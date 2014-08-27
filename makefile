@@ -25,7 +25,7 @@ MANSEC		= KSP
 include ${PETSC_DIR}/conf/variables
 include ${PETSC_DIR}/conf/rules
 
-all: clean vep
+all: subduction
 
 version.h : 
 	echo "#define MARKERCODE_HG_VERSION \"$(MARKERCODE_HG_VERSION)\"" > version.h
@@ -35,7 +35,7 @@ fdcode.h : version.h
 io.o : version.h
 
 clean ::
-	rm -f *.o version.h
+	rm -f *.o version.h subduction
 
 
 
@@ -49,12 +49,12 @@ clean ::
 #	-${CLINKER} $(CFLAGS) -o vep-ridge $^ ${PETSC_LIB}
 #	${RM} main.o
 
-main_subduction.o : main_isotropic_convection.c version.h
+main_subduction.o : main_subduction.c version.h
 	$(CC) $(CFLAGS) -c $^ $(PETSC_CC_INCLUDES)
 
 
-subduction :  post.o main_subduction.o nodalFields.o gridGenerator.o gridSpacing.o options.o  markers.o randomProperties.o io.o updateDamageViscosity.o kspLinearSolve.o vep_system.o retrieveSolutions.o limitTimestep.o nodalStressStrain.o updateMarkerStrainPressure.o subgridStressChanges.o updateMarkerStress.o formThermalSystem.o subgridTemperatureChanges.o updateBCs.o adiabaticHeating.o enforceThermalBC.o restart.o updateDamageViscosity.o viscosity.o benchmarkInitialConditions.o residual.o profile.o markerProjection.o initialPressureGuess.o pressureNullSpace.o
-	-${CLINKER} $(CFLAGS) -o iso-convect-p $^ ${PETSC_LIB}
+subduction:  post.o main_subduction.o nodalFields.o gridGenerator.o gridSpacing.o options.o  markers.o randomProperties.o io.o updateDamageViscosity.o kspLinearSolve.o vep_system.o retrieveSolutions.o limitTimestep.o nodalStressStrain.o updateMarkerStrainPressure.o subgridStressChanges.o updateMarkerStress.o formThermalSystem.o subgridTemperatureChanges.o updateBCs.o adiabaticHeating.o enforceThermalBC.o restart.o updateDamageViscosity.o viscosity.o benchmarkInitialConditions.o residual.o profile.o markerProjection.o initialPressureGuess.o pressureNullSpace.o
+	-${CLINKER} $(CFLAGS) -o subduction $^ ${PETSC_LIB}
 	${RM} main.o
 
 
