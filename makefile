@@ -49,35 +49,12 @@ clean ::
 #	-${CLINKER} $(CFLAGS) -o vep-ridge $^ ${PETSC_LIB}
 #	${RM} main.o
 
-main_isotropic_convection.o : main_isotropic_convection.c version.h
+main_subduction.o : main_isotropic_convection.c version.h
 	$(CC) $(CFLAGS) -c $^ $(PETSC_CC_INCLUDES)
 
-vep-ridge-p : version.h main_vep_ridges_parallel.o nodalFields.o options.o irregulargrid_fault.o markers.o randomProperties.o io.o updateDamageViscosity.o kspLinearSolve.o vep_system.o retrieveSolutions.o limitTimestep.o nodalStressStrain.o updateMarkerStrainPressure.o subgridStressChanges.o updateMarkerStress.o formThermalSystem.o subgridTemperatureChanges.o updateBCs.o adiabaticHeating.o enforceThermalBC.o viscosity.o memuse.o reggrid.o gridSpacing.o profile.o markerProjection.o
-	-${CLINKER} $(CFLAGS) -o vep-ridge-p $^ ${PETSC_LIB}
-	${RM} main.o
 
-vep-bench-p : version.h main_benchmark_problems.o nodalFields.o options.o markers.o randomProperties.o io.o updateDamageViscosity.o kspLinearSolve.o vep_system_benchmarks.o retrieveSolutions.o limitTimestep.o nodalStressStrain.o updateMarkerStrainPressure.o subgridStressChanges.o updateMarkerStress.o formThermalSystem.o subgridTemperatureChanges.o updateBCs.o adiabaticHeating.o enforceThermalBC.o benchmarkInitialConditions.o restart.o reggrid.o viscosity.o irregulargrid1.o residual.o
-	-${CLINKER} $(CFLAGS)  -o vep-bench-p $^ ${PETSC_LIB}
-	${RM} main.o
-
-vep-magmamixing-p : version.h main_magma_mixing.o nodalFields.o options.o markers.o randomProperties.o io.o updateDamageViscosity.o kspLinearSolve.o vep_system_benchmarks.o retrieveSolutions.o limitTimestep.o nodalStressStrain.o updateMarkerStrainPressure.o subgridStressChanges.o updateMarkerStress.o formThermalSystem.o subgridTemperatureChanges.o updateBCs.o adiabaticHeating.o enforceThermalBC.o benchmarkInitialConditions.o restart.o reggrid.o viscosity.o irregulargrid1.o residual.o phaseBA.o profile.o
-	-${CLINKER} $(CFLAGS)  -o vep-magmamixing-p $^ ${PETSC_LIB}
-	${RM} main.o
-
-vep-dilation-test : version.h main_vep_dilation_test.o nodalFields.o options.o irregulargrid_fault.o markers.o randomProperties.o io.o updateDamageViscosity.o kspLinearSolve.o vep_system.o retrieveSolutions.o limitTimestep.o nodalStressStrain.o updateMarkerStrainPressure.o subgridStressChanges.o updateMarkerStress.o formThermalSystem.o subgridTemperatureChanges.o updateBCs.o adiabaticHeating.o enforceThermalBC.o viscosity.o memuse.o reggrid.o gridSpacing.o benchmarkInitialConditions.o markerProjection.o fsPressureCorrection.o profile.o pressureNullSpace.o
-	-${CLINKER} $(CFLAGS) -o vep-dilation-test $^ ${PETSC_LIB}
-	${RM} main.o
-
-iso-convect-p :  post.o main_isotropic_convection.o nodalFields.o gridGenerator.o gridSpacing.o options.o  markers.o randomProperties.o io.o updateDamageViscosity.o kspLinearSolve.o vep_system.o retrieveSolutions.o limitTimestep.o nodalStressStrain.o updateMarkerStrainPressure.o subgridStressChanges.o updateMarkerStress.o formThermalSystem.o subgridTemperatureChanges.o updateBCs.o adiabaticHeating.o enforceThermalBC.o restart.o updateDamageViscosity.o viscosity.o benchmarkInitialConditions.o residual.o profile.o markerProjection.o initialPressureGuess.o pressureNullSpace.o
+subduction :  post.o main_subduction.o nodalFields.o gridGenerator.o gridSpacing.o options.o  markers.o randomProperties.o io.o updateDamageViscosity.o kspLinearSolve.o vep_system.o retrieveSolutions.o limitTimestep.o nodalStressStrain.o updateMarkerStrainPressure.o subgridStressChanges.o updateMarkerStress.o formThermalSystem.o subgridTemperatureChanges.o updateBCs.o adiabaticHeating.o enforceThermalBC.o restart.o updateDamageViscosity.o viscosity.o benchmarkInitialConditions.o residual.o profile.o markerProjection.o initialPressureGuess.o pressureNullSpace.o
 	-${CLINKER} $(CFLAGS) -o iso-convect-p $^ ${PETSC_LIB}
-	${RM} main.o
-
-iso-convect-p-racr : version.h main_isotropic_convection_find_racr.o nodalFields.o gridGenerator.o gridSpacing.o options.o  markers.o randomProperties.o io.o updateDamageViscosity.o kspLinearSolve.o vep_system.o retrieveSolutions.o limitTimestep.o nodalStressStrain.o updateMarkerStrainPressure.o subgridStressChanges.o updateMarkerStress.o formThermalSystem.o subgridTemperatureChanges.o updateBCs.o adiabaticHeating.o enforceThermalBC.o restart.o updateDamageViscosity.o viscosity.o benchmarkInitialConditions.o residual.o profile.o markerProjection.o initialPressureGuess.o pressureNullSpace.o post.o
-	-${CLINKER} $(CFLAGS) -o iso-convect-p-racr $^ ${PETSC_LIB}
-	${RM} main.o
-
-ani-convect-p : main_anisotropic_convection.o nodalFields.o options.o irregulargrid1.o markers.o randomProperties.o io.o updateDamageViscosity.o kspLinearSolve.o anisotropic_system.o retrieveSolutions.o limitTimestep.o nodalStressStrainAnisotropy.o updateMarkerStrainPressure.o subgridStressChanges.o updateMarkerStress.o formThermalSystem.o subgridTemperatureChanges.o updateBCs.o microMacroIceModel.o limitAnisotropicViscosity.o adiabaticHeating.o enforceThermalBC.o reggrid.o restart.o updateDamageViscosity.o viscosity.o benchmarkInitialConditions.o profile.o
-	-${CLINKER} $(CFLAGS) $(VERSION) -o ani-convect-p $^ ${PETSC_LIB}
 	${RM} main.o
 
 
