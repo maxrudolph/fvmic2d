@@ -1,5 +1,6 @@
 #include "fdcode.h"
 #include "thermalSystem.h"
+#include "benchmarkInitialConditions.h"
 
 PetscErrorCode enforceThermalBCs1( GridData *grid, Options *options, NodalFields *nodalFields){
   PetscErrorCode ierr;
@@ -9,8 +10,8 @@ PetscErrorCode enforceThermalBCs1( GridData *grid, Options *options, NodalFields
   PetscInt x,y,m,n;
   PetscScalar **lastT;
   ierr = DMDAGetCorners(grid->da,&x,&y,PETSC_NULL,&m,&n,PETSC_NULL);CHKERRQ(ierr);
-  ierr = DMDAVecGetArray(grid->da,nodalFields->lastT,&lastT);CHKERRQ(ierr);
-  
+  ierr = DMDAVecGetArray(grid->da,nodalFields->lastT,&lastT);CHKERRQ(ierr);  
+
   PetscInt ix,jy;
   /* First enforce dirichlet BCs */
   for(ix=x;ix<x+m;ix++){
@@ -27,9 +28,8 @@ PetscErrorCode enforceThermalBCs1( GridData *grid, Options *options, NodalFields
       
       if(!grid->xperiodic && ix ==0){/* LEFT */
 	if(options->thermalBCLeft.type[0] == 0){
-	  lastT[jy][ix] = options->thermalBCLeft.value[0];
-	  
-
+	  // left boundary gets half-space cooling
+	  lastT[jy][ix] = slab_inflow_temperature( 0.0, grid->y[jy], options->slabAngle );
 	}   
       }else if(!grid->xperiodic && ix == grid->NX-1){/* RIGHT */
 	if(options->thermalBCRight.type[0] == 0){

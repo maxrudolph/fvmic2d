@@ -1,4 +1,4 @@
-void gridSpacingUniform( PetscScalar *, PetscScalar , PetscInt );
+void gridSpacingUniform( PetscScalar *, PetscScalar , PetscScalar, PetscInt );
 void makePeriodic( PetscScalar *, PetscScalar *, PetscScalar , PetscInt );
 void getCellCenters( PetscScalar *, PetscScalar *, PetscScalar , PetscInt );
 void gridSpacingConstantInnerOuter( PetscScalar *, PetscScalar , PetscInt , PetscScalar);

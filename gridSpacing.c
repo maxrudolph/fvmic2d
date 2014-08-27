@@ -5,14 +5,15 @@
 
 /* This file contains subroutines that generate uniform and non-uniform coordinates to use in constructing grids */
 
-void gridSpacingUniform( PetscScalar *x, PetscScalar LX, PetscInt NX){
+void gridSpacingUniform( PetscScalar *x, PetscScalar xmin, PetscScalar xmax, PetscInt NX){
   PetscInt ix;
+  PetscScalar LX = xmax-xmin;
   PetscScalar dx = LX/((PetscScalar) NX - 1.0);
-  x[0] = 0.0;
+  x[0] = xmin;
   for(ix=1;ix<NX-1;ix++){
-    x[ix] = 0.0 + dx*((PetscScalar) ix);
+    x[ix] = x[ix-1] + dx;
   }
-  x[NX-1] = LX;
+  x[NX-1] = xmax;
 }
 
 void smoothGrid( PetscScalar *x, PetscScalar NX, PetscInt nSmooth){

@@ -13,14 +13,20 @@ PetscErrorCode initializeRegularGrid(GridData *grid, Options *options){
   PetscErrorCode ierr=0;
 
   ierr = allocateGrid( grid, options);CHKERRQ(ierr);
+
+  // for subduction problem - tweak y-gridlines so that slab falls exactly on a cell corner
+  const PetscScalar cornerx = LY/tan(options->slabAngle);
+  PetscInt NXL = NX * cornerx/LX;
+  PetscInt NXR = NX-NXL+1;
   if( options->mechBCLeft.type[0] == 2){    
     grid->xperiodic = 1;
-    gridSpacingUniform( grid->x, LX, NX+1 );
+    gridSpacingUniform( grid->x, 0.0, LX, NX+1 );
   } else{
-    gridSpacingUniform( grid->x, LX, NX );
+    gridSpacingUniform( grid->x, 0.0, cornerx, NXL );
+    gridSpacingUniform( grid->x+NXL-1, cornerx, LX , NXR );
   }
+  gridSpacingUniform( grid->y, 0.0, LY, NY );
 
-  gridSpacingUniform( grid->y, LY, NY );
   getCellCenters( grid->x, grid->xc, LX, NX);
   getCellCenters( grid->y, grid->yc, LY, NY);
   if( grid->xperiodic ){
@@ -42,7 +48,7 @@ PetscErrorCode initializeIrregularGridConstantInnerOuter(GridData *grid, Options
     grid->xperiodic = 1;
   }  
   if( grid->xperiodic ){
-    gridSpacingUniform( grid->x, LX, NX+1 );
+    gridSpacingUniform( grid->x,0.0, LX, NX+1 );
   }else{
     gridSpacingConstantInnerOuter( grid->x, LX, NX ,hcontrast);
   }

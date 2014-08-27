@@ -1,0 +1,103 @@
+# Van Keken subduction benchmark
+LX,660000
+LY,600000
+NX,66
+NY,60			
+NMX,5
+NMY,5
+gridRatio,1.0
+maxMarkFactor,2.0; /*memory to allocate for markers is this number*original number of markers*/
+minMarkers,1; /* munimum number of markers per cell */
+maxMarkers,100
+#
+#Time step Stuff
+#
+dtMax,1.5779e20
+displacementStepLimit,0.5
+maxTempChange,70.0
+nTime,1
+restartStep,0
+#maximum model time to run:
+totalTime,4.4e30
+#
+#Plasticity
+#
+maxNumPlasticity,1
+plasticDelay,0
+# /* minimum viscosity allowed in plastic yielding*/
+etamin,0.0
+etamax,1.0e99
+#
+# Monte Carlo Searches
+#
+doMonte,0
+nMonte,1
+#
+#Porosity limit
+#
+maxPorosity,0.0
+#
+slabAngle,45
+slabVelocity,1.58443823e-9
+#
+#  /* model setup/ICs */
+Tperturb,50.0
+#  /* Thermal B.C.s*/
+mechBCLeft,0,0,0,0.0,0.0,0.0
+mechBCRight,0,1,0,0.0,0.0,0.0
+mechBCTop,1,0,0,0.0,0.0,0.0
+mechBCBottom,0,0,0,0.0,0.0,0.0
+thermalBCLeft,0,0
+thermalBCRight,0,0
+thermalBCTop,0,0.0
+thermalBCBottom,0,1000.0
+#
+shearHeating,0
+adiabaticHeating,0
+#
+oscillatoryX,0
+oscillatoryY,0
+oscillatoryZ,0
+oscillationPeriod,3.15e7
+#
+#  /* body forces*/
+#
+gy,10.0
+gx,0.0
+#
+#  /* I/O etc*/
+#
+saveInterval,250
+#
+subgridStressDiffusivity,0.0
+subgridTemperatureDiffusivity,1.0
+#
+# MATERIAL PROPERTIES
+#
+doTexture,1
+nMaterials,1
+hasPlasticity,0,0
+#
+materialEta,0,1.0e20	
+#
+materialRho,0,4000.0
+#
+materialkThermal,0,5.0
+#
+materialCp,0,1250.0
+#
+materialAlpha,0,0.0
+#
+materialMu,0,1e99
+#
+materialCohesion,0,1e99
+#
+materialFriction,0,0.6
+#
+hasDilation,0,0
+# Temperature dependent viscosity
+hasEtaT,0,0
+#
+QonR,0,6.907755e-3
+Tref,0,0.0
+#/*kelvin*/

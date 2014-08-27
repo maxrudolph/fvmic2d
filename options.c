@@ -86,6 +86,14 @@ PetscErrorCode csvOptions(char *csvFileName, Options *options, Materials *materi
 	  //printf("reading minMarkers\n");
 	  sscanf( &line[idxComma+1],"%d\n", &(options -> maxMarkers)); printf("maxMarkers = %d\n",options->maxMarkers);
 	
+
+	} else if( !strncmp( "slabAngle", line, 9) ){
+	  sscanf( &line[idxComma+1],"%le\n", &(options -> slabAngle)); printf("slabAngle = %le\n",options->slabAngle);
+	  options->slabAngle *= M_PI/180.0;
+	  printf("slabAngle in radians %le\n",options->slabAngle);
+	} else if( !strncmp( "slabVelocity", line, 12) ){
+	  sscanf( &line[idxComma+1],"%le\n", &(options -> slabVelocity)); printf("slabVelocity = %le\n",options->slabVelocity);
+	  
 	  /* time step, plastic iteration*/
 
 	  /*   options->dtMax = 1e0*(365.25*24*3600); */
