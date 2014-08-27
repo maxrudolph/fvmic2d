@@ -368,8 +368,10 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 	  ierr = VecSetValue(RHS, vxdof[jyl][ixl], Kbond[0]*bv->mechBCLeft.value[0],INSERT_VALUES);CHKERRQ(ierr);
 	}
       } else if( !grid->xperiodic && (ix == NX-1 && jy < NY-1)){
-	/* right boundary - prescribed x-velocity*/
+	/* right boundary - prescribed x-velocity */
+	PetscScalar mydx = grid->x[ix] - grid->x[ix-1];
 	ierr = MatSetValue(LHS, vxdof[jyl][ixl], vxdof[jyl][ixl],1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
+	ierr = MatSetValue(LHS, vxdof[jyl][ixl], vxdof[jyl][ixl-1],-1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
 	ierr = VecSetValue(RHS, vxdof[jyl][ixl], Kbond[0]*bv->mechBCRight.value[0],INSERT_VALUES);CHKERRQ(ierr);
       } else if( grid->xperiodic && bv->mechBCTop.type[0] == 1 && bv->mechBCBottom.type[0] == 1 &&  ix == 0 && jy == 0){
 	/* left top boundary - fix x-velocity at one point */
@@ -378,7 +380,11 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 	ierr = VecSetValue(RHS, vxdof[jyl][ixl], 0.0 ,INSERT_VALUES); CHKERRQ(ierr);	
 	//      }else if( in_slab( grid->x[ix+1], grid->y[jy], options->slabAngle ) ){
 	//ierr = MatSetValue(LHS,vxdof[jyl][ixl],vxdof[jyl][ixl],1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
-	//ierr = VecSetValue(RHS, vxdof[jyl][ixl], Kbond[0]*svx,INSERT_VALUES);CHKERRQ(ierr);
+	//ierr = VecSetValue(RHS, vxdof[jyl][ixl], Kbond[0]*svx,INSERT_VALUES);CHKERRQ(ierr);    
+      } else if( ix>0 && ix<NX-1 && in_plate( grid->x[ix], grid->yc[jy+1], options->slabAngle ) ){
+	ierr = MatSetValue(LHS, vxdof[jyl][ixl], vxdof[jyl][ixl], 1.0*Kbond[0],INSERT_VALUES); CHKERRQ(ierr);
+	ierr = VecSetValue(RHS, vxdof[jyl][ixl], 0.0 ,INSERT_VALUES); CHKERRQ(ierr);	
+
       }else{
 	/* normal x-stokes stencil */
 	rowidx = vxdof[jyl][ixl];
@@ -480,7 +486,12 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 	}
 
       }else if( !grid->xperiodic && (ix == NX-1 )) {/* RIGHT WALL */
-	if( bv->mechBCRight.type[1] == 0){/* prescribed velocity case */
+	if( 1 ){
+	  /* dvy/dx = 0 */
+	  ierr=MatSetValue(LHS,vydof[jyl][ixl], vydof[jyl][ixl],  1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
+	  ierr=MatSetValue(LHS,vydof[jyl][ixl], vydof[jyl][ixl-1],-1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
+	  ierr=VecSetValue(RHS,vydof[jyl][ixl], 0.0, INSERT_VALUES); CHKERRQ(ierr);	  
+	}else if( bv->mechBCRight.type[1] == 0){/* prescribed velocity case */
 	  ierr=MatSetValue(LHS,vydof[jyl][ixl], vydof[jyl][ixl],  1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
 	  ierr=MatSetValue(LHS,vydof[jyl][ixl], vydof[jyl][ixl-1],1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
 	  ierr=VecSetValue(RHS,vydof[jyl][ixl], 2.0*Kbond[0]*bv->mechBCRight.value[1], INSERT_VALUES); CHKERRQ(ierr);	  
@@ -745,6 +756,9 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
   ierr = MatAssemblyEnd( LHSz, MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   ierr = VecAssemblyEnd(RHS);CHKERRQ(ierr);
   ierr = VecAssemblyEnd(RHSz); CHKERRQ(ierr);
+
+
+
 
   /* assemble preconditioner */
   if( P != PETSC_NULL ){

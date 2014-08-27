@@ -39,6 +39,15 @@ PetscErrorCode initialConditionsVanKeken( MarkerSet *markerset, Options *options
   PetscFunctionReturn(ierr);
 }
 
+PetscInt in_plate(PetscScalar x, PetscScalar y, PetscScalar angle){
+  const PetscScalar lith_depth = 50000;
+  if( !in_slab(x,y,angle) && y < lith_depth ){
+    return 1;
+  }else{
+    return 0;
+  }
+}
+
 PetscScalar slab_depth(PetscScalar x, PetscScalar angle){
   // calculates depth of slab interface given x and angle
   return x*tan(angle);
