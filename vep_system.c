@@ -371,8 +371,8 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 	/* right boundary - prescribed x-velocity */
 	PetscScalar mydx = grid->x[ix] - grid->x[ix-1];
 	ierr = MatSetValue(LHS, vxdof[jyl][ixl], vxdof[jyl][ixl],1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
-	ierr = MatSetValue(LHS, vxdof[jyl][ixl], vxdof[jyl][ixl-1],-1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
-	ierr = VecSetValue(RHS, vxdof[jyl][ixl], Kbond[0]*bv->mechBCRight.value[0],INSERT_VALUES);CHKERRQ(ierr);
+
+	ierr = VecSetValue(RHS, vxdof[jyl][ixl], 0.0,INSERT_VALUES);CHKERRQ(ierr);
       } else if( grid->xperiodic && bv->mechBCTop.type[0] == 1 && bv->mechBCBottom.type[0] == 1 &&  ix == 0 && jy == 0){
 	/* left top boundary - fix x-velocity at one point */
 	/* this is only needed when the domain is periodic and free slip boundary conditions */
@@ -381,9 +381,10 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 	//      }else if( in_slab( grid->x[ix+1], grid->y[jy], options->slabAngle ) ){
 	//ierr = MatSetValue(LHS,vxdof[jyl][ixl],vxdof[jyl][ixl],1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
 	//ierr = VecSetValue(RHS, vxdof[jyl][ixl], Kbond[0]*svx,INSERT_VALUES);CHKERRQ(ierr);    
-      } else if( ix>0 && ix<NX-1 && in_plate( grid->x[ix], grid->yc[jy+1], options->slabAngle ) ){
-	ierr = MatSetValue(LHS, vxdof[jyl][ixl], vxdof[jyl][ixl], 1.0*Kbond[0],INSERT_VALUES); CHKERRQ(ierr);
-	ierr = VecSetValue(RHS, vxdof[jyl][ixl], 0.0 ,INSERT_VALUES); CHKERRQ(ierr);	
+
+	//      } else if( ix>0 && ix<NX-1 && in_plate( grid->x[ix], grid->yc[jy+1], options->slabAngle ) ){
+	//ierr = MatSetValue(LHS, vxdof[jyl][ixl], vxdof[jyl][ixl], 1.0*Kbond[0],INSERT_VALUES); CHKERRQ(ierr);
+	//ierr = VecSetValue(RHS, vxdof[jyl][ixl], 0.0 ,INSERT_VALUES); CHKERRQ(ierr);	
 
       }else{
 	/* normal x-stokes stencil */
@@ -486,7 +487,7 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 	}
 
       }else if( !grid->xperiodic && (ix == NX-1 )) {/* RIGHT WALL */
-	if( 1 ){
+	if( 0 ){
 	  /* dvy/dx = 0 */
 	  ierr=MatSetValue(LHS,vydof[jyl][ixl], vydof[jyl][ixl],  1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
 	  ierr=MatSetValue(LHS,vydof[jyl][ixl], vydof[jyl][ixl-1],-1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
