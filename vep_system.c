@@ -282,9 +282,7 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 	ierr = MatSetValue(LHS,pdof[jyl][ixl],pdof[jyl][ixl],1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
 
 	ierr = VecSetValue(RHS,pdof[jyl][ixl],0.0,INSERT_VALUES);CHKERRQ(ierr);
-      } else if( in_slab( grid->x[ix], grid->y[jy-1], options->slabAngle) ){
-	ierr = MatSetValue(LHS,pdof[jyl][ixl],pdof[jyl][ixl], 1.0*Kbond[0], INSERT_VALUES); CHKERRQ(ierr);
-	ierr = VecSetValue(RHS,pdof[jyl][ixl], 0.0, INSERT_VALUES);CHKERRQ(ierr);
+
       } else {
 
 	dx=grid->x[ix]-grid->x[ix-1];
@@ -300,7 +298,7 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 	/* this is not the same thing as compressibility - that would require additional terms in the momentum equations too */
 	PetscScalar rhobar = (rho[jy-1][ix-1] + rho[jy-1][ix] + rho[jy][ix-1] + rho[jy][ix])*0.25;
 	PetscScalar rhodotbar =  (rhodot[jy-1][ix-1] + rhodot[jy-1][ix] + rhodot[jy][ix-1] + rhodot[jy][ix])*0.25; 
-	//PetscScalar Rval = -1.0/rhobar*rhodotbar*Kcont[0]; 
+	//PetscScalar Rval = -1.0/rhobar*rhodotbar*Kcont[0];
 	PetscScalar Rval = 0.0;
 
 	ierr = VecSetValue(RHS,pdof[jyl][ixl],Rval,INSERT_VALUES);CHKERRQ(ierr);
@@ -359,9 +357,6 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 	PetscScalar mydx = grid->x[ix+1] - grid->x[ix];
 	ierr = MatSetValue( LHS, vxdof[jyl][ixl], vxdof[jyl][ixl], (1.0-xsp/mydx)*Kbond[0], INSERT_VALUES); CHKERRQ(ierr);
 	ierr = MatSetValue( LHS, vxdof[jyl][ixl], vxdof[jyl][ixl], xsp/mydx*Kbond[0], INSERT_VALUES); CHKERRQ(ierr);
-	ierr = VecSetValue( RHS, vxdof[jyl][ixl], Kbond[0]*svx, INSERT_VALUES); CHKERRQ(ierr);
-      }else if(ix>0 && ix<NX-1 &&jy>0 && jy < NY-1 && in_slab( grid->x[ix], grid->y[jy], options->slabAngle) ){
-	ierr = MatSetValue( LHS, vxdof[jyl][ixl], vxdof[jyl][ixl], 1.0*Kbond[0], INSERT_VALUES); CHKERRQ(ierr);
 	ierr = VecSetValue( RHS, vxdof[jyl][ixl], Kbond[0]*svx, INSERT_VALUES); CHKERRQ(ierr);
       }else{
 	/* normal x-stokes stencil */
@@ -489,10 +484,7 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 	ierr = MatSetValue( LHS, vydof[jyl][ixl], vydof[jyl][ixl], (1.0-ysp/mydy)*Kbond[0], INSERT_VALUES); CHKERRQ(ierr);
 	ierr = MatSetValue( LHS, vydof[jyl][ixl], vydof[jyl][ixl], ysp/mydy*Kbond[0], INSERT_VALUES); CHKERRQ(ierr);
 	ierr = VecSetValue( RHS, vydof[jyl][ixl], Kbond[0]*svy, INSERT_VALUES); CHKERRQ(ierr);
-      }else if( ix>0 && ix < NX-1 && jy>0 && jy < NY-1 && in_slab( grid->x[ix], grid->y[jy], options->slabAngle) ){
-	// fully inside slab - specify vy
-	ierr = MatSetValue( LHS, vydof[jyl][ixl], vydof[jyl][ixl], 1.0*Kbond[0], INSERT_VALUES); CHKERRQ(ierr);
-	ierr = VecSetValue( RHS, vydof[jyl][ixl], Kbond[0]*svy, INSERT_VALUES); CHKERRQ(ierr);
+
       }else {
 	rowidx = vydof[jyl][ixl];
 	/* normal y-stokes stencil*/
