@@ -250,7 +250,12 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
       PetscInt colidx[NADD];
 
       /* Continuity equation */
-      if( ix>0 && jy > 0 && in_slab( grid->xc[ix], grid->y[jy-1], options->slabAngle) && in_slab( grid->x[ix], grid->yc[jy], options->slabAngle)){
+      if( ix>0 && jy > 0 && 
+	  in_either( grid->xc[ix], grid->y[jy-1], options->slabAngle) && 
+	  in_either( grid->xc[ix], grid->y[jy], options->slabAngle) && 
+	  in_either( grid->x[ix],   grid->yc[jy], options->slabAngle) && 
+	  in_either( grid->x[ix-1], grid->yc[jy], options->slabAngle) ){
+
 	ierr = MatSetValue(LHS,pdof[jyl][ixl], pdof[jyl][ixl],1.0*Kbond[0],INSERT_VALUES); CHKERRQ(ierr);
 	ierr = VecSetValue(RHS,pdof[jyl][ixl], 0.0,INSERT_VALUES); CHKERRQ(ierr);
       }else if( jy == 0 ){/* make ghost nodes have same pressure as first row so that null space will be constant */
@@ -291,6 +296,9 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
       if( jy <NY-1 && in_slab( grid->x[ix], grid->yc[jy+1], options->slabAngle) ){
 	ierr =  MatSetValue(LHS,vxdof[jyl][ixl],vxdof[jyl][ixl],1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);	
 	ierr = VecSetValue(RHS, vxdof[jyl][ixl],Kbond[0]*svx,INSERT_VALUES);CHKERRQ(ierr);       
+      }else if( in_plate( grid->x[ix], grid->yc[jy+1], options->slabAngle) ){//rigid over-riding plate
+	ierr =  MatSetValue(LHS,vxdof[jyl][ixl],vxdof[jyl][ixl],1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);	
+	ierr = VecSetValue(RHS, vxdof[jyl][ixl], 0.0 ,INSERT_VALUES);CHKERRQ(ierr);       		  
       }else if( jy == NY-1){ /* BOTTOM BOUNDARY */
 	/* Last row of nodes are used explicitly for boundary conditions. Note that the boundary conditions are treated implicitly for the top and left but explicitly for the right and bottom*/
 	if( in_slab( grid->x[ix], grid->y[jy], options->slabAngle ) ){
@@ -433,7 +441,9 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
       if( in_slab( grid->xc[ix+1], grid->y[jy], options->slabAngle) ){
 	ierr = MatSetValue(LHS, vydof[jyl][ixl],vydof[jyl][ixl], Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
 	ierr = VecSetValue(RHS, vydof[jyl][ixl], Kbond[0] * svy,INSERT_VALUES);CHKERRQ(ierr);	
-
+      }else if( in_plate( grid->xc[ix+1], grid->y[jy], options->slabAngle) ){
+	ierr = MatSetValue(LHS, vydof[jyl][ixl],vydof[jyl][ixl], Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
+	ierr = VecSetValue(RHS, vydof[jyl][ixl], 0.0,INSERT_VALUES);CHKERRQ(ierr);	
       }else if( jy == 0 && (grid->xperiodic || ix < NX-1)) {	/* TOP - prescribed velocity */
 	ierr = MatSetValue(LHS, vydof[jyl][ixl],vydof[jyl][ixl], Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
 	ierr = VecSetValue(RHS, vydof[jyl][ixl], Kbond[0] * 0.0,INSERT_VALUES);CHKERRQ(ierr);	
@@ -661,6 +671,8 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 	PetscScalar xcoef = etaSZ[jy][ix]/((grid->y[jy] - grid->y[1 + jy])*(grid->yc[jy] - grid->yc[1 + jy]));
 	if( in_slab( grid->x[ix], grid->yc[jy+1], options->slabAngle )){
 	  //do nothing - kinematic internal boundary
+	}else if( in_plate( grid->x[ix], grid->yc[jy+1], options->slabAngle)){
+	  //do nothing - kinematic internal boundary condition
 	}else if( bv->mechBCTop.type[0] == 0){/* kinematic boundary condition */
 	  PetscScalar Rval = -2.0*bv->mechBCTop.value[0]*xcoef;
 	  ierr = VecSetValue( RHS, vxdof[jyl][ixl], Rval, ADD_VALUES);

@@ -41,7 +41,7 @@ PetscErrorCode initialConditionsVanKeken( MarkerSet *markerset, Options *options
 
 PetscInt in_plate(PetscScalar x, PetscScalar y, PetscScalar angle){
   const PetscScalar lith_depth = 50000;
-  if( !in_slab(x,y,angle) && y < lith_depth ){
+  if( !in_slab(x,y,angle) && y <= lith_depth ){
     return 1;
   }else{
     return 0;
@@ -59,7 +59,7 @@ PetscScalar slab_x(PetscScalar y, PetscScalar angle){
 }
 
 PetscInt in_slab(PetscScalar x, PetscScalar y, PetscScalar angle ){
-  if( y > slab_depth(x,angle) ){
+  if( y >= slab_depth(x,angle) ){
     return 1;
   }else{
     return 0;
@@ -74,4 +74,12 @@ PetscScalar slab_inflow_temperature(PetscScalar x, PetscScalar y, PetscScalar an
   const PetscScalar t50 = 1.5778463e15;//50 Myr in seconds
   return Ts + (T0-Ts) * erf( (y-slab_depth(x,angle))/(2.0*sqrt(kappa*t50)) );
 
+}
+
+PetscInt in_either( PetscScalar x, PetscScalar y, PetscScalar angle){
+  if( in_slab( x, y, angle) || in_plate(x,y,angle) ){
+    return 1;
+  }else{
+    return 0;
+  }
 }
