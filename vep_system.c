@@ -267,7 +267,7 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 	ierr = MatSetValue(LHS,pdof[jyl][ixl],pdof[jyl][ixl+1],-1.0*Kbond[0],INSERT_VALUES); CHKERRQ(ierr);
 	ierr = VecSetValue(RHS,pdof[jyl][ixl],0.0,INSERT_VALUES); CHKERRQ(ierr);	       
 	
-      } else if( FIX_PRESSURE && jy==10 && ix==NX-1 ){/* pressure specified in one cell */	
+      } else if( 0 && FIX_PRESSURE && jy==10 && ix==NX-1 ){/* pressure specified in one cell */	
 	ierr = MatSetValue(LHS,pdof[jyl][ixl],pdof[jyl][ixl],1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
 	ierr = VecSetValue(RHS,pdof[jyl][ixl],0.0,INSERT_VALUES);CHKERRQ(ierr);
       } else {
@@ -334,7 +334,7 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 	}
 
 	/* RIGHT BOUNDARY - SWITCHED BCs */
-	//      } else if( 0 && !grid->xperiodic && (ix == NX-1 && jy < NY-1)){
+	//    } else if( 0 && !grid->xperiodic && (ix == NX-1 && jy < NY-1)){
 	/* right boundary - prescribed x-velocity */
 	//PetscScalar mydx = grid->x[ix] - grid->x[ix-1];
 	//ierr = MatSetValue(LHS, vxdof[jyl][ixl], vxdof[jyl][ixl],1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
@@ -463,6 +463,14 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 	  ierr=MatSetValue(LHS,vydof[jyl][ixl], vydof[jyl][ixl],  1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
 	  ierr=MatSetValue(LHS,vydof[jyl][ixl], vydof[jyl][ixl-1],-1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
 	  ierr=VecSetValue(RHS,vydof[jyl][ixl], 0.0, INSERT_VALUES); CHKERRQ(ierr);	  
+	}else if( !in_plate( grid->x[ix], grid->y[jy], options->slabAngle )){
+	  PetscScalar dxc = grid->xc[ix+1] - grid->xc[ix];
+	  PetscScalar dyc = grid->yc[jy+1] - grid->yc[jy];
+	  ierr=MatSetValue(LHS,vydof[jyl][ixl], vxdof[jyl][ixl], 1.0/dyc*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
+	  ierr=MatSetValue(LHS,vydof[jyl][ixl], vxdof[jyl-1][ixl],  -1.0/dyc*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
+	  ierr=MatSetValue(LHS,vydof[jyl][ixl], vydof[jyl][ixl], 1.0/dxc*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
+	  ierr=MatSetValue(LHS,vydof[jyl][ixl], vydof[jyl][ixl-1],  -1.0/dxc*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
+	  ierr=VecSetValue(RHS,vydof[jyl][ixl], 0.0, INSERT_VALUES);CHKERRQ(ierr);
 	}else if( bv->mechBCRight.type[1] == 0){/* prescribed velocity case */
 	  ierr=MatSetValue(LHS,vydof[jyl][ixl], vydof[jyl][ixl],  1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
 	  ierr=MatSetValue(LHS,vydof[jyl][ixl], vydof[jyl][ixl-1],1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
@@ -681,13 +689,13 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 	  /* add xcoef to the vx[i,j] LHS coefficient */
 	  ierr = MatSetValue( LHS, vxdof[jyl][ixl], vxdof[jyl][ixl], xcoef, ADD_VALUES);
 	}
-      } else if( ix == NX-1 && !in_plate( grid->x[ix], grid->yc[jy+1], options->slabAngle) ){// modify for outflow BC
+      } else if( ix == NX-1 && jy < NY-1 && !in_plate( grid->x[ix], grid->yc[jy+1], options->slabAngle) ){// modify for outflow BC
 	/* get coefficient for vx[ix-1][jy] */
 	PetscScalar mydx = grid->x[ix]-grid->x[ix-1];
 	PetscScalar xcoef = (4*etaNZ[jy+1][ix])/(3.*(grid->x[-1 + ix] - grid->x[ix])*(grid->xc[ix] - grid->xc[1 + ix]));
-	PetscScalar Pcoef = -xcoef*2.0*mydx/etaSZ[jy][ix];
-	ierr = MatSetValue( LHS, vxdof[jyl][ixl], vxdof[jyl][ixl-1], xcoef, ADD_VALUE);CHKERRQ(ierr);
-	ierr = MatSetValue( LHS, vxdof[jyl][ixl], pdof[jyl][ixl-1], Pcoef, ADD_VALUE);CHKERRQ(ierr);
+	PetscScalar Pcoef = -Kcont[0]*xcoef*mydx/etaNZ[jy+1][ix] + Kcont[0]/(grid->xc[ix] - grid->xc[1 + ix]);
+	ierr = MatSetValue( LHS, vxdof[jyl][ixl], vxdof[jyl][ixl-1], xcoef, ADD_VALUES);CHKERRQ(ierr);
+	ierr = MatSetValue( LHS, vxdof[jyl][ixl], pdof[jyl+1][ixl], Pcoef, ADD_VALUES);CHKERRQ(ierr);
       }
       
       /* y-stokes */

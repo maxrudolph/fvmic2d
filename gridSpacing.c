@@ -138,7 +138,7 @@ void getCellCenters( PetscScalar *x, PetscScalar *xc, PetscScalar LX, PetscInt N
     xc[ix] = (x[ix-1] + x[ix])/2.0;
   }
   xc[0] = -xc[1];
-  xc[NX] = 2.0*LX - xc[NX-1];  
+  xc[NX] = 2.0*LX - xc[NX-1];
 }
 
 void makePeriodic( PetscScalar *x, PetscScalar *xc, PetscScalar LX, PetscInt NX){

@@ -44,7 +44,7 @@ slabVelocity,1.58443823e-9
 Tperturb,50.0
 #  /* Thermal B.C.s*/
 mechBCLeft,0,0,0,0.0,0.0,0.0
-mechBCRight,0,1,0,0.0,0.0,0.0
+mechBCRight,0,0,0,0.0,0.0,0.0
 mechBCTop,0,0,0,0.0,0.0,0.0
 mechBCBottom,1,0,0,0.0,0.0,0.0
 thermalBCLeft,0,0
