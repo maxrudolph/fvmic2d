@@ -336,8 +336,6 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 	/* right boundary - prescribed x-velocity */
 	PetscScalar mydx = grid->x[ix] - grid->x[ix-1];
 	ierr = MatSetValue(LHS, vxdof[jyl][ixl], vxdof[jyl][ixl],1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
-	//ierr = MatSetValue(LHS, vxdof[jyl][ixl], vxdof[jyl][ixl-1],-1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
-
 	ierr = VecSetValue(RHS, vxdof[jyl][ixl], 0.0,INSERT_VALUES);CHKERRQ(ierr);
       } else if( grid->xperiodic && bv->mechBCTop.type[0] == 1 && bv->mechBCBottom.type[0] == 1 &&  ix == 0 && jy == 0){
 	/* left top boundary - fix x-velocity at one point */
