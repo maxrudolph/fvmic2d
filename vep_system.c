@@ -447,15 +447,16 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
       }else if( jy == 0 && (grid->xperiodic || ix < NX-1)) {	/* TOP - prescribed velocity */
 	ierr = MatSetValue(LHS, vydof[jyl][ixl],vydof[jyl][ixl], Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
 	ierr = VecSetValue(RHS, vydof[jyl][ixl], Kbond[0] * 0.0,INSERT_VALUES);CHKERRQ(ierr);	
-      }else if( jy == NY-1 && (grid->xperiodic || ix < NX-1) ) { /* bottom boundary. vy=0 */
-	if( in_slab( grid->xc[ix+1], grid->y[jy], options->slabAngle) ){
-	  ierr=MatSetValue(LHS,vydof[jyl][ixl],vydof[jyl][ixl],Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
-	  ierr = VecSetValue(RHS, vydof[jyl][ixl], Kbond[0]*svy,INSERT_VALUES);CHKERRQ(ierr);	    
+
+	//}else if( jy == NY-1 && (grid->xperiodic || ix < NX-1) && ) { /* bottom boundary. vy=0 */
+	//if( in_slab( grid->xc[ix+1], grid->y[jy], options->slabAngle) ){
+	//ierr=MatSetValue(LHS,vydof[jyl][ixl],vydof[jyl][ixl],Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
+	//ierr = VecSetValue(RHS, vydof[jyl][ixl], Kbond[0]*svy,INSERT_VALUES);CHKERRQ(ierr);	    
 	  	  
-	}else if( bv->mechBCBottom.type[1] == 0 ){//normal bottom boundary
-	  ierr=MatSetValue(LHS,vydof[jyl][ixl],vydof[jyl][ixl],Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
-	  ierr = VecSetValue(RHS, vydof[jyl][ixl], Kbond[0]*bv->mechBCBottom.value[1] ,INSERT_VALUES);CHKERRQ(ierr);
-	}
+	//}else if( bv->mechBCBottom.type[1] == 0 ){//normal bottom boundary
+	//ierr=MatSetValue(LHS,vydof[jyl][ixl],vydof[jyl][ixl],Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
+	//ierr = VecSetValue(RHS, vydof[jyl][ixl], Kbond[0]*bv->mechBCBottom.value[1] ,INSERT_VALUES);CHKERRQ(ierr);
+	//}
 
       }else if( !grid->xperiodic && (ix == NX-1 )) {/* RIGHT WALL */
 	if( 0 ){
@@ -711,9 +712,15 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 	}else if( bv->mechBCLeft.type[1] ==1 ){/* free slip */
 	  ierr = MatSetValue( LHS, vydof[jyl][ixl], vydof[jyl][ixl], ycoef, ADD_VALUES);
 	}
+      } else if( jy == NY-1 && ix < NX-1 && !in_slab( grid->xc[ix+1], grid->y[jy], options->slabAngle) ){
+	PetscScalar mydy = grid->y[jy]-grid->y[jy-1];
+	PetscScalar ycoef = (4*etaNZ[jy][1+ix])/(3.*(grid->y[-1 + jy] - grid->y[jy])*(grid->yc[jy] - grid->yc[1 + jy]));
+	PetscScalar Pcoef = -Kcont[0]*ycoef*mydy/etaNZ[jy][ix+1] + Kcont[0]/(grid->yc[jy] - grid->yc[1 + jy]);
+	printf("mydy ycoef pcoef = %le %le %le\n",mydy,ycoef,Pcoef);
+	ierr = MatSetValue( LHS, vydof[jyl][ixl], vydof[jyl-1][ixl], ycoef, ADD_VALUES);CHKERRQ(ierr);
+	ierr = MatSetValue( LHS, vydof[jyl][ixl], pdof[jyl][ixl+1], Pcoef, ADD_VALUES);CHKERRQ(ierr);
+	/* top boundary */
       }
-      
-      /* top boundary */
       
       /* z stokes */
       if( ix == NX-1 && jy > 0){/* Right boundary */
