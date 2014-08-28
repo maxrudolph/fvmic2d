@@ -11,12 +11,15 @@ PetscErrorCode initializeRegularGrid(GridData *grid, Options *options){
   PetscScalar LX = options->LX;
   PetscScalar LY = options->LY;
   PetscErrorCode ierr=0;
-
+  if( NX <= NY ){
+    fprintf(stderr,"ERROR: NX MUST be greater than NY\n");
+    abort();
+  }
   ierr = allocateGrid( grid, options);CHKERRQ(ierr);
 
   // for subduction problem - tweak y-gridlines so that slab falls exactly on a cell corner
   const PetscScalar cornerx = LY/tan(options->slabAngle);
-  PetscInt NXL = NX * cornerx/LX;
+  PetscInt NXL = NY;
   PetscInt NXR = NX-NXL+1;
   if( options->mechBCLeft.type[0] == 2){    
     grid->xperiodic = 1;

@@ -31,7 +31,7 @@ PetscErrorCode initialConditionsVanKeken( MarkerSet *markerset, Options *options
     }
     markers[m].Mat = 0;
     markers[m].rhodot = 0.0;
-    markers[m].rho = materials->materialRho[(PetscInt) markers[m].Mat]*(1.0-materials->materialAlpha[(PetscInt) markers[m].Mat]*markers[m].T);
+    markers[m].rho = -materials->materialRho[(PetscInt) markers[m].Mat]*(materials->materialAlpha[(PetscInt) markers[m].Mat]*markers[m].T);
     
     updateMarkerViscosity( &markers[m], options, materials, 0.0 );
         
@@ -51,6 +51,11 @@ PetscInt in_plate(PetscScalar x, PetscScalar y, PetscScalar angle){
 PetscScalar slab_depth(PetscScalar x, PetscScalar angle){
   // calculates depth of slab interface given x and angle
   return x*tan(angle);
+}
+
+PetscScalar slab_x(PetscScalar y, PetscScalar angle){
+  // calculates horizontal position of slab interface given depth (y)
+  return y/tan(angle);
 }
 
 PetscInt in_slab(PetscScalar x, PetscScalar y, PetscScalar angle ){

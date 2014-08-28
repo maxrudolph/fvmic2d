@@ -1370,23 +1370,6 @@ PetscErrorCode checkPlasticYielding(GridData *grid,MarkerSet *markerset, Materia
       updateMarkerViscosity( &markers[m], options, materials, siinew);
       /* correct viscosity for damage */
 
-      if( materials->hasDamage[markers[m].Mat]){
-	Tensor33s s;
-	s.T11 = sxxnew;
-	s.T22 = syynew;
-	s.T33 = szznew;
-	s.T12 = sxynew;
-	s.T13 = sxznew;
-	s.T23 = syznew;
-	updateMarkerDamageRate( &markers[m], &s, materials, options );
-       
-	etanew = (1.0-markers[m].D) * markers[m].eta;
-	PetscScalar munew = (1.0-markers[m].D)*markers[m].mu;
-	if( munew/markers[m].mu < fractionalEtamin ){
-	  munew = fractionalEtamin*markers[m].mu ;
-	}
-	markers[m].mu = munew;
-      }
 
       if( materials->hasPlasticity[markers[m].Mat] || materials->hasDamage[markers[m].Mat] ){
 	PetscInt thismat = (PetscInt) markers[m].Mat;
