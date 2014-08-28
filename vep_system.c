@@ -332,11 +332,13 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 	  ierr = MatSetValue(LHS,vxdof[jyl][ixl],vxdof[jyl][ixl],1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
 	  ierr = VecSetValue(RHS, vxdof[jyl][ixl], Kbond[0]*bv->mechBCLeft.value[0],INSERT_VALUES);CHKERRQ(ierr);
 	}
-      } else if( !grid->xperiodic && (ix == NX-1 && jy < NY-1)){
+
+	/* RIGHT BOUNDARY - SWITCHED BCs */
+	//      } else if( 0 && !grid->xperiodic && (ix == NX-1 && jy < NY-1)){
 	/* right boundary - prescribed x-velocity */
-	PetscScalar mydx = grid->x[ix] - grid->x[ix-1];
-	ierr = MatSetValue(LHS, vxdof[jyl][ixl], vxdof[jyl][ixl],1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
-	ierr = VecSetValue(RHS, vxdof[jyl][ixl], 0.0,INSERT_VALUES);CHKERRQ(ierr);
+	//PetscScalar mydx = grid->x[ix] - grid->x[ix-1];
+	//ierr = MatSetValue(LHS, vxdof[jyl][ixl], vxdof[jyl][ixl],1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
+	//ierr = VecSetValue(RHS, vxdof[jyl][ixl], 0.0,INSERT_VALUES);CHKERRQ(ierr);
       } else if( grid->xperiodic && bv->mechBCTop.type[0] == 1 && bv->mechBCBottom.type[0] == 1 &&  ix == 0 && jy == 0){
 	/* left top boundary - fix x-velocity at one point */
 	/* this is only needed when the domain is periodic and free slip boundary conditions */
@@ -679,6 +681,13 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 	  /* add xcoef to the vx[i,j] LHS coefficient */
 	  ierr = MatSetValue( LHS, vxdof[jyl][ixl], vxdof[jyl][ixl], xcoef, ADD_VALUES);
 	}
+      } else if( ix == NX-1 && !in_plate( grid->x[ix], grid->yc[jy+1], options->slabAngle) ){// modify for outflow BC
+	/* get coefficient for vx[ix-1][jy] */
+	PetscScalar mydx = grid->x[ix]-grid->x[ix-1];
+	PetscScalar xcoef = (4*etaNZ[jy+1][ix])/(3.*(grid->x[-1 + ix] - grid->x[ix])*(grid->xc[ix] - grid->xc[1 + ix]));
+	PetscScalar Pcoef = -xcoef*2.0*mydx/etaSZ[jy][ix];
+	ierr = MatSetValue( LHS, vxdof[jyl][ixl], vxdof[jyl][ixl-1], xcoef, ADD_VALUE);CHKERRQ(ierr);
+	ierr = MatSetValue( LHS, vxdof[jyl][ixl], pdof[jyl][ixl-1], Pcoef, ADD_VALUE);CHKERRQ(ierr);
       }
       
       /* y-stokes */
