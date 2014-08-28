@@ -306,10 +306,14 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 	  ierr =  MatSetValue(LHS,vxdof[jyl][ixl],vxdof[jyl][ixl],1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
 	  ierr =  MatSetValue(LHS,vxdof[jyl][ixl],vxdof[jyl-1][ixl],1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
 	  ierr = VecSetValue(RHS, vxdof[jyl][ixl],2.0*Kbond[0]*svx,INSERT_VALUES);CHKERRQ(ierr);
-	} else if (0){//stress-free BC
-	  ierr =  MatSetValue(LHS,vxdof[jyl][ixl],vxdof[jyl][ixl],1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
-	  ierr =  MatSetValue(LHS,vxdof[jyl][ixl],vxdof[jyl-1][ixl],-1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
-	  ierr = VecSetValue(RHS, vxdof[jyl][ixl],0.0,INSERT_VALUES);CHKERRQ(ierr);
+	} else if (1){//stress-free BC
+	  PetscScalar dxc = grid->xc[ix+1] - grid->xc[ix];
+	  PetscScalar dyc = grid->yc[jy+1] - grid->yc[jy];
+	  ierr=MatSetValue(LHS,vxdof[jyl][ixl], vxdof[jyl][ixl], 1.0/dyc*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
+	  ierr=MatSetValue(LHS,vxdof[jyl][ixl], vxdof[jyl-1][ixl],  -1.0/dyc*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
+	  ierr=MatSetValue(LHS,vxdof[jyl][ixl], vydof[jyl][ixl], 1.0/dxc*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
+	  ierr=MatSetValue(LHS,vxdof[jyl][ixl], vydof[jyl][ixl-1],  -1.0/dxc*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
+	  ierr=VecSetValue(RHS,vxdof[jyl][ixl], 0.0, INSERT_VALUES);CHKERRQ(ierr);
 	} else if( bv->mechBCBottom.type[0] == 0 ){
 	  /* prescribed velocity vx[j,i] + vx[j-1,i] = 2.0*vb */
 	  ierr =  MatSetValue(LHS,vxdof[jyl][ixl],vxdof[jyl][ixl],1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
