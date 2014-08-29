@@ -1,8 +1,8 @@
 # Van Keken subduction benchmark
 LX,660000
 LY,600000
-NX,201
-NY,172			
+NX,101
+NY,90			
 NMX,4
 NMY,4
 gridRatio,1.0
@@ -49,7 +49,7 @@ mechBCTop,0,0,0,0.0,0.0,0.0
 mechBCBottom,1,0,0,0.0,0.0,0.0
 thermalBCLeft,0,0
 thermalBCRight,0,0
-thermalBCTop,0,0.0
+thermalBCTop,0,273.0
 thermalBCBottom,0,1000.0
 #
 shearHeating,0
@@ -67,7 +67,7 @@ gx,0.0
 #
 #  /* I/O etc*/
 #
-saveInterval,250
+saveInterval,10
 #
 subgridStressDiffusivity,0.0
 subgridTemperatureDiffusivity,1.0

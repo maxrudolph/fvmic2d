@@ -22,7 +22,7 @@ PetscErrorCode enforceThermalBCs1( GridData *grid, Options *options, NodalFields
 	}
       } else if(jy == grid->NY-1){              /* BOTTOM */
 	if(options->thermalBCBottom.type[0] == 0){
-	  lastT[jy][ix] = options->thermalBCBottom.value[0];
+	  //lastT[jy][ix] = options->thermalBCBottom.value[0];
 	}
       }
       
@@ -32,9 +32,9 @@ PetscErrorCode enforceThermalBCs1( GridData *grid, Options *options, NodalFields
 	  lastT[jy][ix] = slab_inflow_temperature( 0.0, grid->y[jy], options->slabAngle );
 	}   
       }else if(!grid->xperiodic && ix == grid->NX-1){/* RIGHT */
-	if(options->thermalBCRight.type[0] == 0){
-	  lastT[jy][ix] = options->thermalBCRight.value[0];
-	}
+	//if(options->thermalBCRight.type[0] == 0){
+	//lastT[jy][ix] = options->thermalBCRight.value[0];
+	//}
       }
     }/* end loop over y*/
   }/* end loop over x */
