@@ -1,8 +1,8 @@
 # Van Keken subduction benchmark
 LX,660000
 LY,600000
-NX,66
-NY,60			
+NX,201
+NY,172			
 NMX,4
 NMY,4
 gridRatio,1.0

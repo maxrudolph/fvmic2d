@@ -301,12 +301,12 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 	ierr = VecSetValue(RHS, vxdof[jyl][ixl], 0.0 ,INSERT_VALUES);CHKERRQ(ierr);       		  
       }else if( jy == NY-1){ /* BOTTOM BOUNDARY */
 	/* Last row of nodes are used explicitly for boundary conditions. Note that the boundary conditions are treated implicitly for the top and left but explicitly for the right and bottom*/
-	if( in_slab( grid->x[ix], grid->y[jy], options->slabAngle ) ){
+	if( in_slab( grid->x[ix], grid->yc[jy+1], options->slabAngle ) ){
 	  // prescribed velocity svx
 	  ierr =  MatSetValue(LHS,vxdof[jyl][ixl],vxdof[jyl][ixl],1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
 	  ierr =  MatSetValue(LHS,vxdof[jyl][ixl],vxdof[jyl-1][ixl],1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
 	  ierr = VecSetValue(RHS, vxdof[jyl][ixl],2.0*Kbond[0]*svx,INSERT_VALUES);CHKERRQ(ierr);
-	} else if (1){//stress-free BC
+	} else if(ix < NX-1){//stress-free BC
 	  PetscScalar dxc = grid->xc[ix+1] - grid->xc[ix];
 	  PetscScalar dyc = grid->yc[jy+1] - grid->yc[jy];
 	  ierr=MatSetValue(LHS,vxdof[jyl][ixl], vxdof[jyl][ixl], 1.0/dyc*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
@@ -468,7 +468,7 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 	  ierr=MatSetValue(LHS,vydof[jyl][ixl], vydof[jyl][ixl],  1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
 	  ierr=MatSetValue(LHS,vydof[jyl][ixl], vydof[jyl][ixl-1],-1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
 	  ierr=VecSetValue(RHS,vydof[jyl][ixl], 0.0, INSERT_VALUES); CHKERRQ(ierr);	  
-	}else if( !in_plate( grid->x[ix], grid->y[jy], options->slabAngle )){
+	}else if( !in_plate( grid->xc[ix+1], grid->y[jy], options->slabAngle )){
 	  PetscScalar dxc = grid->xc[ix+1] - grid->xc[ix];
 	  PetscScalar dyc = grid->yc[jy+1] - grid->yc[jy];
 	  ierr=MatSetValue(LHS,vydof[jyl][ixl], vxdof[jyl][ixl], 1.0/dyc*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
@@ -716,11 +716,18 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 	}else if( bv->mechBCLeft.type[1] ==1 ){/* free slip */
 	  ierr = MatSetValue( LHS, vydof[jyl][ixl], vydof[jyl][ixl], ycoef, ADD_VALUES);
 	}
+      } else if( jy == NY-1 && ix < NX-1 && in_slab(grid->xc[ix+1], 2.0*grid->y[jy] - grid->y[jy-1], options->slabAngle) ){
+	// special case where ghost node is in slab
+	PetscScalar ycoef = (4*etaNZ[jy][1+ix])/(3.*(grid->y[-1 + jy] - grid->y[jy])*(grid->yc[jy] - grid->yc[1 + jy]));
+	PetscScalar Pcoef = Kcont[0]/(grid->yc[jy] - grid->yc[1 + jy]);
+	//	ierr = MatSetValue( LHS, vydof[jyl][ixl], vydof[jyl-1][ixl], ycoef, ADD_VALUES);CHKERRQ(ierr);
+	ierr = VecSetValue( RHS, vydof[jyl][ixl], -ycoef*svy, ADD_VALUES);CHKERRQ(ierr);
+	ierr = MatSetValue( LHS, vydof[jyl][ixl], pdof[jyl][ixl+1], Pcoef, ADD_VALUES);CHKERRQ(ierr);	
+
       } else if( jy == NY-1 && ix < NX-1 && !in_slab( grid->xc[ix+1], grid->y[jy], options->slabAngle) ){
 	PetscScalar mydy = grid->y[jy]-grid->y[jy-1];
 	PetscScalar ycoef = (4*etaNZ[jy][1+ix])/(3.*(grid->y[-1 + jy] - grid->y[jy])*(grid->yc[jy] - grid->yc[1 + jy]));
 	PetscScalar Pcoef = -Kcont[0]*ycoef*mydy/etaNZ[jy][ix+1] + Kcont[0]/(grid->yc[jy] - grid->yc[1 + jy]);
-	printf("mydy ycoef pcoef = %le %le %le\n",mydy,ycoef,Pcoef);
 	ierr = MatSetValue( LHS, vydof[jyl][ixl], vydof[jyl-1][ixl], ycoef, ADD_VALUES);CHKERRQ(ierr);
 	ierr = MatSetValue( LHS, vydof[jyl][ixl], pdof[jyl][ixl+1], Pcoef, ADD_VALUES);CHKERRQ(ierr);
 	/* top boundary */
