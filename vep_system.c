@@ -716,7 +716,7 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 	}else if( bv->mechBCLeft.type[1] ==1 ){/* free slip */
 	  ierr = MatSetValue( LHS, vydof[jyl][ixl], vydof[jyl][ixl], ycoef, ADD_VALUES);
 	}
-      } else if( jy == NY-1 && ix < NX-1 && in_slab(grid->xc[ix+1], 2.0*grid->y[jy] - grid->y[jy-1], options->slabAngle) ){
+      } else if( jy == NY-1 && ix < NX-1 && !in_slab( grid->xc[ix+1], grid->y[jy], options->slabAngle) && in_slab(grid->xc[ix+1], 2.0*grid->y[jy] - grid->y[jy-1], options->slabAngle) ){
 	// special case where ghost node is in slab
 	PetscScalar ycoef = (4*etaNZ[jy][1+ix])/(3.*(grid->y[-1 + jy] - grid->y[jy])*(grid->yc[jy] - grid->yc[1 + jy]));
 	PetscScalar Pcoef = Kcont[0]/(grid->yc[jy] - grid->yc[1 + jy]);
