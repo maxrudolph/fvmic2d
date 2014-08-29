@@ -33,9 +33,9 @@ PetscErrorCode initialPressureGuess( GridData *grid , NodalFields *nodalFields, 
   PetscInt ixl, jyl;
 
   /* Set up DOF indexing */
-  PetscInt nlocal;
+  //  PetscInt nlocal;
   ISLocalToGlobalMapping ltogm;
-  PetscInt *globalIdx;
+  const PetscInt *globalIdx;
   ierr=DMGetLocalToGlobalMapping(grid->da,&ltogm); CHKERRQ(ierr);
   ierr=ISLocalToGlobalMappingGetIndices(ltogm,&globalIdx);CHKERRQ(ierr);
 
@@ -52,9 +52,9 @@ PetscErrorCode initialPressureGuess( GridData *grid , NodalFields *nodalFields, 
     }
   }
   ierr = ISLocalToGlobalMappingRestoreIndices(ltogm,&globalIdx);CHKERRQ(ierr);
-  PetscScalar dx = grid->x[1]-grid->x[0];
-  PetscScalar dy = grid->y[1]-grid->y[0];
-  PetscScalar Kb = 4.0/(dx*dx+dy*dy); /* scaling to condition LHS matrix properly */
+  //PetscScalar dx = grid->x[1]-grid->x[0];
+  //  PetscScalar dy = grid->y[1]-grid->y[0];
+  //  PetscScalar Kb = 4.0/(dx*dx+dy*dy); /* scaling to condition LHS matrix properly */
 
   for(ix=x;ix<x+m;ix++){
     ixl = ix-xg;
