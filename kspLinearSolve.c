@@ -7,7 +7,7 @@
 #include "profile.h"
 #include "fdcode.h"
 
-//#define DEBUG
+#define DEBUG
 PetscErrorCode KSPMonitorStokesBlocks(KSP ,PetscInt ,PetscReal,void *);
 
 PetscErrorCode kspLinearSolve( Mat LHS, Mat P, Vec RHS, Vec X,const char *label, MatNullSpace ns ){
@@ -64,9 +64,7 @@ PetscErrorCode kspLinearSolve( Mat LHS, Mat P, Vec RHS, Vec X,const char *label,
 	}
       }
       
-
-      ierr = KSPSolve( ksp,  RHS,  X);CHKERRQ(ierr);
-
+      ierr = KSPSolve( ksp,  RHS,  X);//CHKERRQ(ierr);
 
 #ifdef DEBUG
       char fn[80];
