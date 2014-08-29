@@ -293,7 +293,7 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
       
       
       /*         %x-momentum */
-      if( jy <NY-1 && in_slab( grid->x[ix], grid->yc[jy+1], options->slabAngle) ){
+      if( in_slab( grid->x[ix], grid->yc[jy+1], options->slabAngle) ){
 	ierr =  MatSetValue(LHS,vxdof[jyl][ixl],vxdof[jyl][ixl],1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);	
 	ierr = VecSetValue(RHS, vxdof[jyl][ixl],Kbond[0]*svx,INSERT_VALUES);CHKERRQ(ierr);       
       }else if( in_plate( grid->x[ix], grid->yc[jy+1], options->slabAngle) ){//rigid over-riding plate
