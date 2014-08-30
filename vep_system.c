@@ -255,7 +255,7 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 	  in_either( grid->xc[ix], grid->y[jy], options->slabAngle) && 
 	  in_either( grid->x[ix] , grid->yc[jy], options->slabAngle) && 
 	  in_either( grid->x[ix-1], grid->yc[jy], options->slabAngle) ){
-
+	
 	ierr = MatSetValue(LHS,pdof[jyl][ixl], pdof[jyl][ixl],1.0*Kbond[0],INSERT_VALUES); CHKERRQ(ierr);
 	ierr = VecSetValue(RHS,pdof[jyl][ixl], 0.0,INSERT_VALUES); CHKERRQ(ierr);
       }else if( jy == 0 ){/* make ghost nodes have same pressure as first row so that null space will be constant */
@@ -267,7 +267,8 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 	ierr = MatSetValue(LHS,pdof[jyl][ixl],pdof[jyl][ixl+1],-1.0*Kbond[0],INSERT_VALUES); CHKERRQ(ierr);
 	ierr = VecSetValue(RHS,pdof[jyl][ixl],0.0,INSERT_VALUES); CHKERRQ(ierr);	       
 	
-      } else if( FIX_PRESSURE && 0 && jy==10 && ix==NX-1 ){/* pressure specified in one cell */	
+      } else if( FIX_PRESSURE && ix==NX-1 && grid->yc[jy+1] > plate_depth(grid->LX) && grid->yc[jy] < plate_depth(grid->LX) ){/* pressure specified in one cell */	
+	printf("Fixing pressure\n");
 	ierr = MatSetValue(LHS,pdof[jyl][ixl],pdof[jyl][ixl],1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
 	ierr = VecSetValue(RHS,pdof[jyl][ixl],0.0,INSERT_VALUES);CHKERRQ(ierr);
       } else {
@@ -298,7 +299,7 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
       }else if( in_plate( grid->x[ix], grid->yc[jy+1], options->slabAngle) ){ //rigid over-riding plate
 	ierr = MatSetValue(LHS,vxdof[jyl][ixl],vxdof[jyl][ixl],1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);	
 	ierr = VecSetValue(RHS, vxdof[jyl][ixl], 0.0 ,INSERT_VALUES);CHKERRQ(ierr);       		  
-      }else if( jy == NY-1 /*&& ix < NX-1*/){ /* BOTTOM BOUNDARY */
+      }else if( jy == NY-1 && ix < NX-1){ /* BOTTOM BOUNDARY */
 	  PetscScalar dxc = grid->xc[ix+1] - grid->xc[ix];
 	  PetscScalar dyc = grid->yc[jy+1] - grid->yc[jy];
 	  ierr=MatSetValue(LHS,vxdof[jyl][ixl], vxdof[jyl][ixl], 1.0/dyc*Kcont[0],INSERT_VALUES);CHKERRQ(ierr);
