@@ -404,10 +404,10 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
       }else if( ix == NX-1 && grid->y[jy] > plate_depth(grid->x[ix]) /*&& jy < NY-1*/ ){// not in plate - zero shear stress on RIGHT BOUNDARY
 	  PetscScalar dxc = grid->xc[ix+1] - grid->xc[ix];
 	  PetscScalar dyc = grid->yc[jy+1] - grid->yc[jy];
-	  ierr=MatSetValue(LHS,vydof[jyl][ixl], vxdof[jyl][ixl], 1.0/dyc*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
-	  ierr=MatSetValue(LHS,vydof[jyl][ixl], vxdof[jyl-1][ixl],  -1.0/dyc*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
-	  ierr=MatSetValue(LHS,vydof[jyl][ixl], vydof[jyl][ixl], 1.0/dxc*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
-	  ierr=MatSetValue(LHS,vydof[jyl][ixl], vydof[jyl][ixl-1],  -1.0/dxc*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
+	  ierr=MatSetValue(LHS,vydof[jyl][ixl], vxdof[jyl][ixl],   1.0/dyc*Kcont[0],INSERT_VALUES);CHKERRQ(ierr);
+	  ierr=MatSetValue(LHS,vydof[jyl][ixl], vxdof[jyl-1][ixl],-1.0/dyc*Kcont[0],INSERT_VALUES);CHKERRQ(ierr);
+	  ierr=MatSetValue(LHS,vydof[jyl][ixl], vydof[jyl][ixl],   1.0/dxc*Kcont[0],INSERT_VALUES);CHKERRQ(ierr);
+	  ierr=MatSetValue(LHS,vydof[jyl][ixl], vydof[jyl][ixl-1],-1.0/dxc*Kcont[0],INSERT_VALUES);CHKERRQ(ierr);
 	  ierr=VecSetValue(RHS,vydof[jyl][ixl], 0.0, INSERT_VALUES);CHKERRQ(ierr);
 
       }else if( in_plate( grid->xc[ix+1], grid->y[jy], options->slabAngle) ){/* plate internal BC */
