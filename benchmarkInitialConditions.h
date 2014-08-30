@@ -1,3 +1,4 @@
+PetscScalar plate_depth(PetscScalar);
 PetscInt in_slab( PetscScalar, PetscScalar, PetscScalar);
 PetscInt in_plate( PetscScalar, PetscScalar, PetscScalar);
 PetscInt in_either( PetscScalar, PetscScalar, PetscScalar);
