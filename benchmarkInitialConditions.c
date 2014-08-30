@@ -3,17 +3,16 @@
 #include "viscosity.h"
 #include "math.h"
 
+const PetscScalar Tlith = 1573.0;
 
 PetscErrorCode initialConditionsVanKeken( MarkerSet *markerset, Options *options, Materials *materials, GridData *grid){
   PetscErrorCode ierr=0;
   PetscInt m;
   Marker *markers = markerset->markers;
   const PetscScalar slab_angle = options->slabAngle;
-  const PetscScalar D = grid->LY;
-  const PetscScalar Tlith = 1573;// temperature at base of overriding plates
+
 
   for(m=0;m<markerset->nMark;m++){    
-    /* note that D essentially falls out of cos term. This is because Barr fixes xmax = lam/(2*D) */	   
     if( grid->xperiodic){/* for periodic grid, enforce smoothness across lateral boundary */
       fprintf(stderr,"Do not use a periodic boundary condition for the subduction benchmark\n");
       abort();
@@ -23,7 +22,8 @@ PetscErrorCode initialConditionsVanKeken( MarkerSet *markerset, Options *options
 	markers[m].T = slab_inflow_temperature( markers[m].X, markers[m].Y, slab_angle);
       }else if(markers[m].Y < 50000.0){
 	//in overriding plate
-	markers[m].T = markers[m].Y/50000.0 * (Tlith-273.0) + 273.0;
+	//	markers[m].T = markers[m].Y/50000.0 * (Tlith-273.0) + 273.0;
+	markers[m].T = plate_geotherm( markers[m].Y );
       }else{
 	//wedge temperature
 	markers[m].T = Tlith;
@@ -43,6 +43,12 @@ PetscErrorCode initialConditionsVanKeken( MarkerSet *markerset, Options *options
 PetscScalar plate_depth(PetscScalar x){
   return 50000.0;
 }
+
+PetscScalar plate_geotherm( PetscScalar y){
+  PetscScalar T = y/plate_depth(0.0) * (Tlith - 273.0) + 273.0;
+  return T;
+}
+
 
 PetscInt in_plate(PetscScalar x, PetscScalar y, PetscScalar angle){
   const PetscScalar lith_depth = plate_depth(x);

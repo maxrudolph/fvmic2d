@@ -1,7 +1,8 @@
 #include "fdcode.h"
 #include "thermalSystem.h"
+#include "benchmarkInitialConditions.h"
 
-PetscErrorCode formThermalSystem(GridData *grid, NodalFields *nodalFields, Mat thermalLHS, Vec thermalRHS, PetscScalar dt, Options *options, PetscInt doSteady){
+PetscErrorCode formThermalSystem(Problem *problem, GridData *grid, NodalFields *nodalFields, Mat thermalLHS, Vec thermalRHS, PetscScalar dt, Options *options, PetscInt doSteady){
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscMPIInt rank;
@@ -20,7 +21,7 @@ PetscErrorCode formThermalSystem(GridData *grid, NodalFields *nodalFields, Mat t
   ierr=DMDAGetGhostCorners(grid->da,&xg,&yg,PETSC_NULL,&mg,&ng,PETSC_NULL);CHKERRQ(ierr);
   /* get the global indices of the local nodes*/
   ISLocalToGlobalMapping ltogm;
-  PetscInt *globalIdx;
+  const PetscInt *globalIdx;
   ierr=DMGetLocalToGlobalMapping(grid->da,&ltogm); CHKERRQ(ierr);
   ierr=ISLocalToGlobalMappingGetIndices(ltogm,&globalIdx);CHKERRQ(ierr);
 
@@ -85,7 +86,10 @@ PetscErrorCode formThermalSystem(GridData *grid, NodalFields *nodalFields, Mat t
 	
 	//ierr = VecSetValue( thermalRHS, idxnode, 0.0, ADD_VALUES); CHKERRQ(ierr);
       } else if( !grid->xperiodic && ix == NX-1){/* RIGHT WALL */
-	if( options->thermalBCRight.type[0] == 1){
+	// enforce overriding plate geotherm
+	if( grid->y[jy] <= plate_depth(grid->LX) ){
+	  ierr = MatSetValue( thermalLHS, idxnode, idxnode, 1.0, INSERT_VALUES);CHKERRQ(ierr);
+	}else if( options->thermalBCRight.type[0] == 1 ){
 	  ierr = MatSetValue( thermalLHS, idxnode, idxnode, 1.0, INSERT_VALUES);CHKERRQ(ierr);
 	  ierr = MatSetValue( thermalLHS, idxnode, Tdof[jyl][ixl-1], -1.0, INSERT_VALUES); CHKERRQ(ierr);
 	}else if(options->thermalBCRight.type[0] == 0){
@@ -136,8 +140,9 @@ PetscErrorCode formThermalSystem(GridData *grid, NodalFields *nodalFields, Mat t
 	PetscScalar dy2 = gy[jy+1] - gy[jy];
 	/* right hand side value */
 	if( !doSteady ){/* Normal RHS and i,j term for transient problems */
-	  ierr = VecSetValue(thermalRHS,idxnode, rho[jy][ix]*Cp[jy][ix]/dt*lastT[jy][ix],ADD_VALUES); CHKERRQ(ierr); /* this is add values because it is assumed that the RHS already contains internal heating terms */
-	  ierr = MatSetValue( thermalLHS, idxnode, idxnode, rho[jy][ix]*Cp[jy][ix]/dt + 2.0/(dx2+dx1)*(kb/dx2 + ka/dx1) + 2.0/(dy1+dy2)*(kd/dy2+kc/dy1) , INSERT_VALUES); CHKERRQ(ierr); 
+	  PetscScalar rho0 = problem->materials.materialRho[0];
+	  ierr = VecSetValue(thermalRHS,idxnode, (rho0+rho[jy][ix])*Cp[jy][ix]/dt*lastT[jy][ix],ADD_VALUES); CHKERRQ(ierr); /* this is add values because it is assumed that the RHS already contains internal heating terms */
+	  ierr = MatSetValue( thermalLHS, idxnode, idxnode, (rho0+rho[jy][ix])*Cp[jy][ix]/dt + 2.0/(dx2+dx1)*(kb/dx2 + ka/dx1) + 2.0/(dy1+dy2)*(kd/dy2+kc/dy1) , INSERT_VALUES); CHKERRQ(ierr); 
 	}else{ /* special RHS for steady problem */
 	  // do nothing to RHS - it contains only internal heating
 	  ierr = MatSetValue( thermalLHS, idxnode, idxnode, 2.0/(dx2+dx1)*(kb/dx2 + ka/dx1) + 2.0/(dy1+dy2)*(kd/dy2+kc/dy1) , INSERT_VALUES); CHKERRQ(ierr); 
@@ -174,12 +179,17 @@ PetscErrorCode formThermalSystem(GridData *grid, NodalFields *nodalFields, Mat t
 	if( options->thermalBCLeft.type[0] == 1){
 	  ierr = VecSetValue( thermalRHS, idxnode, 0.0, INSERT_VALUES); CHKERRQ(ierr);
 	}else if(options->thermalBCLeft.type[0] == 0){
-	  ierr = VecSetValue( thermalRHS, idxnode, options->thermalBCLeft.value[0] , INSERT_VALUES); CHKERRQ(ierr);
+	  //slab temperature
+	  PetscScalar thisT = slab_inflow_temperature( grid->x[ix], grid->y[jy], options->slabAngle);
+	  ierr = VecSetValue( thermalRHS, idxnode, thisT , INSERT_VALUES); CHKERRQ(ierr);
 	}
       } else if( !grid->xperiodic && ix == NX-1){/* RIGHT WALL */	
-	if( options->thermalBCRight.type[0] == 1){
+	if( grid->y[jy] <= plate_depth( grid->x[ix] ) ){
+	  PetscScalar thisT = plate_geotherm( grid->y[jy] );
+	  ierr = VecSetValue( thermalRHS, idxnode, thisT , INSERT_VALUES); CHKERRQ(ierr);
+	}else if( options->thermalBCRight.type[0] == 1){
 	  ierr = VecSetValue( thermalRHS, idxnode, 0.0, INSERT_VALUES); CHKERRQ(ierr);
-	}else if(options->thermalBCRight.type[0] == 0){
+	}else if( options->thermalBCRight.type[0] == 0){
 	  ierr = VecSetValue( thermalRHS, idxnode, options->thermalBCRight.value[0] , INSERT_VALUES); CHKERRQ(ierr);
 	}
       } else if( jy ==0){/* TOP - constant T*/

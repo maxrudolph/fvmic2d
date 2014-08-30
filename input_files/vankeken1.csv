@@ -12,10 +12,10 @@ maxMarkers,100
 #
 #Time step Stuff
 #
-dtMax,1.5779e20
-displacementStepLimit,0.5
+dtMax,1.5779e13
+displacementStepLimit,0.25
 maxTempChange,70.0
-nTime,2
+nTime,101
 restartStep,0
 #maximum model time to run:
 totalTime,4.4e30
@@ -48,9 +48,9 @@ mechBCRight,0,0,0,0.0,0.0,0.0
 mechBCTop,0,0,0,0.0,0.0,0.0
 mechBCBottom,1,0,0,0.0,0.0,0.0
 thermalBCLeft,0,0
-thermalBCRight,0,0
+thermalBCRight,1,0
 thermalBCTop,0,273.0
-thermalBCBottom,0,1000.0
+thermalBCBottom,1,0.0
 #
 shearHeating,0
 adiabaticHeating,0
@@ -67,7 +67,7 @@ gx,0.0
 #
 #  /* I/O etc*/
 #
-saveInterval,1
+saveInterval,10
 #
 subgridStressDiffusivity,0.0
 subgridTemperatureDiffusivity,1.0
