@@ -31,7 +31,7 @@ PetscErrorCode enforceThermalBCs1( GridData *grid, Options *options, NodalFields
 	  // left boundary gets half-space cooling
 	  lastT[jy][ix] = slab_inflow_temperature( 0.0, grid->y[jy], options->slabAngle );
 	}   
-      }else if(!grid->xperiodic && ix == grid->NX-1){/* RIGHT */
+	//}else if(!grid->xperiodic && ix == grid->NX-1){/* RIGHT */
 	//if(options->thermalBCRight.type[0] == 0){
 	//lastT[jy][ix] = options->thermalBCRight.value[0];
 	//}
@@ -46,19 +46,19 @@ PetscErrorCode enforceThermalBCs1( GridData *grid, Options *options, NodalFields
 	if(options->thermalBCTop.type[0] == 1){
 	  lastT[jy][ix] = lastT[jy+1][ix] - options->thermalBCTop.value[0]*(grid->y[jy+1]-grid->y[jy]);
 	}
-      }else if(jy == grid->NY-1){
-	if(options->thermalBCBottom.type[0] == 1){
-	  lastT[jy][ix] = lastT[jy-1][ix] + options->thermalBCBottom.value[0]*(grid->y[jy]-grid->y[jy-1]);
-	}
+	//}else if(jy == grid->NY-1){
+	//if(options->thermalBCBottom.type[0] == 1){
+	// lastT[jy][ix] = lastT[jy-1][ix] + options->thermalBCBottom.value[0]*(grid->y[jy]-grid->y[jy-1]);
+	//}
       }
       if(!grid->xperiodic && ix == 0){
 	if(options->thermalBCLeft.type[0] == 1){
-	   lastT[jy][ix] = lastT[jy][ix+1] - options->thermalBCLeft.value[0]*(grid->x[ix+1]-grid->x[ix]);
-	 }	
-      }else if(!grid->xperiodic && ix == grid->NX-1){
-	if(options->thermalBCRight.type[0] == 1){
-	  lastT[jy][ix] = lastT[jy][ix-1] + options->thermalBCRight.value[0]*(grid->x[ix]-grid->x[ix-1]);
-	}
+	  lastT[jy][ix] = lastT[jy][ix+1] - options->thermalBCLeft.value[0]*(grid->x[ix+1]-grid->x[ix]);
+	}	
+	//}else if(!grid->xperiodic && ix == grid->NX-1){
+	//if(options->thermalBCRight.type[0] == 1){
+	//  lastT[jy][ix] = lastT[jy][ix-1] + options->thermalBCRight.value[0]*(grid->x[ix]-grid->x[ix-1]);
+	// }
       }
     }/* end loop over y*/
   }/* end loop over x */
