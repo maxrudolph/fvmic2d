@@ -1,1 +1,0 @@
-#define MARKERCODE_HG_VERSION "31:2944b591dccb"
