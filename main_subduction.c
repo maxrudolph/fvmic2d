@@ -253,7 +253,7 @@ int main(int argc, char **args){
       ierr = checkMarkerDensity(&problem.markerset, &problem.grid, &problem.options, r);
       findMarkerCells( &problem.markerset, &problem.grid);
       /* calculate rhodot for markers*/
-      PetscScalar Vmax = 1.0/problem.options.maxPorosity;
+      //PetscScalar Vmax = 1.0/problem.options.maxPorosity;
       {
 	Marker *markers = problem.markerset.markers;
 	for(m=0;m<problem.markerset.nMark;m++){
