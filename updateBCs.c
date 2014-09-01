@@ -17,18 +17,6 @@ PetscErrorCode updateBoundaryConditions( Options *options, BoundaryValues *bv , 
   bv->mechBCTop    = options->mechBCTop;
   bv->mechBCBottom = options->mechBCBottom;
 
-  if( options->oscillatoryX){
-    bv->mechBCLeft.value[0]  *= sin( 2*pi* currentTime/options->oscillationPeriod);
-    bv->mechBCRight.value[0] *= sin( 2*pi* currentTime/options->oscillationPeriod);
-  }
-  
-  /* z component */
-  if( options->oscillatoryZ){
-    bv->mechBCLeft.value[2]  *= sin( 2*pi* currentTime/options->oscillationPeriod);
-    bv->mechBCRight.value[2] *= sin( 2*pi* currentTime/options->oscillationPeriod);
-    
-  }
-
   //printf("vbz = %e, %e\n",bv->mechBCLeft.value[2], bv->mechBCRight.value[2]);
 
 

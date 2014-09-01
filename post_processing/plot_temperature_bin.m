@@ -12,7 +12,7 @@ addpath([PETSC_DIR '/share/petsc/matlab']);
 
 % loadgrid
 
-filelist=dir('../output/loadNodalFields_0_20.petscbin');
+filelist=dir('../output/loadNodalFields_0_0.petscbin');
 nskip=1;
 iFile=1;
 
@@ -62,7 +62,7 @@ yc = nf.gridy(1:end-1,1) + diff(nf.gridy(:,1))/2;
 figure, pcolor(xc,yc,sqrt(vxc.^2+vyc.^2)); shading faceted;colorbar; caxis([-slabv slabv]);
 set(gca,'YDir','reverse');
 nsl = 100;
-streamline(xc,yc,vxc,vyc,xc(end-1)*ones(nsl,1),rand(nsl,1)*LY);
+streamline(xc,yc,vxc,vyc,xc(end-1)*ones(nsl,1),linspace(51000,599000,nsl)'*LY);
 
 figure, imagesc(nf.T); title('T');
 

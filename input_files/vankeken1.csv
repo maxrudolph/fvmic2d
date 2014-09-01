@@ -15,7 +15,7 @@ maxMarkers,100
 dtMax,1.5779e13
 displacementStepLimit,0.25
 maxTempChange,20.0
-nTime,1
+nTime,101
 restartStep,0
 #maximum model time to run:
 totalTime,4.4e30
@@ -23,6 +23,7 @@ totalTime,4.4e30
 #Plasticity
 #
 maxNumPlasticity,1
+fractionalEtamin,1.0
 plasticDelay,0
 # /* minimum viscosity allowed in plastic yielding*/
 etamin,0.0

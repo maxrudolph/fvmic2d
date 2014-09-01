@@ -176,9 +176,7 @@ typedef struct {
   PetscScalar totalTime;
   PetscInt maxNumPlasticity;
   PetscInt plasticDelay;
-  PetscScalar maxPorosity;
-  PetscInt dilationModel;
-  PetscScalar Dcrit;
+
 
   PetscScalar Tperturb; /* magnitude of initial temperature perturbation */
   PetscInt shearHeating, adiabaticHeating;/* toggle these quantities on/off */
@@ -191,8 +189,7 @@ typedef struct {
   BCInfo thermalBCLeft, thermalBCRight, thermalBCTop, thermalBCBottom;
 
   /* Variables related to oscillatory boundary conditions*/
-  PetscInt oscillatoryX, oscillatoryY, oscillatoryZ;/* flags for oscillating boundary conditions. not all are implemented */
-  PetscScalar oscillationPeriod;/* period of oscillation when using oscillating boundary conditions */
+
   /* options related to solution and time step limits */
   PetscScalar fractionalEtamin; /* fractional minimum viscosity */
   PetscScalar etamin;/* minimum allowed viscosity*/
@@ -203,7 +200,7 @@ typedef struct {
   PetscInt saveInterval;
   PetscScalar subgridStressDiffusivity;
   PetscScalar subgridTemperatureDiffusivity;
-  PetscInt nMonte;
+
   PetscScalar maxMarkFactor;
   PetscInt minMarkers, maxMarkers;
   PetscInt doMonte;/* run monte-carlo simulations */

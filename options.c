@@ -1,5 +1,6 @@
 #include "fdcode.h"
 #include "options.h"
+#include <float.h>
 
 #ifndef LINEWIDTH
 #define LINEWIDTH 128
@@ -157,21 +158,9 @@ PetscErrorCode csvOptions(char *csvFileName, Options *options, Materials *materi
 	  sscanf( &line[idxComma+1],"%le\n", &(options -> grainSize)); printf("grainSize = %e\n",options->grainSize);
 	
 	  /* Monte-carlo search */
-/*   options->doMonte = 1; */
-	} else if( !strncmp( "doMonte", line, 7) ){
-	  //printf("reading doMonte\n");
-	  sscanf( &line[idxComma+1],"%d\n", &(options -> doMonte)); printf("doMonte = %d\n",options->doMonte);
 	
-/*   options->nMonte = 100; */
-	} else if( !strncmp( "nMonte", line, 6) ){
-	  //printf("reading nMonte\n");
-	  sscanf( &line[idxComma+1],"%d\n", &(options -> nMonte)); printf("nMonte = %d\n",options->nMonte);
 	
   /* damage stuff */
-  /* options->maxPorosity=0.5; */ /* set the maximum porosity*/
-	} else if( !strncmp( "maxPorosity", line, 11) ){
-	  //printf("reading maxPorosity\n");
-	  sscanf( &line[idxComma+1],"%le\n", &(options -> maxPorosity)); printf("maxPorosity = %le\n",options->maxPorosity);
 	
 	  
 	  /* model setup/ICs */
@@ -208,15 +197,6 @@ PetscErrorCode csvOptions(char *csvFileName, Options *options, Materials *materi
 	} else if( !strncmp( "thermalBCRight", line, 14) ){
 	  sscanf( &line[idxComma+1],"%d,%le\n", &(options->thermalBCRight.type[0]), &(options->thermalBCRight.value[0]));
 	  
-	  /* oscillatory BCs */
-	}else if( !strncmp( "oscillatoryX", line,12) ){
-	  sscanf( &line[idxComma+1],"%d\n", &(options -> oscillatoryX)); printf("oscillatoryX? = %d\n",options->oscillatoryX);
-	}else if( !strncmp( "oscillatoryY", line,12) ){
-	  sscanf( &line[idxComma+1],"%d\n", &(options -> oscillatoryY)); printf("oscillatoryY? = %d\n",options->oscillatoryY);
-	}else if( !strncmp( "oscillatoryZ", line,12) ){
-	  sscanf( &line[idxComma+1],"%d\n", &(options -> oscillatoryZ)); printf("oscillatoryZ? = %d\n",options->oscillatoryZ);
-	}else if( !strncmp( "oscillationPeriod", line,17) ){
-	  sscanf( &line[idxComma+1],"%le\n", &(options -> oscillationPeriod)); printf("oscillationPeriod = %le\n",options->oscillationPeriod);
 	  
 	  /* body forces*/
 	  /*   options->gy = 1.3; */
@@ -383,25 +363,7 @@ PetscErrorCode csvOptions(char *csvFileName, Options *options, Materials *materi
 	  materials->hasDamage[thisMat] = val1;
 	  printf("hasDamage[%d] = %d\n",thisMat,materials->hasDamage[thisMat]);
 
-#ifdef TEXTURE
-	} else if( !strncmp( "hasTexture", line,10 ) ){
-	  /* first read material number */
-	  PetscInt thisMat;
-	  PetscInt val1;
-	  sscanf( &line[idxComma+1],"%d,%d\n", &thisMat,&val1); /* read material number, value */
-	  materials->hasTexture[thisMat] = val1;
-	  printf("hasTexture[%d] = %d\n",thisMat,materials->hasTexture[thisMat]);
-#endif
-	}else if ( !strncmp( "dilationModel", line,13 ) ){
-	  /* */
-	  sscanf( &line[idxComma+1],"%d\n",&options->dilationModel); /* read material number, value */
-
-
-	}else if ( !strncmp( "Dcrit", line,5 ) ){
-	  
-	  sscanf( &line[idxComma+1],"%le\n",&options->Dcrit); /* read material number, value */
-	  
-
+	 
 
 	} else if( !strncmp( "hasDilation", line,11 ) ){
 	  /* first read material number */
@@ -535,5 +497,42 @@ PetscErrorCode csvOptions(char *csvFileName, Options *options, Materials *materi
 
 void setOptions( Options *options){
   /* set options to default (often meaningless) values */
+  options->NX = 0;
+  options->NY = 0;
+  options->NMX = 0;
+  options->NMY = 0;
+  options->gridRatio = 0.0;
+  options->nTime = 0;
+  options->restartStep = 0;
+  options->totalTime = 0.0;
+  options->maxNumPlasticity = 0;
+  options->plasticDelay = 0;
+  options->Tperturb = 0.0;
+  options->shearHeating = 0;
+  options->adiabaticHeating = 0;
+  options->gx = 0;
+  options->gy = 0;
+  options->gz = 0;
+  //BC stuff here
+  options->fractionalEtamin = 1.0;
+  options->etamin = 0.0;
+  options->etamax = DBL_MAX;
+  options->dtMax = DBL_MAX;
+  options->displacementStepLimit = 1.0;
+  options->maxTempChange = DBL_MAX;
+  options->saveInterval = 1;
+  options->subgridStressDiffusivity = 0.0;
+  options->subgridTemperatureDiffusivity = 0.0;
+  options->maxMarkFactor = 0.0;
+  options->minMarkers = 0;
+  options->maxMarkers = INT_MAX;
+  options->grainSize = 0.0;
+  options->slabAngle = 0.0;
+  options->slabVelocity = 0.0;
+
+
+
+
+
 
 }

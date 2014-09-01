@@ -170,12 +170,12 @@ int main(int argc, char **args){
   ierr = VecZeroEntries(problem.mech_system.solution);CHKERRQ(ierr);
 
   PetscInt iMonte=0;
-  for(iMonte=0;iMonte<problem.options.nMonte;iMonte++){
+  
     PetscScalar displacementdt;/* this is the displacement timestep*/
     PetscScalar elapsedTime=0.0;
     printf("beginning MonteCarlo run %d\n",iMonte);
     /* randomize parameters*/
-    if(problem.options.nMonte > 1){ierr = getRandomProperties( &problem.materials, &problem.options, &r);CHKERRQ(ierr);}
+
     if(!rank) ierr = saveRunInfo( &problem.options, &problem.materials, iMonte);
     /* reset (zero out) all marker properties*/
     resetMarkers( &problem.markerset, &problem.options);
@@ -329,11 +329,9 @@ int main(int argc, char **args){
 	  PetscLogStagePush(stages[11]);
 	  /* 	  saveGriddedMarkersBinary( &markers, &problem.grid, 5*problem.grid.NX, 5*problem.grid.NY,iMonte,iTime); */
 	  ierr=saveMarkersBinary( &problem.markerset, iMonte,-iTime,elapsedTime); 
-	  if(iMonte < problem.options.nMonte-1){
-	    goto nextMonte;
-	  }else{
-	    goto abort;
-	  }
+
+	  goto abort;
+
 	}/* end deal with nan in solution*/
 
 	ierr=nodalStressStrain(&problem.grid, &problem.nodal_fields,&problem.options,&boundaryValues, displacementdt, problem.nodal_heating, problem.options.gy);CHKERRQ(ierr);
@@ -463,10 +461,7 @@ int main(int argc, char **args){
       
       
     }/* end time stepping*/
-  nextMonte:;
-    
-    
-  }/* end montecarlo loop */
+ nextMonte:;            
  abort:;
   
   //ierr = VecDestroy(&problem.thermal_system.rhs);CHKERRQ(ierr);

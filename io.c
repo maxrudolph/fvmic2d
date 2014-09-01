@@ -44,9 +44,7 @@ PetscErrorCode saveRunInfo( Options *options, Materials *materials, PetscInt iMo
   fprintf(of,"plasticDelay,%d\n",options->plasticDelay);
   fprintf(of,"displacementStepLimit,%e\n",options->displacementStepLimit);
   fprintf(of,"maxTempChange,%e\n",options->maxTempChange);
-  /* montecarlo options */
-  fprintf(of,"doMonte,%d\n",options->doMonte);
-  fprintf(of,"nMonte,%d\n",options->nMonte);
+
   /* initial and boundary conditions */
   fprintf(of,"Tperturb,%e\n",options->Tperturb);
   {
@@ -68,10 +66,6 @@ PetscErrorCode saveRunInfo( Options *options, Materials *materials, PetscInt iMo
     thisBC = &options->thermalBCBottom;
     fprintf(of,"thermalBCBottom,%d,%e\n",thisBC->type[0],thisBC->value[0]);
   }
-  fprintf(of,"oscillatoryX,%d\n",options->oscillatoryX);
-  fprintf(of,"oscillatoryY,%d\n",options->oscillatoryY);
-  fprintf(of,"oscillatoryZ,%d\n",options->oscillatoryZ);
-  fprintf(of,"oscillationPeriod,%e\n",options->oscillationPeriod);
 
   /* physics */
   fprintf(of,"adiabaticHeating,%d\n", options->adiabaticHeating);
@@ -82,15 +76,13 @@ PetscErrorCode saveRunInfo( Options *options, Materials *materials, PetscInt iMo
   fprintf(of,"fractionalEtamin,%e\n",options->fractionalEtamin);
   fprintf(of,"etamin,%e\n",options->etamin);
   fprintf(of,"etamax,%e\n",options->etamax);
-  fprintf(of,"maxPorosity,%e\n",options->maxPorosity);
 
   /* material properties*/
   fprintf(of,"#Material Properties:\n");
   fprintf(of,"textureDevelopment,%d\n",options->textureDevelopment);
   fprintf(of,"grainSize,%e\n",options->grainSize);
   fprintf(of,"nMaterials,%d\n",materials->nMaterials);
-  fprintf(of,"dilationModel,%d\n",options->dilationModel);
-  fprintf(of,"Dcrit,%e\n",options->Dcrit);
+
   PetscInt i;
   for(i=0;i<materials->nMaterials;i++){
     fprintf(of,"materialEta,%d,%e\n",i,materials->materialEta[i]);
@@ -112,15 +104,15 @@ PetscErrorCode saveRunInfo( Options *options, Materials *materials, PetscInt iMo
 #ifdef TEXTURE
     fprintf(of,"hasTexture,%d,%d\n",i,materials->hasTexture[i]);
 #endif
-    if( materials->hasDamage[i]){
-      fprintf(of,"hayhurstAlpha,%d,%e\n",i,materials->hayhurstAlpha[i]);
-      fprintf(of,"hayhurstBeta,%d,%e\n",i,materials->hayhurstBeta[i]);
-      fprintf(of,"damager,%d,%e\n",i, materials->damager[i]);
-      fprintf(of,"damageB,%d,%e\n",i, materials->damageB[i]);
-      fprintf(of,"damagem,%d,%e\n",i,  materials->damagem[i]);
-      fprintf(of,"damagek,%d,%e\n",i, materials->damagek[i]);
-      fprintf(of,"damageAlpha3,%d,%e\n",i,materials->damageAlpha3[i]);
-    }
+/*     if( materials->hasDamage[i]){ */
+/*       fprintf(of,"hayhurstAlpha,%d,%e\n",i,materials->hayhurstAlpha[i]); */
+/*       fprintf(of,"hayhurstBeta,%d,%e\n",i,materials->hayhurstBeta[i]); */
+/*       fprintf(of,"damager,%d,%e\n",i, materials->damager[i]); */
+/*       fprintf(of,"damageB,%d,%e\n",i, materials->damageB[i]); */
+/*       fprintf(of,"damagem,%d,%e\n",i,  materials->damagem[i]); */
+/*       fprintf(of,"damagek,%d,%e\n",i, materials->damagek[i]); */
+/*       fprintf(of,"damageAlpha3,%d,%e\n",i,materials->damageAlpha3[i]); */
+/*     } */
     fprintf(of,"hasEtaT,%d,%d\n",i,  materials -> hasEtaT[i]);
     if(materials->hasEtaT[i]){
       fprintf(of,"QonR,%d,%e\n",i, materials -> QonR[i]);
