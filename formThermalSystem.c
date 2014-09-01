@@ -93,13 +93,10 @@ PetscErrorCode formThermalSystem(Problem *problem, GridData *grid, NodalFields *
 	/* NOTE THAT RHS BC VALUES ARE NOT SET HERE. SEE BELOW */
 	
 	//ierr = VecSetValue( thermalRHS, idxnode, 0.0, ADD_VALUES); CHKERRQ(ierr);
-      } else if(ix == NX-1 && (grid->y[jy] <= plate_depth(grid->LX) || (jy>0 && (vx[jyl][ixl]+vx[jyl-1][ixl])/2.0 <= 0.0  )) ){/* RIGHT WALL */
+      } else if(ix == NX-1 && (grid->y[jy] <= plate_depth(grid->LX) || (jy>0 && (vx[jy][ix]+vx[jy-1][ix])/2.0 < 0.0  )) ){/* RIGHT WALL */
 	// enforce overriding plate geotherm
-	if( grid->y[jy] <= plate_depth(grid->LX) ){
-	  ierr = MatSetValue( thermalLHS, idxnode, idxnode, 1.0, INSERT_VALUES);CHKERRQ(ierr);
-	}else{
-	  ierr = MatSetValue( thermalLHS, idxnode, idxnode, 1.0, INSERT_VALUES);CHKERRQ(ierr);
-	}
+	ierr = MatSetValue( thermalLHS, idxnode, idxnode, 1.0, INSERT_VALUES);CHKERRQ(ierr);
+	
       } else if( jy ==0){
 	/* Top boundary */
 	if( options->thermalBCTop.type[0] == 0){
@@ -189,7 +186,7 @@ PetscErrorCode formThermalSystem(Problem *problem, GridData *grid, NodalFields *
 	  ierr = VecSetValue( thermalRHS, idxnode, thisT , INSERT_VALUES); CHKERRQ(ierr);
 	}
 
-      } else if(ix == NX-1 && (grid->y[jy] <= plate_depth(grid->LX) || (jy>0 && (vx[jyl][ixl]+vx[jyl-1][ixl])/2.0 <= 0.0  )) ){/* RIGHT WALL */
+      } else if(ix == NX-1 && (grid->y[jy] <= plate_depth(grid->LX) || (jy>0 && (vx[jy][ix]+vx[jy-1][ix])/2.0 < 0.0  )) ){/* RIGHT WALL */
 	PetscScalar thisT;
 	if( grid->y[jy] <= plate_depth( grid->x[ix] ) ){
 	  thisT = plate_geotherm( grid->y[jy] );
@@ -197,10 +194,10 @@ PetscErrorCode formThermalSystem(Problem *problem, GridData *grid, NodalFields *
 	  thisT = 1573.0;
 	}
 	ierr = VecSetValue( thermalRHS, idxnode, thisT , INSERT_VALUES); CHKERRQ(ierr);
-
+	
       } else if(ix == NX-1){
 	/* enforce zero curvature on outflow section */
-	PetscScalar dx2 = gx[ix+1]-gx[ix];
+	PetscScalar dx2 = gx[ix]-gx[ix-1];
 	PetscScalar dx1 = gx[ix] - gx[ix-1];
 	PetscScalar kb = (kThermal[jy][ix]);
 	PetscScalar coef = -2.0/(dx1+dx2)*kb/dx2;
@@ -216,7 +213,7 @@ PetscErrorCode formThermalSystem(Problem *problem, GridData *grid, NodalFields *
       } else if( jy == NY-1){/* Bottom */
 	// this boundary is 100% outflow.
 	PetscScalar dy1 = gy[jy] - gy[jy-1];
-	PetscScalar dy2 = gy[jy+1] - gy[jy];
+	PetscScalar dy2 = gy[jy] - gy[jy-1];
 	PetscScalar kd = (kThermal[jy][ix]);
 	PetscScalar coef =  -2.0/(dy1+dy2)*kd/dy2;
 	//T[i,j+1] = T[i,j] + T[i,j] - T[i,j-1]

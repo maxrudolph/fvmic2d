@@ -36,19 +36,6 @@ typedef struct{/* 6x6 matrix entries for storing full viscoplasticity tensor - o
   PetscScalar T[6][6];
 } Tensor66s;
 
-#ifndef NT
-#define NT 12
-#endif
-
-typedef struct {
-  PetscScalar ctheta[NT][NT][NT];/* c-axis colatitude (angle from +z)*/
-  PetscScalar cphi[NT][NT][NT];/* c-axis orientation from xz plane*/
-  PetscScalar cthetadot[NT][NT][NT];/* rate of change of c-axis orientation*/
-  PetscScalar cphidot[NT][NT][NT];
-  PetscScalar M[6][6]; /* 3D viscoplasticity tensor M */
-  PetscScalar N[2][2]; /* 2D reciprocal viscoplasticity tensor N */
-  PetscScalar d;/* grain size */
-} TextureInfo;
 
 typedef struct {
   /* New Organization: Fields defined on xy nodes */
@@ -103,9 +90,7 @@ typedef struct {
   
   PetscInt hasDamage[MAXMAT];
   PetscInt hasDilation[MAXMAT];
-#ifdef TEXTURE
-  PetscInt hasTexture[MAXMAT];
-#endif
+
   PetscScalar hayhurstAlpha[MAXMAT];
   PetscScalar hayhurstBeta[MAXMAT];
   PetscScalar damagem[MAXMAT];

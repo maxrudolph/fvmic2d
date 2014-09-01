@@ -3,8 +3,9 @@
 #include "markers.h"
 
 PetscErrorCode subgridTemperatureChanges(Vec thisT, GridData *grid, NodalFields *nodalFields, MarkerSet *markerset, Materials *materials, PetscScalar dt, Options *options){
-  PetscErrorCode ierr;
+  PetscErrorCode ierr=0;
   PetscScalar dsubgrid = options->subgridTemperatureDiffusivity;
+  PetscFunctionBegin;
 
   Marker *markers = markerset -> markers;
 
@@ -58,7 +59,7 @@ PetscErrorCode subgridTemperatureChanges(Vec thisT, GridData *grid, NodalFields 
       PetscScalar mdy=(markers[m].Y - grid->y[cellY])/dy;
 
       PetscScalar Tmnodeslast = T[cellY][cellX]*(1.0-mdx)*(1.0-mdy) + T[cellY][cellX+1]*mdx*(1.0-mdy) + T[cellY+1][cellX]*(1.0-mdx)*(mdy) + T[cellY+1][cellX+1]*mdx*mdy;
-      PetscScalar rhonodeslast = rho[cellY][cellX]*(1.0-mdx)*(1.0-mdy) + rho[cellY][cellX+1]*(mdx)*(1.0-mdy) + rho[cellY+1][cellX]*(1.0-mdx)*(mdy) + rho[cellY+1][cellX+1]*mdx*mdy;
+      PetscScalar rhonodeslast = materials->materialRho[0] + rho[cellY][cellX]*(1.0-mdx)*(1.0-mdy) + rho[cellY][cellX+1]*(mdx)*(1.0-mdy) + rho[cellY+1][cellX]*(1.0-mdx)*(mdy) + rho[cellY+1][cellX+1]*mdx*mdy;
       PetscScalar Cpnodeslast =  Cp[cellY][cellX]*(1.0-mdx)*(1.0-mdy) + Cp[cellY][cellX+1]*(mdx)*(1.0-mdy) + Cp[cellY+1][cellX]*(1.0-mdx)*(mdy) + Cp[cellY+1][cellX+1]*mdx*mdy;
       PetscScalar knodeslast= kThermal[cellY][cellX]*(1.0-mdx)*(1.0-mdy) + kThermal[cellY][cellX+1]*(mdx)*(1.0-mdy) + kThermal[cellY+1][cellX]*(1.0-mdx)*(mdy) + kThermal[cellY+1][cellX+1]*mdx*mdy;
       /* Gerya Book Equation 10.16 */

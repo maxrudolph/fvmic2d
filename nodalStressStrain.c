@@ -16,7 +16,7 @@ PetscErrorCode nodalStressStrain( GridData *grid, NodalFields *nodalFields, Opti
 
 
   /* retrieve local arrays of nodal fields, including ghost node values*/
-  Vec vxl,vyl,vzl,pl;
+  Vec vxl,vyl,vzl;
   Vec exxl,eyyl,ezzl,exyl,exzl,eyzl;
 
   ierr=DMDAGetCorners(grid->da,&x,&y,PETSC_NULL,&m,&n,PETSC_NULL);CHKERRQ(ierr);

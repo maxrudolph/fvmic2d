@@ -402,7 +402,7 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 	ierr = MatSetValue(LHS, vydof[jyl][ixl],vydof[jyl][ixl], Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
 	ierr = VecSetValue(RHS, vydof[jyl][ixl], Kbond[0] * svy,INSERT_VALUES);CHKERRQ(ierr);	
 
-      }else if( ix == NX-1 && grid->y[jy] > plate_depth(grid->x[ix]) /*&& jy < NY-1*/ ){// not in plate - zero shear stress on RIGHT BOUNDARY
+      }else if( ix == NX-1 && grid->y[jy] > plate_depth(grid->x[ix]) && jy < NY-1 ){// not in plate - zero shear stress on RIGHT BOUNDARY
 	  PetscScalar dxc = grid->xc[ix+1] - grid->xc[ix];
 	  PetscScalar dyc = grid->yc[jy+1] - grid->yc[jy];
 	  ierr=MatSetValue(LHS,vydof[jyl][ixl], vxdof[jyl][ixl],   1.0/dyc*Kcont[0],INSERT_VALUES);CHKERRQ(ierr);
