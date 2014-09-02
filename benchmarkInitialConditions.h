@@ -9,3 +9,4 @@ PetscScalar slab_x(PetscScalar, PetscScalar);
 PetscScalar plate_geotherm( PetscScalar);
 
 
+PetscScalar mantle_temperature();

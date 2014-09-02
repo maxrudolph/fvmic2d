@@ -23,7 +23,6 @@ PetscErrorCode enforceThermalBCs1( GridData *grid, Options *options, NodalFields
       }
       
       if(ix ==0){/* LEFT */
-
 	lastT[jy][ix] = slab_inflow_temperature( 0.0, grid->y[jy], options->slabAngle );
 
       }else if(ix == grid->NX-1){/* RIGHT */

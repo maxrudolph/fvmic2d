@@ -12,7 +12,7 @@ addpath([PETSC_DIR '/share/petsc/matlab']);
 
 % loadgrid
 
-filelist=dir('../output/loadNodalFields_0_0.petscbin');
+filelist=dir('../output/loadNodalFields_0_20.petscbin');
 nskip=1;
 iFile=1;
 
@@ -59,12 +59,18 @@ LY=max(grid.y);
 xc = nf.gridx(1,1:end-1) + diff(nf.gridx(1,:))/2;
 yc = nf.gridy(1:end-1,1) + diff(nf.gridy(:,1))/2;
 [X,Y] = meshgrid(xc,yc);
-figure, pcolor(xc,yc,sqrt(vxc.^2+vyc.^2)); shading faceted;colorbar; caxis([-slabv slabv]);
+figure, pcolor(xc,yc,sqrt(vxc.^2+vyc.^2)); shading flat;colorbar; caxis([-slabv slabv]);
 set(gca,'YDir','reverse');
-nsl = 100;
-streamline(xc,yc,vxc,vyc,xc(end-1)*ones(nsl,1),linspace(51000,599000,nsl)'*LY);
+nsl = 50;
+streamline(xc,yc,vxc,vyc,xc(end-1)*ones(nsl,1),linspace(51000,599000,nsl)');
 
-figure, imagesc(nf.T); title('T');
+figure, imagesc(xc/1e3,yc/1e3,nf.T); title('T'); hold on;
+colorbar;
+h = streamline(xc/1e3,yc/1e3,vxc,vyc,xc(end-1)*ones(nsl,1)/1e3,linspace(51000,599000,nsl)'/1e3);
+set(h,'Color','k')
+xlabel('Horizontal (km)')
+ylabel('Depth (km)');
+axis equal tight
 
 %%
 NX=length(grid.x);

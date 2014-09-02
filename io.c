@@ -79,7 +79,7 @@ PetscErrorCode saveRunInfo( Options *options, Materials *materials, PetscInt iMo
 
   /* material properties*/
   fprintf(of,"#Material Properties:\n");
-  fprintf(of,"textureDevelopment,%d\n",options->textureDevelopment);
+
   fprintf(of,"grainSize,%e\n",options->grainSize);
   fprintf(of,"nMaterials,%d\n",materials->nMaterials);
 

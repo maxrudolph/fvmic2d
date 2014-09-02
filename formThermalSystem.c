@@ -82,25 +82,19 @@ PetscErrorCode formThermalSystem(Problem *problem, GridData *grid, NodalFields *
       PetscInt idxnode = Tdof[jyl][ixl];
       /* boundary conditions*/
       if( !grid->xperiodic && ix == 0 ){/* left wall */
-	if( options->thermalBCLeft.type[0] == 1){
-	  /* insulating */
-	  ierr = MatSetValue( thermalLHS, idxnode, idxnode, 1.0, INSERT_VALUES);CHKERRQ(ierr);
-	  ierr = MatSetValue( thermalLHS, idxnode, Tdof[jyl][ixl+1], -1.0, INSERT_VALUES); CHKERRQ(ierr);
-	} else if( options->thermalBCLeft.type[0] == 0){
-	  /* fixed temperature */
-	  ierr = MatSetValue( thermalLHS, idxnode, idxnode, 1.0, INSERT_VALUES);CHKERRQ(ierr);
-	}
-	/* NOTE THAT RHS BC VALUES ARE NOT SET HERE. SEE BELOW */
-	
-	//ierr = VecSetValue( thermalRHS, idxnode, 0.0, ADD_VALUES); CHKERRQ(ierr);
+	/* fixed temperature */
+	ierr = MatSetValue( thermalLHS, idxnode, idxnode, 1.0, INSERT_VALUES);CHKERRQ(ierr);
+       
       } else if(ix == NX-1 && (grid->y[jy] <= plate_depth(grid->LX) || (jy>0 && (vx[jy][ix]+vx[jy-1][ix])/2.0 < 0.0  )) ){/* RIGHT WALL */
 	// enforce overriding plate geotherm
 	ierr = MatSetValue( thermalLHS, idxnode, idxnode, 1.0, INSERT_VALUES);CHKERRQ(ierr);
-	
+      }else if(ix == NX-1){
+	ierr = MatSetValue( thermalLHS, idxnode, idxnode, 1.0, INSERT_VALUES);CHKERRQ(ierr);
+
       } else if( jy ==0){
 	/* Top boundary */
 	if( options->thermalBCTop.type[0] == 0){
-	  /* fixed temerature */
+	  /* fixed temperature */
 	  ierr = MatSetValue( thermalLHS, idxnode, idxnode, 1.0, INSERT_VALUES);CHKERRQ(ierr);	  
 	}else if(options->thermalBCTop.type[0] == 1){
 	  /* fixed temperature gradient */
@@ -108,18 +102,11 @@ PetscErrorCode formThermalSystem(Problem *problem, GridData *grid, NodalFields *
 	  ierr = MatSetValue( thermalLHS, idxnode, idxnode, -1.0/dyt1, INSERT_VALUES);CHKERRQ(ierr);
 	  ierr = MatSetValue( thermalLHS, idxnode, Tdof[jyl+1][ixl], 1.0/dyt1, INSERT_VALUES);CHKERRQ(ierr);
 	}
-      } else if( 0 && jy == NY-1){/* Bottom */
+      } else if( jy == NY-1){/* Bottom */
 	/* Bottom boundary */
-	if( options->thermalBCBottom.type[0] == 0){
-	  /* fixed temerature */
-	  ierr = MatSetValue( thermalLHS, idxnode, idxnode, 1.0, INSERT_VALUES);CHKERRQ(ierr);	  
-	}else if(options->thermalBCBottom.type[0] == 1){
-	  /* fixed temperature gradient */
-	  PetscScalar dyt1 = grid->y[jy]-grid->y[jy-1];
-	  ierr = MatSetValue( thermalLHS, idxnode, idxnode, 1.0/dyt1, INSERT_VALUES);CHKERRQ(ierr);
-	  ierr = MatSetValue( thermalLHS, idxnode, Tdof[jyl-1][ixl], -1.0/dyt1, INSERT_VALUES);CHKERRQ(ierr);
-	}
+	ierr = MatSetValue( thermalLHS, idxnode, idxnode, 1.0, INSERT_VALUES);CHKERRQ(ierr);
       } else{ /* interior */
+	if(ix == NX-1) printf("ix, jy %d %d\n",ix,jy);
 	PetscScalar ka,kb,kc,kd;
 	
 	//       ix-1 dx1 ix dx2 ix+1
@@ -146,7 +133,7 @@ PetscErrorCode formThermalSystem(Problem *problem, GridData *grid, NodalFields *
 	  ierr = MatSetValue( thermalLHS, idxnode, idxnode, (rho0+rho[jy][ix])*Cp[jy][ix]/dt + 2.0/(dx2+dx1)*(kb/dx2 + ka/dx1) + 2.0/(dy1+dy2)*(kd/dy2+kc/dy1) , INSERT_VALUES); CHKERRQ(ierr); 
 	}else{ /* special RHS for steady problem */
 	  // do nothing to RHS - it contains only internal heating
-	  ierr = MatSetValue( thermalLHS, idxnode, idxnode, 2.0/(dx2+dx1)*(kb/dx2 + ka/dx1) + 2.0/(dy1+dy2)*(kd/dy2+kc/dy1) , INSERT_VALUES); CHKERRQ(ierr); 
+	  ierr = MatSetValue( thermalLHS, idxnode, idxnode, 2.0/(dx2+dx1)*(kb/dx2 + ka/dx1) + 2.0/(dy1+dy2)*(kd/dy2+kc/dy1) , INSERT_VALUES); CHKERRQ(ierr);
 	}
 	/* left hand side values */
 	/* i,j*/
@@ -176,15 +163,13 @@ PetscErrorCode formThermalSystem(Problem *problem, GridData *grid, NodalFields *
       PetscInt ixl = ix-xg; 
       PetscInt idxnode = Tdof[jyl][ixl];
       /* boundary conditions*/
-      if( !grid->xperiodic && ix == 0 ){/* left wall */
-	/* insulating */       
-	if( options->thermalBCLeft.type[0] == 1){
-	  ierr = VecSetValue( thermalRHS, idxnode, 0.0, INSERT_VALUES); CHKERRQ(ierr);
-	}else if(options->thermalBCLeft.type[0] == 0){
-	  //slab temperature
-	  PetscScalar thisT = slab_inflow_temperature( grid->x[ix], grid->y[jy], options->slabAngle);
-	  ierr = VecSetValue( thermalRHS, idxnode, thisT , INSERT_VALUES); CHKERRQ(ierr);
-	}
+      if( ix == 0 ){/* left wall */
+	
+	
+	//slab temperature
+	PetscScalar thisT = slab_inflow_temperature( grid->x[ix], grid->y[jy], options->slabAngle);
+	ierr = VecSetValue( thermalRHS, idxnode, thisT , INSERT_VALUES); CHKERRQ(ierr);
+
 
       } else if(ix == NX-1 && (grid->y[jy] <= plate_depth(grid->LX) || (jy>0 && (vx[jy][ix]+vx[jy-1][ix])/2.0 < 0.0  )) ){/* RIGHT WALL */
 	PetscScalar thisT;
@@ -197,12 +182,15 @@ PetscErrorCode formThermalSystem(Problem *problem, GridData *grid, NodalFields *
 	
       } else if(ix == NX-1){
 	/* enforce zero curvature on outflow section */
-	PetscScalar dx2 = gx[ix]-gx[ix-1];
-	PetscScalar dx1 = gx[ix] - gx[ix-1];
-	PetscScalar kb = (kThermal[jy][ix]);
-	PetscScalar coef = -2.0/(dx1+dx2)*kb/dx2;
-	ierr = MatSetValue( thermalLHS, idxnode, Tdof[jyl][ixl], 2.0*coef, ADD_VALUES);CHKERRQ(ierr);
-	ierr = MatSetValue( thermalLHS, idxnode, Tdof[jyl][ixl-1], -1.0*coef, ADD_VALUES);CHKERRQ(ierr);
+	
+	/* 	PetscScalar dx2 = gx[ix]-gx[ix-1]; */
+	/* 	PetscScalar dx1 = gx[ix] - gx[ix-1]; */
+	/* 	PetscScalar kb = (kThermal[jy][ix]); */
+	/* 	PetscScalar coef = -2.0/(dx1+dx2)*kb/dx2; */
+	/* 	printf("ix, jy, dx1 dx2 kb coef = %d %d %le, %le, %le, %le\n",ix,jy,dx1,dx2,kb,coef); */
+	/* 	ierr = MatSetValue( thermalLHS, idxnode, Tdof[jyl][ixl],   2.0*coef, ADD_VALUES);CHKERRQ(ierr); */
+	/* 	ierr = MatSetValue( thermalLHS, idxnode, Tdof[jyl][ixl-1],-1.0*coef, ADD_VALUES);CHKERRQ(ierr); */
+	ierr = VecSetValue(thermalRHS, idxnode, lastT[jy][ix], INSERT_VALUES); CHKERRQ(ierr);
 
       } else if( jy ==0){/* TOP - constant T*/
 	if(options->thermalBCTop.type[0] == 0){
@@ -212,13 +200,14 @@ PetscErrorCode formThermalSystem(Problem *problem, GridData *grid, NodalFields *
 	}
       } else if( jy == NY-1){/* Bottom */
 	// this boundary is 100% outflow.
-	PetscScalar dy1 = gy[jy] - gy[jy-1];
-	PetscScalar dy2 = gy[jy] - gy[jy-1];
-	PetscScalar kd = (kThermal[jy][ix]);
-	PetscScalar coef =  -2.0/(dy1+dy2)*kd/dy2;
-	//T[i,j+1] = T[i,j] + T[i,j] - T[i,j-1]
-	ierr = MatSetValue( thermalLHS, idxnode, Tdof[jyl][ixl], 2.0*coef, ADD_VALUES);CHKERRQ(ierr);
-	ierr = MatSetValue( thermalLHS, idxnode, Tdof[jyl-1][ixl], -1.0*coef, ADD_VALUES);CHKERRQ(ierr);
+	/* 	PetscScalar dy1 = gy[jy] - gy[jy-1]; */
+	/* 	PetscScalar dy2 = gy[jy] - gy[jy-1]; */
+	/* 	PetscScalar kd = (kThermal[jy][ix]); */
+	/* 	PetscScalar coef =  -2.0/(dy1+dy2)*kd/dy2; */
+ 	//T[i,j+1] = T[i,j] + T[i,j] - T[i,j-1]
+	  /* 	ierr = MatSetValue( thermalLHS, idxnode, Tdof[jyl][ixl], 2.0*coef, ADD_VALUES);CHKERRQ(ierr); */
+	  /* 	ierr = MatSetValue( thermalLHS, idxnode, Tdof[jyl-1][ixl], -1.0*coef, ADD_VALUES);CHKERRQ(ierr); */
+	ierr = VecSetValue( thermalRHS, idxnode, lastT[jy][ix], INSERT_VALUES); CHKERRQ(ierr);
       } else{
 	/* do nothing */
       }

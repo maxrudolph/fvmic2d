@@ -399,6 +399,7 @@ int main(int argc, char **args){
       ierr = VecAXPY(dT,-1.0,problem.nodal_fields.lastT);CHKERRQ(ierr);
       PetscScalar dTmax;/* max abs change in temperature*/
       ierr = VecNorm(dT,NORM_INFINITY,&dTmax);CHKERRQ(ierr);
+      if(!rank) printf("Maximum temperature change %le\n",dTmax);
       if(dTmax > problem.options.maxTempChange){
 	printf("[%d] temperature change too large, limiting timestep from %e to %e\n",rank,dt,dt*problem.options.maxTempChange/dTmax);
 	dt = dt*problem.options.maxTempChange/dTmax;

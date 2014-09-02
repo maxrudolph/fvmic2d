@@ -9,6 +9,7 @@
 #include "math.h"
 #include "profile.h"
 #include "updateDamageViscosity.h"
+#include "benchmarkInitialConditions.h"
 //#define DEBUG
 
 PetscErrorCode allocateMarkers( PetscInt nMark, MarkerSet *markerset, Options *options){
@@ -709,7 +710,7 @@ PetscErrorCode checkMarkerDensity( MarkerSet *markerset, GridData *grid, Options
 	/* take all properties from nearest marker*/
 	PetscInt idx;
 	if(nOut>0){	/* if there are markers out of the domain, recycle one of them*/
-	  idx= isout[nOut-1];
+	  idx = isout[nOut-1];
 	  nOut--;
 	  //printf("recycling marker %d\n",idx);
 	}else{
@@ -719,7 +720,12 @@ PetscErrorCode checkMarkerDensity( MarkerSet *markerset, GridData *grid, Options
         markers[idx] = markers[minidx];
 	markers[idx].X = newX[i];
 	markers[idx].Y = newY[i];
-	
+	if( markers[idx].X <= grid->x[1] ){//enforce slab geotherm
+	  markers[idx].T = slab_inflow_temperature( markers[idx].X, markers[idx].Y,options->slabAngle );
+	}else if(markers[idx].X >= grid->x[NX-1]){//enforce mantle inflow temperature
+	  markers[idx].T = mantle_temperature();
+	}
+
       } else{
 	printf("Error: No markers close enough for nearest-neighbor interpolation\n");
       }

@@ -3,7 +3,7 @@
 #include "viscosity.h"
 #include "math.h"
 
-const PetscScalar Tlith = 1573.0;
+
 
 PetscErrorCode initialConditionsVanKeken( MarkerSet *markerset, Options *options, Materials *materials, GridData *grid){
   PetscErrorCode ierr=0;
@@ -26,26 +26,41 @@ PetscErrorCode initialConditionsVanKeken( MarkerSet *markerset, Options *options
 	markers[m].T = plate_geotherm( markers[m].Y );
       }else{
 	//wedge temperature
-	markers[m].T = Tlith;
+	markers[m].T = mantle_temperature();
       }     
     }
     markers[m].Mat = 0;
     markers[m].rhodot = 0.0;
-    markers[m].rho = -materials->materialRho[(PetscInt) markers[m].Mat]*(materials->materialAlpha[(PetscInt) markers[m].Mat]*markers[m].T);
-    
-    updateMarkerViscosity( &markers[m], options, materials, 0.0 );
-        
+    markers[m].rho = -materials->materialRho[(PetscInt) markers[m].Mat]*(materials->materialAlpha[(PetscInt) markers[m].Mat]*markers[m].T);    
+    updateMarkerViscosity( &markers[m], options, materials, 0.0 );    
   } 
+  /* Set up boundary conditions to match prescribed slab velocity in advection routines */
+  options->mechBCLeft.type[0] = 0;
+  options->mechBCLeft.type[1] = 0;
+  PetscScalar svx = options->slabVelocity * cos( slab_angle );
+  PetscScalar svy = options->slabVelocity * sin( slab_angle );
+  options->mechBCLeft.value[0] = svx;
+  options->mechBCLeft.value[1] = svy;
+  options->mechBCTop.type[0] = 0;
+  options->mechBCTop.value[0] = 0.0;
+  options->mechBCTop.type[1] = 0;
+  options->mechBCTop.value[1] = 0.0;
+
+
   PetscFunctionReturn(ierr);
 }
 
+PetscScalar mantle_temperature(){
+  const PetscScalar t = 1573.0;
+  return t;
+}
 
 PetscScalar plate_depth(PetscScalar x){
   return 50000.0;
 }
 
 PetscScalar plate_geotherm( PetscScalar y){
-  PetscScalar T = y/plate_depth(0.0) * (Tlith - 273.0) + 273.0;
+  PetscScalar T = y/plate_depth(0.0) * (mantle_temperature() - 273.0) + 273.0;
   return T;
 }
 

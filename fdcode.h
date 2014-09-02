@@ -203,8 +203,7 @@ typedef struct {
 
   PetscScalar maxMarkFactor;
   PetscInt minMarkers, maxMarkers;
-  PetscInt doMonte;/* run monte-carlo simulations */
-  PetscInt textureDevelopment; /* allow texture to change */
+
   PetscScalar grainSize;
   PetscScalar slabAngle;
   PetscScalar slabVelocity;

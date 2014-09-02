@@ -13,6 +13,7 @@ PetscErrorCode csvOptions(char *csvFileName, Options *options, Materials *materi
   PetscMPIInt rank,size;
   char fn[12] = "options.csv";
   char *ifn;
+  setOptions (options);
 
   PetscFunctionBegin;
   /* for testing: */
@@ -149,8 +150,7 @@ PetscErrorCode csvOptions(char *csvFileName, Options *options, Materials *materi
 /* 	} else if(  !strncmp( "doTexture", line, 9) ){ */
 /* 	  //printf("reading doMonte\n"); */
 /* 	  sscanf( &line[idxComma+1],"%d\n", &(options -> doTexture)); printf("doTexture = %d\n",options->doTexture); */
-	} else if(  !strncmp( "textureDevelopment", line, 18) ){
-	  sscanf( &line[idxComma+1],"%d\n", &(options -> textureDevelopment)); printf("textureDevelopment = %d\n",options->textureDevelopment);
+
        
 
 	} else if(  !strncmp( "grainSize", line, 9) ){
