@@ -12,17 +12,33 @@ addpath([PETSC_DIR '/share/petsc/matlab']);
 
 % loadgrid
 
-filelist=dir('../output/loadNodalFields_0_100.petscbin');
+filelist=dir('../output/loadNodalFields_0_*.petscbin');
+snums = zeros(size(filelist));
+for i=1:length(snums)
+   undpos = find(filelist(i).name == '_',1,'last');
+   dotpos = find(filelist(i).name == '.',1,'first');
+   snums(i) = str2num(filelist(i).name(undpos+1:dotpos-1));
+end
+[a,i] = sort(snums);
+filelist = filelist(i);
+snums = snums(i);
+
 markfile = '../output/Markers.0.100';
-mark = getBinaryMarkers(markfile,0);
+% mark = getBinaryMarkers(markfile,0);
 nskip=1;
 iFile=1;
 
-nf=loadNodalFieldsPetscBin2(['../output/' filelist(1).name]);
-grid.x = nf.gridx(1,:);
-grid.y = nf.gridy(:,1);
-NX = length(nf.gridx(1,:));
-NY = length(nf.gridy(:,1));
+nf1=loadNodalFieldsPetscBin2(['../output/' filelist(end-1).name]);
+nf2=loadNodalFieldsPetscBin2(['../output/' filelist(end).name]);
+grid.x = nf1.gridx(1,:);
+grid.y = nf1.gridy(:,1);
+NX = length(nf1.gridx(1,:));
+NY = length(nf1.gridy(:,1));
+
+T2 = nf2.T;
+T1 = nf1.T;
+
+
 % figure, pcolor(grid.x, grid.y, nf.T); shading flat;
 % set(gca,'YDir','reverse');
 % axis equal
@@ -39,39 +55,29 @@ NY = length(nf.gridy(:,1));
 % get cell-centered vx, vy
 slabv = 1.58e-9;
 
-vxc = (nf.vx(1:end-1,1:end-1) + nf.vx(1:end-1,2:end))/2;
-vyc = (nf.vy(1:end-1,1:end-1) + nf.vy(2:end,1:end-1))/2;
+vxc = (nf2.vx(1:end-1,1:end-1) + nf2.vx(1:end-1,2:end))/2;
+vyc = (nf2.vy(1:end-1,1:end-1) + nf2.vy(2:end,1:end-1))/2;
 
-figure, imagesc(nf.vx); title('vx'); colorbar; caxis([-slabv slabv]);
-figure, imagesc(nf.vy); title('vy'); colorbar; caxis([-slabv slabv]);
-figure, imagesc(nf.p); title('p'); colorbar; 
-
-% add up flux along left boundary
-leftflux = nf.vx(1:end-1,1).*diff(nf.gridy(:,1));
-rightflux = nf.vx(1:end-1,end).*diff(nf.gridy(:,end));
-btmflux = nf.vy(end,1:end-1).*diff(nf.gridx(end,:));
-topflux = nf.vy(1,1:end-1).*diff(nf.gridx(1,:));
-sum(leftflux)
-sum(rightflux)
-sum(btmflux)
-sum(topflux)
+% figure, imagesc(nf2.vx); title('vx'); colorbar; caxis([-slabv slabv]);
+% figure, imagesc(nf2.vy); title('vy'); colorbar; caxis([-slabv slabv]);
+% figure, imagesc(nf2.p); title('p'); colorbar; 
 
 LX=max(grid.x);
 LY=max(grid.y);
-xc = nf.gridx(1,1:end-1) + diff(nf.gridx(1,:))/2;
-yc = nf.gridy(1:end-1,1) + diff(nf.gridy(:,1))/2;
+xc = nf1.gridx(1,1:end-1) + diff(nf1.gridx(1,:))/2;
+yc = nf1.gridy(1:end-1,1) + diff(nf1.gridy(:,1))/2;
 [X,Y] = meshgrid(xc,yc);
-figure, pcolor(xc,yc,sqrt(vxc.^2+vyc.^2)); shading flat;colorbar; caxis([-slabv slabv]);
-set(gca,'YDir','reverse');
+% figure, pcolor(xc,yc,sqrt(vxc.^2+vyc.^2)); shading flat;colorbar; caxis([-slabv slabv]);
+% set(gca,'YDir','reverse');
 nsl = 50;
 
 slx = rand(nsl,1)*LX;
 sly = rand(nsl,1)*LY;
 
-hold on
-streamline(xc,yc,vxc,vyc,slx,sly);
+% hold on
+% streamline(xc,yc,vxc,vyc,slx,sly);
 
-figure, pcolor(nf.gridx/1e3,nf.gridy/1e3,nf.T); title('T'); hold on;
+figure, pcolor(nf2.gridx/1e3,nf2.gridy/1e3,nf2.T); title('T'); hold on;
 set(gca,'YDir','reverse');
 colorbar;
 h = streamline(xc/1e3,yc/1e3,vxc,vyc,xc(end-1)*ones(nsl,1)/1e3,linspace(51000,599000,nsl)'/1e3);
@@ -80,6 +86,17 @@ set(h,'Color','k')
 xlabel('Distance km)')
 ylabel('Depth (km)');
 axis equal tight
+
+figure, pcolor(nf2.gridx/1e3,nf2.gridy/1e3,nf2.T-nf1.T); title('T'); hold on; caxis([-25 25]);
+set(gca,'YDir','reverse');
+colorbar;
+h = streamline(xc/1e3,yc/1e3,vxc,vyc,xc(end-1)*ones(nsl,1)/1e3,linspace(51000,599000,nsl)'/1e3);
+shading interp
+set(h,'Color','k')
+xlabel('Distance km)')
+ylabel('Depth (km)');
+axis equal tight
+
 
 %% check divergence field
 divv = zeros(NY-1,NX-1);

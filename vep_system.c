@@ -404,7 +404,7 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
       /* %y-momentum */
       /* y-equation has implicit bcs on left, explicit on top, bottom, and right */
       if( in_slab( grid->xc[ix+1], grid->y[jy], options->slabAngle) ){/* slab internal BC */
-	ierr = MatSetValue(LHS, vydof[jyl][ixl],vydof[jyl][ixl], Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
+	ierr = MatSetValue(LHS, vydof[jyl][ixl], vydof[jyl][ixl], Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
 	ierr = VecSetValue(RHS, vydof[jyl][ixl], Kbond[0] * svy,INSERT_VALUES);CHKERRQ(ierr);	
 
       }else if( in_plate( grid->xc[ix+1], grid->y[jy], options->slabAngle) ){/* plate internal BC */
@@ -550,7 +550,7 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
       
       /* y-stokes */
       // bottom boundary
-      if(  jy == NY-1 && ix < NX-1 && in_slab(grid->xc[ix+1], 2.0*grid->y[jy] - grid->y[jy-1], options->slabAngle) && !in_slab(grid->xc[ix+1],grid->y[jy],options->slabAngle) ){
+      if( 0 &&  jy == NY-1 && ix < NX-1 && in_slab(grid->xc[ix+1], 2.0*grid->y[jy] - grid->y[jy-1], options->slabAngle) && !in_slab(grid->xc[ix+1],grid->y[jy],options->slabAngle) ){
 	// special case where ghost node is in slab
 	PetscScalar eta = etaNZ[jy][ix+1];
 	PetscScalar Pcoef = Kcont[0]/(grid->yc[jy] - grid->yc[1 + jy]);

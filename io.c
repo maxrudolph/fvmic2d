@@ -220,23 +220,23 @@ PetscErrorCode saveNodalFields( NodalFields *nodalFields, GridData *grid,PetscIn
   }
 
 
-  ierr=  VecView( nodalFields->vx,viewer );CHKERRQ(ierr);
-  ierr=  VecView( nodalFields->vy,viewer );CHKERRQ(ierr);
-  ierr=  VecView( nodalFields->p,viewer );CHKERRQ(ierr);
-  ierr=  VecView( nodalFields->rho,viewer );CHKERRQ(ierr);
-  ierr=  VecView( nodalFields->rhodot,viewer );CHKERRQ(ierr);
+  ierr=  VecView( nodalFields->vx,viewer );CHKERRQ(ierr);//1
+  ierr=  VecView( nodalFields->vy,viewer );CHKERRQ(ierr);//2
+  ierr=  VecView( nodalFields->p,viewer );CHKERRQ(ierr);//3
+  ierr=  VecView( nodalFields->rho,viewer );CHKERRQ(ierr);//4
+  ierr=  VecView( nodalFields->rhodot,viewer );CHKERRQ(ierr);//5
   //ierr=  VecView( nodalFields->D,viewer );CHKERRQ(ierr);
   //ierr=  VecView( nodalFields->Ddot,viewer );CHKERRQ(ierr);
-  ierr=  VecView( nodalFields->etaN,viewer );CHKERRQ(ierr);
-  ierr=  VecView( nodalFields->etaS,viewer );CHKERRQ(ierr);
+  ierr=  VecView( nodalFields->etaN,viewer );CHKERRQ(ierr);//6
+  ierr=  VecView( nodalFields->etaS,viewer );CHKERRQ(ierr);//7
   //ierr=  VecView( nodalFields->etavx,viewer );CHKERRQ(ierr);
   //ierr=  VecView( nodalFields->etavy,viewer );CHKERRQ(ierr);
 
-  ierr=  VecView( nodalFields->kThermal,viewer);CHKERRQ(ierr);
-  ierr=  VecView( nodalFields->lastT,viewer );CHKERRQ(ierr);
-  ierr=  VecView( nodalFields->Cp,viewer);CHKERRQ(ierr);
-  ierr=  VecView( nodalFields->muN,viewer);CHKERRQ(ierr);
-  ierr=  VecView( nodalFields->muS,viewer);CHKERRQ(ierr);
+  ierr=  VecView( nodalFields->kThermal,viewer);CHKERRQ(ierr);//8
+  ierr=  VecView( nodalFields->lastT,viewer );CHKERRQ(ierr);//9
+  ierr=  VecView( nodalFields->Cp,viewer);CHKERRQ(ierr);//10
+  ierr=  VecView( nodalFields->muN,viewer);CHKERRQ(ierr);//11
+  ierr=  VecView( nodalFields->muS,viewer);CHKERRQ(ierr);//12
   //ierr=  VecView( nodalFields->muvx,viewer);CHKERRQ(ierr);
   //ierr=  VecView( nodalFields->muvy,viewer);CHKERRQ(ierr);
 
@@ -244,25 +244,25 @@ PetscErrorCode saveNodalFields( NodalFields *nodalFields, GridData *grid,PetscIn
   ierr=  VecView( nodalFields->VPTensorB,viewer);CHKERRQ(ierr);
   ierr=  VecView( nodalFields->VPTensorC,viewer);CHKERRQ(ierr);
 #endif
-  ierr=  VecView( nodalFields->soxx,viewer);CHKERRQ(ierr);
-  ierr=  VecView( nodalFields->soyy,viewer);CHKERRQ(ierr);
+  ierr=  VecView( nodalFields->soxx,viewer);CHKERRQ(ierr);//13
+  ierr=  VecView( nodalFields->soyy,viewer);CHKERRQ(ierr);//14
 /*   ierr=  VecView( nodalFields->sozz,viewer);CHKERRQ(ierr); */
-  ierr=  VecView( nodalFields->soxy,viewer);CHKERRQ(ierr);
+  ierr=  VecView( nodalFields->soxy,viewer);CHKERRQ(ierr);//15
 /*   ierr=  VecView( nodalFields->soxz,viewer);CHKERRQ(ierr); */
 /*   ierr=  VecView( nodalFields->soyz,viewer);CHKERRQ(ierr); */
   /* strain rate components */
-  ierr=  VecView( nodalFields->edotxx,viewer);CHKERRQ(ierr);
-  ierr=  VecView( nodalFields->edotyy,viewer);CHKERRQ(ierr);
-  ierr=  VecView( nodalFields->edotxy,viewer);CHKERRQ(ierr);
+  ierr=  VecView( nodalFields->edotxx,viewer);CHKERRQ(ierr);//16
+  ierr=  VecView( nodalFields->edotyy,viewer);CHKERRQ(ierr);//17
+  ierr=  VecView( nodalFields->edotxy,viewer);CHKERRQ(ierr);//18
 /*   ierr=  VecView( nodalFields->edotxz,viewer);CHKERRQ(ierr); */
 /*   ierr=  VecView( nodalFields->edotyz,viewer);CHKERRQ(ierr); */
   /* rotation tensor */
-  ierr=  VecView( nodalFields->wxy,viewer);CHKERRQ(ierr);
+  ierr=  VecView( nodalFields->wxy,viewer);CHKERRQ(ierr);//19
 /*   ierr=  VecView( nodalFields->wxz,viewer);CHKERRQ(ierr); */
 /*   ierr=  VecView( nodalFields->wyz,viewer);CHKERRQ(ierr); */
 
 
-  ierr=  VecView( nodalFields->ha,viewer);CHKERRQ(ierr);
+  ierr=  VecView( nodalFields->ha,viewer);CHKERRQ(ierr);//20
 #ifdef TEXTURE
   ierr = VecView( nodalFields->strainRateResidual,viewer);CHKERRQ(ierr);
 #endif

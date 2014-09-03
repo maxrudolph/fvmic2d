@@ -1,8 +1,8 @@
 # Van Keken subduction benchmark
 LX,660000
 LY,600000
-NX,133
-NY,121			
+NX,221
+NY,201			
 NMX,4
 NMY,4
 gridRatio,1.0
@@ -79,11 +79,11 @@ doTexture,1
 nMaterials,1
 hasPlasticity,0,0
 #
-materialEta,0,1.0e20	
+materialEta,0,1.0e21	
 #
-materialRho,0,4000.0
+materialRho,0,3300.0
 #
-materialkThermal,0,5.0
+materialkThermal,0,3.0
 #
 materialCp,0,1250.0
 #
