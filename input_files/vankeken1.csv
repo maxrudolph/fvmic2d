@@ -2,7 +2,7 @@
 LX,660000
 LY,600000
 NX,133
-NY,120			
+NY,121			
 NMX,4
 NMY,4
 gridRatio,1.0
@@ -15,7 +15,7 @@ maxMarkers,100
 dtMax,1.5779e13
 displacementStepLimit,0.25
 maxTempChange,20.0
-nTime,1001
+nTime,11
 restartStep,0
 #maximum model time to run:
 totalTime,4.4e30
