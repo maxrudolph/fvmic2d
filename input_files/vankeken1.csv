@@ -7,7 +7,7 @@ NMX,4
 NMY,4
 gridRatio,1.0
 maxMarkFactor,2.0; /*memory to allocate for markers is this number*original number of markers*/
-minMarkers,1; /* munimum number of markers per cell */
+minMarkers,8; /* munimum number of markers per cell */
 maxMarkers,100
 #
 #Time step Stuff
