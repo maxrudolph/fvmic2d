@@ -1,1 +1,1 @@
-PetscErrorCode retrieveSolutions( GridData *,NodalFields *, Vec , Vec , PetscScalar, PetscInt *);
+PetscErrorCode retrieveSolutions( GridData *,NodalFields *, Vec , PetscScalar, PetscInt *);

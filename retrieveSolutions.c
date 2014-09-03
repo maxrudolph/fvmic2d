@@ -1,7 +1,7 @@
 #include "fdcode.h"
 #include "retrieveSolutions.h"
 
-PetscErrorCode retrieveSolutions( GridData *grid,NodalFields *nodalFields, Vec S, Vec Sz, PetscScalar Kcont, PetscInt *foundnan){
+PetscErrorCode retrieveSolutions( GridData *grid,NodalFields *nodalFields, Vec S, PetscScalar Kcont, PetscInt *foundnan){
   PetscErrorCode ierr;
   
   PetscInt x,y,m,n;
@@ -11,20 +11,16 @@ PetscErrorCode retrieveSolutions( GridData *grid,NodalFields *nodalFields, Vec S
 
   /* retrieve velocity and pressure from mechanical solutions */
   PetscScalar ***Sa;
-  PetscScalar **Sza;
+
   PetscScalar **vx;
   PetscScalar **vy;
-  PetscScalar **vz;
+/*   PetscScalar **vz; */
   PetscScalar **p;
   ierr = DMDAVecGetArrayDOF(grid->vda,S,&Sa);CHKERRQ(ierr);
-#ifndef TEXTURE
-  ierr = DMDAVecGetArray(grid->da,Sz,&Sza);CHKERRQ(ierr);
-#endif
+
   ierr = DMDAVecGetArray(grid->da,nodalFields->vx,&vx);CHKERRQ(ierr);
   ierr = DMDAVecGetArray(grid->da,nodalFields->vy,&vy);CHKERRQ(ierr);
-#ifndef TEXTURE
-  ierr = DMDAVecGetArray(grid->da,nodalFields->vz,&vz);CHKERRQ(ierr);
-#endif
+
   ierr = DMDAVecGetArray(grid->da,nodalFields->p,&p);CHKERRQ(ierr);
 
   PetscInt i,j;
@@ -36,12 +32,7 @@ PetscErrorCode retrieveSolutions( GridData *grid,NodalFields *nodalFields, Vec S
       vx[j][i] = Sa[j][i][DOF_U];
       vy[j][i] = Sa[j][i][DOF_V];
 #ifndef TEXTURE
-      /*       vz[idxnode]=Sza[idxnode]; */
-      vz[j][i] = Sza[j][i];
-      
-      if(isnan(vx[j][i]) || isnan(p[j][i]) || isnan(vy[j][i]) || isnan(vz[j][i])){
-	havenan=1;
-      }
+
 #else
       if(isnan(vx[j][i]) || isnan(p[j][i]) || isnan(vy[j][i])){
 	havenan=1;
@@ -80,13 +71,11 @@ PetscErrorCode retrieveSolutions( GridData *grid,NodalFields *nodalFields, Vec S
   
   ierr = DMDAVecRestoreArrayDOF(grid->vda,S,&Sa);CHKERRQ(ierr);
 #ifndef TEXTURE
-  ierr = DMDAVecRestoreArray(grid->da,Sz,&Sza);CHKERRQ(ierr);
+
 #endif
   ierr = DMDAVecRestoreArray(grid->da,nodalFields->vx,&vx);CHKERRQ(ierr);
   ierr = DMDAVecRestoreArray(grid->da,nodalFields->vy,&vy);CHKERRQ(ierr);
-#ifndef TEXTURE
-  ierr = DMDAVecRestoreArray(grid->da,nodalFields->vz,&vz);CHKERRQ(ierr);
-#endif
+
   ierr = DMDAVecRestoreArray(grid->da,nodalFields->p,&p);CHKERRQ(ierr);
 
   PetscFunctionReturn(ierr);

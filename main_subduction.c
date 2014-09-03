@@ -134,8 +134,6 @@ int main(int argc, char **args){
   ierr = PetscObjectSetName( (PetscObject) problem.mech_system.lhs,"CmechLHS");
   ierr = createPressureNullSpace( &problem.grid, &problem.mech_system.ns );CHKERRQ(ierr); 
 
-  ierr=DMCreateMatrix(problem.grid.da,&problem.z_system.lhs);CHKERRQ(ierr);
-  ierr = PetscObjectSetName( (PetscObject) problem.z_system.lhs,"CmechLHSz");
   {
     PetscInt m,n; 
     ierr=MatGetSize(problem.mech_system.lhs,&m,&n);CHKERRQ(ierr); 
@@ -146,8 +144,7 @@ int main(int argc, char **args){
 
   ierr=DMGetGlobalVector(problem.grid.vda,&problem.mech_system.rhs);CHKERRQ(ierr);
   ierr = PetscObjectSetName( (PetscObject) problem.mech_system.rhs,"CmechRHS"); 
-  ierr=DMGetGlobalVector(problem.grid.da,&problem.z_system.rhs);CHKERRQ(ierr);
-  ierr = PetscObjectSetName( (PetscObject) problem.z_system.rhs,"CmechRHSz"); 
+
   /* initialize LHS matrix, RHS Vec and nodalHeating Vec for thermal problem*/
   ierr=DMGetGlobalVector(problem.grid.da,&problem.thermal_system.rhs);CHKERRQ(ierr);
   ierr=PetscObjectSetName( (PetscObject) problem.thermal_system.rhs,"CthermalRHS");
@@ -230,6 +227,10 @@ int main(int argc, char **args){
     PetscInt iPlastic;
     
     displacementdt=problem.options.dtMax;/* initially*/
+
+    Vec steadySolution;
+    ierr = VecDuplicate( problem.mech_system.solution, &steadySolution); CHKERRQ(ierr);    
+
     for(iTime=iTime0;iTime<problem.options.nTime;iTime++){
       {
 	PetscLogDouble memuse;
@@ -304,24 +305,26 @@ int main(int argc, char **args){
 	/* form mechanical problem LHS*/
 	/* zero out LHS, RHS*/
 	ierr = VecZeroEntries( problem.mech_system.rhs);CHKERRQ(ierr);	
-	ierr = VecZeroEntries( problem.z_system.rhs); CHKERRQ(ierr);
+
 	PetscLogStagePush(stages[1]);
-	ierr=formVEPSystem( &problem.nodal_fields, &problem.grid, problem.mech_system.lhs, problem.mech_system.pc, problem.mech_system.rhs,problem.z_system.lhs,problem.z_system.rhs, &Kbond, &Kcont, problem.options.gy, displacementdt, &problem.options, &boundaryValues);
+	ierr=formVEPSystem( &problem.nodal_fields, &problem.grid, problem.mech_system.lhs, problem.mech_system.pc, problem.mech_system.rhs, &Kbond, &Kcont, problem.options.gy, displacementdt, &problem.options, &boundaryValues);
 	PetscLogStagePop();
 	/* scale the pressure guess */
 	ierr = VecStrideScale( problem.mech_system.solution, DOF_P, 1.0/Kcont );CHKERRQ(ierr);
-	PetscLogStagePush(stages[3]);
-	ierr = kspLinearSolve(problem.mech_system.lhs, problem.mech_system.pc,problem.mech_system.rhs, problem.mech_system.solution,"stokes_",problem.mech_system.ns);
-	PetscLogStagePop();
-
-	ierr = VecDuplicate(problem.z_system.rhs, &problem.z_system.solution);
-	ierr = VecZeroEntries( problem.z_system.solution );CHKERRQ(ierr);
-	//	ierr = kspLinearSolve(LHSz, RHSz, Sz,"zstokes_");CHKERRQ(ierr);
+	if( iTime == 0 ){
+	  PetscLogStagePush(stages[3]);
+	  ierr = kspLinearSolve(problem.mech_system.lhs, problem.mech_system.pc,problem.mech_system.rhs, problem.mech_system.solution,"stokes_",problem.mech_system.ns);
+	  PetscLogStagePop();
+	  
+	  ierr = VecCopy( problem.mech_system.solution, steadySolution ); CHKERRQ(ierr);
+	}else{
+	  ierr = VecCopy( steadySolution, problem.mech_system.solution ); CHKERRQ(ierr);
+	}
 
 	PetscInt fn=0;/* flag for nan in solution*/
-	ierr= retrieveSolutions( &problem.grid, &problem.nodal_fields, problem.mech_system.solution, problem.z_system.solution, Kcont, &fn);
+	ierr= retrieveSolutions( &problem.grid, &problem.nodal_fields, problem.mech_system.solution, Kcont, &fn);
 
-	ierr = VecDestroy(&problem.z_system.solution); CHKERRQ(ierr);
+
 	if(fn) {
 	  ierr=PetscPrintf(PETSC_COMM_WORLD,"Found nan in solution\n");CHKERRQ(ierr);
 	  PetscLogStagePush(stages[11]);
@@ -471,7 +474,7 @@ int main(int argc, char **args){
 
   ierr = VecDestroy(&problem.nodal_heating);CHKERRQ(ierr);
   ierr=DMRestoreGlobalVector(problem.grid.vda,&problem.mech_system.rhs);CHKERRQ(ierr);
-  ierr=DMRestoreGlobalVector(problem.grid.da,&problem.z_system.rhs);CHKERRQ(ierr);
+
   ierr=DMRestoreGlobalVector(problem.grid.da,&problem.thermal_system.rhs);CHKERRQ(ierr);
   
   ierr = MatDestroy(&problem.thermal_system.lhs );CHKERRQ(ierr);

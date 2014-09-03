@@ -13,9 +13,9 @@ maxMarkers,100
 #Time step Stuff
 #
 dtMax,1.5779e13
-displacementStepLimit,0.25
+displacementStepLimit,0.2
 maxTempChange,20.0
-nTime,11
+nTime,10001
 restartStep,0
 #maximum model time to run:
 totalTime,4.4e30
@@ -68,10 +68,10 @@ gx,0.0
 #
 #  /* I/O etc*/
 #
-saveInterval,10
+saveInterval,100
 #
 subgridStressDiffusivity,0.0
-subgridTemperatureDiffusivity,0.0
+subgridTemperatureDiffusivity,1.0
 #
 # MATERIAL PROPERTIES
 #

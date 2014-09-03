@@ -10,7 +10,7 @@
 
 
 
-PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,Mat P,  Vec RHS, Mat LHSz, Vec RHSz, PetscScalar *Kbond, PetscScalar *Kcont, PetscScalar gy, PetscScalar dt, Options *options, BoundaryValues *bv){
+PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,Mat P,  Vec RHS, PetscScalar *Kbond, PetscScalar *Kcont, PetscScalar gy, PetscScalar dt, Options *options, BoundaryValues *bv){
   /* Form system of equations for viscoelastoplastic problem */
   /* P is a preconditioner matrix, which can be optionally populated during the LHS assembly process */
 
@@ -34,8 +34,7 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
   setLogStage( LOG_MECH_ASM );
   ierr = VecZeroEntries( RHS ); CHKERRQ(ierr);
   ierr = MatZeroEntries( LHS ); CHKERRQ(ierr);
-  ierr = MatZeroEntries( LHSz ); CHKERRQ(ierr);
-  ierr = VecZeroEntries( RHSz );CHKERRQ(ierr);
+
 
 
   /* soxxZ etc should be global vectors complete with ghost information*/
@@ -309,10 +308,10 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 	  ierr=MatSetValue(LHS,vxdof[jyl][ixl], vydof[jyl  ][ixl], 1.0/dxc*Kcont[0],INSERT_VALUES);CHKERRQ(ierr);
 	  ierr=MatSetValue(LHS,vxdof[jyl][ixl], vydof[jyl  ][ixl-1],  -1.0/dxc*Kcont[0],INSERT_VALUES);CHKERRQ(ierr);
 	  ierr=VecSetValue(RHS,vxdof[jyl][ixl], 0.0, INSERT_VALUES);CHKERRQ(ierr);	
-      }else if (jy == NY-1 && ix == NX-1){
-	ierr=MatSetValue(LHS,vxdof[jyl][ixl], vxdof[jyl][ixl],    1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
-	ierr=MatSetValue(LHS,vxdof[jyl][ixl], vxdof[jyl-1][ixl], -1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
-	ierr=VecSetValue(RHS,vxdof[jyl][ixl], 0.0, INSERT_VALUES);CHKERRQ(ierr);	
+	  /*}else if (jy == NY-1 && ix == NX-1){
+	    ierr=MatSetValue(LHS,vxdof[jyl][ixl], vxdof[jyl][ixl],    1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
+	    ierr=MatSetValue(LHS,vxdof[jyl][ixl], vxdof[jyl-1][ixl], -1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
+	    ierr=VecSetValue(RHS,vxdof[jyl][ixl], 0.0, INSERT_VALUES);CHKERRQ(ierr);	*/
       }else{
 	if( jy == NY-1 ){ fprintf(stderr,"jy==NY-1 !!!\n"); }
 	/* normal x-stokes stencil */
@@ -452,7 +451,7 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 	PetscScalar v0015 = 1/(-v0002 + grid->y[-1 + jy]);
 	PetscScalar v0016 = 1/(-v0007 + grid->xc[ix]);
 	PetscScalar v0017 = 1/(v0007 - grid->xc[2 + ix]);
-	if( jy == NY-1) printf("grid->xc[2+ix] = %le\n",grid->xc[2+ix]);
+	//	if( jy == NY-1) printf("grid->xc[2+ix] = %le\n",grid->xc[2+ix]);
 	colidx[0] = -1;
 	colidx[1] = -1;
 	colidx[2] = -1;
@@ -520,8 +519,7 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
   }/* end loop over y grid-line*/
   ierr = VecAssemblyBegin(RHS);CHKERRQ(ierr);
   ierr = VecAssemblyEnd(RHS);CHKERRQ(ierr);
-  ierr = VecAssemblyBegin(RHSz);CHKERRQ(ierr);
-  ierr = VecAssemblyEnd(RHSz);CHKERRQ(ierr);
+
   ierr = MatAssemblyBegin( LHS, MAT_FLUSH_ASSEMBLY);CHKERRQ(ierr);
   ierr = MatAssemblyEnd( LHS, MAT_FLUSH_ASSEMBLY);CHKERRQ(ierr);
 
@@ -537,64 +535,47 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
       
       if( ix == NX-1 && jy < NY-1 && !in_plate( grid->x[ix], grid->yc[jy+1], options->slabAngle) ){// modify for outflow BC
 	/* get coefficient for vx[ix-1][jy] */
-	PetscScalar mydx = grid->x[ix]-grid->x[ix-1];
-	PetscScalar vxcoef = (4*etaNZ[jy+1][ix])/(3.*(grid->x[ix-1] - grid->x[ix])*(grid->xc[ix] - grid->xc[1 + ix]));
-
-	PetscScalar Pcoef = Kcont[0]/(grid->xc[ix-1] - grid->xc[ix]);
-	// first implement ghost pressure BC in x-momentum equation
-	PetscScalar dxp = (grid->xc[ix+1]-grid->xc[ix])/(grid->xc[ix]-grid->xc[ix-1]);
-	//ierr = MatSetValue( LHS, vxdof[jyl][ixl], pdof[jyl+1][ixl]  , (1.0+dxp)*Pcoef , ADD_VALUES);CHKERRQ(ierr);
-	//ierr = MatSetValue( LHS, vxdof[jyl][ixl], pdof[jyl+1][ixl-1], (-dxp)*Pcoef , ADD_VALUES);CHKERRQ(ierr);
-	
-	ierr = MatSetValue( LHS, vxdof[jyl][ixl], pdof[jyl+1][ixl], Pcoef , ADD_VALUES);CHKERRQ(ierr);
-
-	// now implement ghost velocity in x-momentum equation - affects pressure too
 	PetscScalar dx = grid->x[ix]-grid->x[ix-1];
+	PetscScalar dy = grid->y[jy+1]-grid->y[jy];
+
+	PetscScalar Pcoef = Kcont[0]/(grid->xc[ix-1] - grid->xc[ix]);// what would normally multiply Pi+1,j+1
 	PetscScalar eta = etaNZ[jy+1][ix];
-	//printf("etaNZ = %le\n",eta);
-	PetscScalar Pcoef1 =  Kcont[0] * vxcoef * dx/eta/2.0*(2.0+dxp);//multiplies P[i,j+1]
-	PetscScalar Pcoef2 = -Kcont[0] * vxcoef * dx/eta/2.0*(dxp);//multiplies P[i-1,j+1]
-	PetscScalar vxcoef1 = vxcoef;
-	PetscScalar Pcoef3 = Kcont[0] * vxcoef * dx/eta;
-	//	printf("Pcoef1, Pcoef2, vxcoef1 = %le, %le, %le\n",Pcoef1,Pcoef2,vxcoef1);
-	ierr = MatSetValue( LHS, vxdof[jyl][ixl], vxdof[jyl][ixl-1], vxcoef1,ADD_VALUES);CHKERRQ(ierr);
-	ierr = MatSetValue( LHS, vxdof[jyl][ixl], pdof[jyl+1][ixl], Pcoef3, ADD_VALUES);CHKERRQ(ierr);
+	ierr = MatSetValue(LHS, vxdof[jyl][ixl], vxdof[jyl][ixl],    Pcoef * 2.0*eta/dx/Kcont[0] , ADD_VALUES); CHKERRQ(ierr);
+	ierr = MatSetValue(LHS, vxdof[jyl][ixl], vydof[jyl+1][ixl], -Pcoef * 2.0*eta/dy/Kcont[0] , ADD_VALUES); CHKERRQ(ierr);
+	ierr = MatSetValue(LHS, vxdof[jyl][ixl], vydof[jyl][ixl],    Pcoef * 2.0*eta/dy/Kcont[0] , ADD_VALUES); CHKERRQ(ierr);
+	ierr = MatSetValue(LHS, vxdof[jyl][ixl], vxdof[jyl][ixl-1], -Pcoef * 2.0*eta/dx/Kcont[0] , ADD_VALUES); CHKERRQ(ierr);
+	ierr = MatSetValue(LHS, vxdof[jyl][ixl], pdof[jyl+1][ixl],  -Pcoef , ADD_VALUES); CHKERRQ(ierr);	
+
+	
       }
       
       /* y-stokes */
       // bottom boundary
       if(  jy == NY-1 && ix < NX-1 && in_slab(grid->xc[ix+1], 2.0*grid->y[jy] - grid->y[jy-1], options->slabAngle) && !in_slab(grid->xc[ix+1],grid->y[jy],options->slabAngle) ){
 	// special case where ghost node is in slab
-	PetscScalar mydy = grid->y[jy]-grid->y[jy-1];
-	PetscScalar vycoef = (4*etaNZ[jy][ix+1])/(3.*(grid->y[jy-1] - grid->y[jy])*(grid->yc[jy] - grid->yc[1 + jy]));
-	PetscScalar Pcoef = Kcont[0]/(grid->yc[jy] - grid->yc[1 + jy]);
-
-	// first implement ghost pressure BC in x-momentum equation
-	ierr = MatSetValue( LHS, vydof[jyl][ixl], pdof[jyl][ixl+1], Pcoef , ADD_VALUES);CHKERRQ(ierr);
-	// now implement ghost velocity in x-momentum equation - affects pressure too
-	PetscScalar dy = grid->y[jy]-grid->y[jy-1];
 	PetscScalar eta = etaNZ[jy][ix+1];
-	PetscScalar Pcoef3 = Kcont[0] * vycoef * dy/eta;
-	PetscScalar vycoef1 = vycoef;
-	//	ierr = MatSetValue( LHS, vydof[jyl][ixl],vydof[jyl-1][ixl], vycoef1, ADD_VALUES);CHKERRQ(ierr);
-	ierr = VecSetValue( RHS, vydof[jyl][ixl], -svy * vycoef, ADD_VALUES);CHKERRQ(ierr);
+	PetscScalar Pcoef = Kcont[0]/(grid->yc[jy] - grid->yc[1 + jy]);
+	PetscScalar dx = grid->x[ix+1]-grid->x[ix];
+	PetscScalar dy = grid->y[jy]-grid->y[jy-1];
+	PetscScalar vyg = svy;
 
+	//ierr = MatSetValue(LHS, vydof[jyl][ixl], vydof[jyl][ixl],    Pcoef*2.0*eta/dy/Kcont[0] , ADD_VALUES);CHKERRQ(ierr);
+	//ierr = MatSetValue(LHS, vydof[jyl][ixl], vxdof[jyl][ixl+1], -Pcoef*2.0*eta/dx/Kcont[0] , ADD_VALUES);CHKERRQ(ierr);
+	//ierr = MatSetValue(LHS, vydof[jyl][ixl], vxdof[jyl][ixl],    Pcoef*2.0*eta/dx/Kcont[0] , ADD_VALUES);CHKERRQ(ierr);
+	ierr = MatSetValue(LHS, vydof[jyl][ixl], vydof[jyl-1][ixl], -Pcoef*2.0*eta/dy/Kcont[0] , ADD_VALUES);CHKERRQ(ierr);
+	ierr = MatSetValue(LHS, vydof[jyl][ixl], pdof[jyl][ixl+1],  -Pcoef, ADD_VALUES);CHKERRQ(ierr);
+	ierr = VecSetValue(RHS, vydof[jyl][ixl], -Pcoef*2.0*eta/dy/Kcont[0] * vyg, ADD_VALUES);CHKERRQ(ierr);
       } else if( jy == NY-1 && ix < NX-1 && !in_slab( grid->xc[ix+1], grid->y[jy], options->slabAngle) ){
 	/* get coefficient for vx[ix-1][jy] */
-	PetscScalar mydy = grid->y[jy]-grid->y[jy-1];
-	PetscScalar vycoef = (4*etaNZ[jy][ix+1])/(3.*(grid->y[jy-1] - grid->y[jy])*(grid->yc[jy] - grid->yc[1 + jy]));
-
-	PetscScalar Pcoef = Kcont[0]/(grid->yc[jy] - grid->yc[1 + jy]);
-
-	// first implement ghost pressure BC in x-momentum equation
-	ierr = MatSetValue( LHS, vydof[jyl][ixl], pdof[jyl][ixl+1], Pcoef , ADD_VALUES);CHKERRQ(ierr);
-	// now implement ghost velocity in x-momentum equation - affects pressure too
-	PetscScalar dy = grid->y[jy]-grid->y[jy-1];
 	PetscScalar eta = etaNZ[jy][ix+1];
-	PetscScalar Pcoef3 = Kcont[0] * vycoef * dy/eta;
-	PetscScalar vycoef1 = vycoef;
-	ierr = MatSetValue( LHS, vydof[jyl][ixl],vydof[jyl-1][ixl], vycoef1, ADD_VALUES);CHKERRQ(ierr);
-	ierr = MatSetValue( LHS, vydof[jyl][ixl],pdof[jyl][ixl+1],Pcoef3, ADD_VALUES);CHKERRQ(ierr);
+	PetscScalar Pcoef = Kcont[0]/(grid->yc[jy] - grid->yc[1 + jy]);
+	PetscScalar dx = grid->x[ix+1]-grid->x[ix];
+	PetscScalar dy = grid->y[jy]-grid->y[jy-1];
+	ierr = MatSetValue(LHS, vydof[jyl][ixl], vydof[jyl][ixl],    Pcoef*2.0*eta/dy/Kcont[0] , ADD_VALUES);CHKERRQ(ierr);
+	ierr = MatSetValue(LHS, vydof[jyl][ixl], vxdof[jyl][ixl+1], -Pcoef*2.0*eta/dx/Kcont[0] , ADD_VALUES);CHKERRQ(ierr);
+	ierr = MatSetValue(LHS, vydof[jyl][ixl], vxdof[jyl][ixl],    Pcoef*2.0*eta/dx/Kcont[0] , ADD_VALUES);CHKERRQ(ierr);
+	ierr = MatSetValue(LHS, vydof[jyl][ixl], vydof[jyl-1][ixl], -Pcoef*2.0*eta/dy/Kcont[0] , ADD_VALUES);CHKERRQ(ierr);
+	ierr = MatSetValue(LHS, vydof[jyl][ixl], pdof[jyl][ixl+1],  -Pcoef, ADD_VALUES);CHKERRQ(ierr);
       }
       
 
@@ -603,13 +584,13 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
   }/* end y-loop */
 
   ierr = VecAssemblyBegin(RHS);
-  ierr = VecAssemblyBegin(RHSz); CHKERRQ(ierr);
+
   ierr = MatAssemblyBegin( LHS, MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-  ierr = MatAssemblyBegin( LHSz, MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+
   ierr = MatAssemblyEnd( LHS, MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-  ierr = MatAssemblyEnd( LHSz, MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+
   ierr = VecAssemblyEnd(RHS);CHKERRQ(ierr);
-  ierr = VecAssemblyEnd(RHSz); CHKERRQ(ierr);
+
 
 
 
