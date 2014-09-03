@@ -53,10 +53,10 @@ PetscErrorCode restartFromMarkers( MarkerSet *markerset, GridData *grid, Materia
   loadMarkerFieldI(& markers[0].cellY, &nMarks[0], of);
   loadMarkerFieldS(& markers[0].X, &nMarks[0], of);
   loadMarkerFieldS(& markers[0].Y, &nMarks[0], of);
-  loadMarkerFieldS(& markers[0].Z, &nMarks[0], of);
+/*   loadMarkerFieldS(& markers[0].Z, &nMarks[0], of); */
   loadMarkerFieldS(& markers[0].VX, &nMarks[0], of);
   loadMarkerFieldS(& markers[0].VY, &nMarks[0], of);
-  loadMarkerFieldS(& markers[0].VZ, &nMarks[0], of);
+/*   loadMarkerFieldS(& markers[0].VZ, &nMarks[0], of); */
   loadMarkerFieldI(& markers[0].Mat, &nMarks[0], of);
   loadMarkerFieldS(& markers[0].T, &nMarks[0], of);
   loadMarkerFieldS(& markers[0].Tdot, &nMarks[0], of);
@@ -72,8 +72,8 @@ PetscErrorCode restartFromMarkers( MarkerSet *markerset, GridData *grid, Materia
 #endif
   //Damage
   /*   fwrite( markers->D, sizeof(PetscScalar), markers->nMark, of); */
-  loadMarkerFieldS(& markers[0].D, &nMarks[0], of);
-  loadMarkerFieldS(& markers[0].Ddot, &nMarks[0], of);
+/*   loadMarkerFieldS(& markers[0].D, &nMarks[0], of); */
+/*   loadMarkerFieldS(& markers[0].Ddot, &nMarks[0], of); */
   //exx
   /*   fwrite( markers->exx, sizeof(PetscScalar), markers->nMark, of); */
   loadMarkerFieldS(& markers[0].e.T11, &nMarks[0], of);

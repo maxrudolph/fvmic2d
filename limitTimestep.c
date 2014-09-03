@@ -17,21 +17,21 @@ PetscErrorCode limitDisplacementTimestep(GridData *grid, NodalFields *nodalField
   PetscInt x,y,m,n;
   PetscFunctionBegin;  
   ierr=DMDAGetCorners(grid->da,&x,&y,PETSC_NULL,&m,&n,PETSC_NULL);CHKERRQ(ierr);
-  Vec vxl, vyl, vzl;
+  Vec vxl, vyl;
   ierr=DMCreateLocalVector(grid->da,&vxl);
   ierr=VecDuplicate(vxl,&vyl);
-  ierr=VecDuplicate(vxl,&vzl);
+  //  ierr=VecDuplicate(vxl,&vzl);
   ierr=DMGlobalToLocalBegin(grid->da,nodalFields->vx,INSERT_VALUES,vxl);CHKERRQ(ierr);
   ierr=DMGlobalToLocalEnd(grid->da,nodalFields->vx,INSERT_VALUES,vxl);CHKERRQ(ierr);
 
   ierr=DMGlobalToLocalBegin(grid->da,nodalFields->vy,INSERT_VALUES,vyl);CHKERRQ(ierr);
   ierr=DMGlobalToLocalEnd(grid->da,nodalFields->vy,INSERT_VALUES,vyl);CHKERRQ(ierr);
-  ierr=DMGlobalToLocalBegin(grid->da,nodalFields->vz,INSERT_VALUES,vzl);CHKERRQ(ierr);
-  ierr=DMGlobalToLocalEnd(grid->da,nodalFields->vz,INSERT_VALUES,vzl);CHKERRQ(ierr);
+/*   ierr=DMGlobalToLocalBegin(grid->da,nodalFields->vz,INSERT_VALUES,vzl);CHKERRQ(ierr); */
+/*   ierr=DMGlobalToLocalEnd(grid->da,nodalFields->vz,INSERT_VALUES,vzl);CHKERRQ(ierr); */
   PetscScalar **vx, **vy, **vz;  
   ierr=DMDAVecGetArray( grid->da,vxl,&vx);CHKERRQ(ierr);
   ierr=DMDAVecGetArray( grid->da,vyl,&vy);CHKERRQ(ierr);
-  ierr=DMDAVecGetArray( grid->da,vzl,&vz);CHKERRQ(ierr);
+/*   ierr=DMDAVecGetArray( grid->da,vzl,&vz);CHKERRQ(ierr); */
 
   /* get local part of rhodot*/
   PetscScalar **rhodot;
@@ -84,14 +84,14 @@ PetscErrorCode limitDisplacementTimestep(GridData *grid, NodalFields *nodalField
       if( displacementdt[0] > dt1 ) displacementdt[0] = dt1;
 
       /* vz */
-      if( jy > 0 && ix > 0){
-	if( vz[jy][ix] != 0.0){
-	  dt1 = sqrt(dx*dx+dy*dy)/(fabs(vz[jy][ix]))*dispFactor;
-	}else{
-	  dt1 = displacementdt[0];
-	}
-	if( displacementdt[0] > dt1 ) displacementdt[0] = dt1;
-      }
+      /*       if( jy > 0 && ix > 0){ */
+      /* 	if( vz[jy][ix] != 0.0){ */
+      /* 	  dt1 = sqrt(dx*dx+dy*dy)/(fabs(vz[jy][ix]))*dispFactor; */
+      /* 	}else{ */
+      /* 	  dt1 = displacementdt[0]; */
+      /* 	} */
+      /* 	if( displacementdt[0] > dt1 ) displacementdt[0] = dt1; */
+      /*       } */
 
       if(rhodot[jy][ix] != 0.0){
 	dt1 = fabs(0.01*rho[jy][ix]/rhodot[jy][ix]); /* 0.01 is 1 % density change */
@@ -123,11 +123,11 @@ PetscErrorCode limitDisplacementTimestep(GridData *grid, NodalFields *nodalField
   ierr=DMDAVecRestoreArray(grid->da,nodalFields->rho,&rho);
   ierr=DMDAVecRestoreArray( grid->da,vxl,&vx);CHKERRQ(ierr);
   ierr=DMDAVecRestoreArray( grid->da,vyl,&vy);CHKERRQ(ierr);
-  ierr=DMDAVecRestoreArray( grid->da,vzl,&vz);CHKERRQ(ierr);
+  //  ierr=DMDAVecRestoreArray( grid->da,vzl,&vz);CHKERRQ(ierr);
 
   ierr=VecDestroy(&vxl);CHKERRQ(ierr);
   ierr=VecDestroy(&vyl);CHKERRQ(ierr);
-  ierr=VecDestroy(&vzl);CHKERRQ(ierr);
+  //  ierr=VecDestroy(&vzl);CHKERRQ(ierr);
 
   PetscFunctionReturn(ierr);
 }

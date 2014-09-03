@@ -38,19 +38,19 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 
 
   /* soxxZ etc should be global vectors complete with ghost information*/
-  Vec soxxZg,soyyZg,sozzZg,soxyZg,soxzZg,soyzZg,etaSZg,etaNZg,etavxZg,etavyZg,X;
+  Vec soxxZg,soyyZg,sozzZg,soxyZg,etaSZg,etaNZg,X;
   PetscFunctionBegin;
   ierr=VecDuplicate( nodalFields->soxx, &soxxZg);CHKERRQ(ierr);
   ierr=VecDuplicate( nodalFields->soxx, &soyyZg);CHKERRQ(ierr);
-  ierr=VecDuplicate( nodalFields->soxx, &sozzZg);CHKERRQ(ierr);
+  //  ierr=VecDuplicate( nodalFields->soxx, &sozzZg);CHKERRQ(ierr);
   ierr=VecDuplicate( nodalFields->soxx, &soxyZg);CHKERRQ(ierr);
-  ierr=VecDuplicate( nodalFields->soxx, &soxzZg);CHKERRQ(ierr);
-  ierr=VecDuplicate( nodalFields->soxx, &soyzZg);CHKERRQ(ierr);
+  //ierr=VecDuplicate( nodalFields->soxx, &soxzZg);CHKERRQ(ierr);
+  //ierr=VecDuplicate( nodalFields->soxx, &soyzZg);CHKERRQ(ierr);
 
   ierr=VecDuplicate( nodalFields->soxx, &etaSZg);CHKERRQ(ierr);
   ierr=VecDuplicate( nodalFields->soxx, &etaNZg);CHKERRQ(ierr);
-  ierr=VecDuplicate( nodalFields->soxx, &etavxZg);CHKERRQ(ierr);
-  ierr=VecDuplicate( nodalFields->soxx, &etavyZg);CHKERRQ(ierr);
+  //ierr=VecDuplicate( nodalFields->soxx, &etavxZg);CHKERRQ(ierr);
+  //ierr=VecDuplicate( nodalFields->soxx, &etavyZg);CHKERRQ(ierr);
 
   ierr=VecDuplicate( nodalFields->soxx, &X);CHKERRQ(ierr);/*viscoelasticity factor*/
 
@@ -80,11 +80,11 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 /*   ierr=VecView(X,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr); */
   ierr=VecCopy(nodalFields->soxy,soxyZg);CHKERRQ(ierr);
   ierr=VecPointwiseMult(soxyZg,X,soxyZg);CHKERRQ(ierr);
-  ierr=VecCopy(nodalFields->soxz,soxzZg);CHKERRQ(ierr);
-  ierr=VecPointwiseMult(soxzZg,X,soxzZg);CHKERRQ(ierr);
+  /*   ierr=VecCopy(nodalFields->soxz,soxzZg);CHKERRQ(ierr); */
+  /*   ierr=VecPointwiseMult(soxzZg,X,soxzZg);CHKERRQ(ierr); */
 
-  ierr=VecCopy(nodalFields->soyz,soyzZg);CHKERRQ(ierr);
-  ierr=VecPointwiseMult(soyzZg,X,soyzZg);CHKERRQ(ierr);
+  /*   ierr=VecCopy(nodalFields->soyz,soyzZg);CHKERRQ(ierr); */
+  /*   ierr=VecPointwiseMult(soyzZg,X,soyzZg);CHKERRQ(ierr); */
   /* now negate X and add 1.0*/
   ierr=VecScale(X,-1.0);CHKERRQ(ierr);
   ierr=VecShift(X,1.0);CHKERRQ(ierr);
@@ -93,23 +93,23 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
   ierr=VecPointwiseMult(etaSZg,X,etaSZg); CHKERRQ(ierr);
 
   /* out-of-plane flow uses etavx for viscosity when computing sxz */
-  ierr=VecCopy(nodalFields->etavx,X);
-  ierr=VecAXPY(X,dt,nodalFields->muvx);/* X now holds etaN+dt*muN */
-  ierr=VecPointwiseDivide(X,nodalFields->etavx,X);/* X now holds etaN/(etaN+dt*muN)*/
+  //ierr=VecCopy(nodalFields->etavx,X);
+  //ierr=VecAXPY(X,dt,nodalFields->muvx);/* X now holds etaN+dt*muN */
+  //ierr=VecPointwiseDivide(X,nodalFields->etavx,X);/* X now holds etaN/(etaN+dt*muN)*/
   /* soxz adjustment would go here if soxz was evaluated at vx nodes */
-  ierr=VecScale(X,-1.0);CHKERRQ(ierr);
-  ierr=VecShift(X,1.0);CHKERRQ(ierr);
-  ierr=VecCopy(nodalFields->etavx,etavxZg);CHKERRQ(ierr);
-  ierr=VecPointwiseMult(etavxZg,X,etavxZg);CHKERRQ(ierr);
+  //ierr=VecScale(X,-1.0);CHKERRQ(ierr);
+  //ierr=VecShift(X,1.0);CHKERRQ(ierr);
+  //ierr=VecCopy(nodalFields->etavx,etavxZg);CHKERRQ(ierr);
+  //ierr=VecPointwiseMult(etavxZg,X,etavxZg);CHKERRQ(ierr);
   
-  ierr=VecCopy(nodalFields->etavy,X);
-  ierr=VecAXPY(X,dt,nodalFields->muvy);/* X now holds etaN+dt*muN */
-  ierr=VecPointwiseDivide(X,nodalFields->etavy,X);/* X now holds etaN/(etaN+dt*muN)*/
+  //ierr=VecCopy(nodalFields->etavy,X);
+  //ierr=VecAXPY(X,dt,nodalFields->muvy);/* X now holds etaN+dt*muN */
+  //  ierr=VecPointwiseDivide(X,nodalFields->etavy,X);/* X now holds etaN/(etaN+dt*muN)*/
 
-  ierr=VecScale(X,-1.0);CHKERRQ(ierr);
-  ierr=VecShift(X,1.0);CHKERRQ(ierr);
-  ierr=VecCopy(nodalFields->etavy,etavyZg);CHKERRQ(ierr);
-  ierr=VecPointwiseMult(etavyZg,X,etavyZg);CHKERRQ(ierr);
+  //ierr=VecScale(X,-1.0);CHKERRQ(ierr);
+  //ierr=VecShift(X,1.0);CHKERRQ(ierr);
+  //ierr=VecCopy(nodalFields->etavy,etavyZg);CHKERRQ(ierr);
+  //ierr=VecPointwiseMult(etavyZg,X,etavyZg);CHKERRQ(ierr);
 
 
   /* compute Kbond and Kcont*/
@@ -127,19 +127,19 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
   /* now calculate mass loss from system */
   PetscInt x,y,m,n;
   ierr=DMDAGetCorners(grid->da,&x,&y,PETSC_NULL,&m,&n,PETSC_NULL);CHKERRQ(ierr);
-  Vec rhol,rhodotl,etaNZl,etaSZl,etavxZl,etavyZl,soxxZl,soyyZl,soxyZl, soxzZl, soyzZl;/* declare other local vecs here*/
-  PetscScalar **rho,**rhodot, **etaNZ, **etaSZ, **etavxZ, **etavyZ, **soxxZ,**soyyZ, **soxyZ, **soxzZ, **soyzZ;
+  Vec rhol,rhodotl,etaNZl,etaSZl,soxxZl,soyyZl,soxyZl;/* declare other local vecs here*/
+  PetscScalar **rho,**rhodot, **etaNZ, **etaSZ, **soxxZ,**soyyZ, **soxyZ;
   ierr=DMCreateLocalVector(grid->da, &rhol);CHKERRQ(ierr);
   ierr=VecDuplicate(rhol,&rhodotl);CHKERRQ(ierr);
   ierr=VecDuplicate(rhol,&etaNZl);CHKERRQ(ierr);
   ierr=VecDuplicate(rhol,&etaSZl);CHKERRQ(ierr);
-  ierr=VecDuplicate(rhol,&etavxZl);CHKERRQ(ierr);
-  ierr=VecDuplicate(rhol,&etavyZl);CHKERRQ(ierr);
+/*   ierr=VecDuplicate(rhol,&etavxZl);CHKERRQ(ierr); */
+/*   ierr=VecDuplicate(rhol,&etavyZl);CHKERRQ(ierr); */
   ierr=VecDuplicate(rhol,&soxxZl);CHKERRQ(ierr);
   ierr=VecDuplicate(rhol,&soxyZl);CHKERRQ(ierr);
   ierr=VecDuplicate(rhol,&soyyZl);CHKERRQ(ierr);
-  ierr=VecDuplicate(rhol,&soxzZl);CHKERRQ(ierr);
-  ierr=VecDuplicate(rhol,&soyzZl);CHKERRQ(ierr);
+/*   ierr=VecDuplicate(rhol,&soxzZl);CHKERRQ(ierr); */
+/*   ierr=VecDuplicate(rhol,&soyzZl);CHKERRQ(ierr); */
 
   ierr=DMGlobalToLocalBegin(grid->da,nodalFields->rho,INSERT_VALUES,rhol);CHKERRQ(ierr);
   ierr=DMGlobalToLocalEnd(grid->da,nodalFields->rho,INSERT_VALUES,rhol);CHKERRQ(ierr);
@@ -151,36 +151,35 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
   ierr=DMGlobalToLocalBegin(grid->da,etaSZg,INSERT_VALUES,etaSZl);CHKERRQ(ierr);
   ierr=DMGlobalToLocalEnd(grid->da,etaSZg,INSERT_VALUES,etaSZl);CHKERRQ(ierr);
 
-  ierr=DMGlobalToLocalBegin(grid->da,etavxZg,INSERT_VALUES,etavxZl);CHKERRQ(ierr);
-  ierr=DMGlobalToLocalEnd(grid->da,etavxZg,INSERT_VALUES,etavxZl);CHKERRQ(ierr);
-  ierr=DMGlobalToLocalBegin(grid->da,etavyZg,INSERT_VALUES,etavyZl);CHKERRQ(ierr);
-  ierr=DMGlobalToLocalEnd(grid->da,etavyZg,INSERT_VALUES,etavyZl);CHKERRQ(ierr);
+/*   ierr=DMGlobalToLocalBegin(grid->da,etavxZg,INSERT_VALUES,etavxZl);CHKERRQ(ierr); */
+/*   ierr=DMGlobalToLocalEnd(grid->da,etavxZg,INSERT_VALUES,etavxZl);CHKERRQ(ierr); */
+/*   ierr=DMGlobalToLocalBegin(grid->da,etavyZg,INSERT_VALUES,etavyZl);CHKERRQ(ierr); */
+/*   ierr=DMGlobalToLocalEnd(grid->da,etavyZg,INSERT_VALUES,etavyZl);CHKERRQ(ierr); */
 
   ierr=DMGlobalToLocalBegin(grid->da,soxxZg,INSERT_VALUES,soxxZl);CHKERRQ(ierr);
   ierr=DMGlobalToLocalEnd(grid->da,soxxZg,INSERT_VALUES,soxxZl);CHKERRQ(ierr);
 
-  ierr=DMGlobalToLocalBegin(grid->da,soxyZg,INSERT_VALUES,soxyZl);CHKERRQ(ierr);
-  ierr=DMGlobalToLocalEnd(grid->da,soxyZg,INSERT_VALUES,soxyZl);CHKERRQ(ierr);
+/*   ierr=DMGlobalToLocalBegin(grid->da,soxyZg,INSERT_VALUES,soxyZl);CHKERRQ(ierr); */
+/*   ierr=DMGlobalToLocalEnd(grid->da,soxyZg,INSERT_VALUES,soxyZl);CHKERRQ(ierr); */
 
-  ierr=DMGlobalToLocalBegin(grid->da,soxzZg,INSERT_VALUES,soxzZl);CHKERRQ(ierr);
-  ierr=DMGlobalToLocalEnd(grid->da,soxzZg,INSERT_VALUES,soxzZl);CHKERRQ(ierr);
-  ierr=DMGlobalToLocalBegin(grid->da,soyzZg,INSERT_VALUES,soyzZl);CHKERRQ(ierr);
-  ierr=DMGlobalToLocalEnd(grid->da,soyzZg,INSERT_VALUES,soyzZl);CHKERRQ(ierr);
+/*   ierr=DMGlobalToLocalBegin(grid->da,soxzZg,INSERT_VALUES,soxzZl);CHKERRQ(ierr); */
+/*   ierr=DMGlobalToLocalEnd(grid->da,soxzZg,INSERT_VALUES,soxzZl);CHKERRQ(ierr); */
+/*   ierr=DMGlobalToLocalBegin(grid->da,soyzZg,INSERT_VALUES,soyzZl);CHKERRQ(ierr); */
+/*   ierr=DMGlobalToLocalEnd(grid->da,soyzZg,INSERT_VALUES,soyzZl);CHKERRQ(ierr); */
 
-  ierr=DMGlobalToLocalBegin(grid->da,soyyZg,INSERT_VALUES,soyyZl);CHKERRQ(ierr);
-  ierr=DMGlobalToLocalEnd(grid->da,soyyZg,INSERT_VALUES,soyyZl);CHKERRQ(ierr);
+
   /* get arrays of values*/
   ierr=DMDAVecGetArray(grid->da,rhol,&rho);CHKERRQ(ierr);
   ierr=DMDAVecGetArray(grid->da,rhodotl,&rhodot);CHKERRQ(ierr);
   ierr=DMDAVecGetArray(grid->da,etaSZl,&etaSZ);CHKERRQ(ierr);
   ierr=DMDAVecGetArray(grid->da,etaNZl,&etaNZ);CHKERRQ(ierr);
-  ierr=DMDAVecGetArray(grid->da,etavxZl,&etavxZ);CHKERRQ(ierr);
-  ierr=DMDAVecGetArray(grid->da,etavyZl,&etavyZ);CHKERRQ(ierr);
+/*   ierr=DMDAVecGetArray(grid->da,etavxZl,&etavxZ);CHKERRQ(ierr); */
+/*   ierr=DMDAVecGetArray(grid->da,etavyZl,&etavyZ);CHKERRQ(ierr); */
 
   ierr=DMDAVecGetArray(grid->da,soxxZl,&soxxZ);CHKERRQ(ierr);
   ierr=DMDAVecGetArray(grid->da,soxyZl,&soxyZ);CHKERRQ(ierr);
-  ierr=DMDAVecGetArray(grid->da,soxzZl,&soxzZ);CHKERRQ(ierr);
-  ierr=DMDAVecGetArray(grid->da,soyzZl,&soyzZ);CHKERRQ(ierr);
+  /*   ierr=DMDAVecGetArray(grid->da,soxzZl,&soxzZ);CHKERRQ(ierr); */
+  /*   ierr=DMDAVecGetArray(grid->da,soyzZl,&soyzZ);CHKERRQ(ierr); */
   ierr=DMDAVecGetArray(grid->da,soyyZl,&soyyZ);CHKERRQ(ierr);
 
 
@@ -207,12 +206,12 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
   PetscInt **vxdof;
   PetscInt **vydof;
   PetscInt **pdof;
-  PetscInt **vzdof;
+  //  PetscInt **vzdof;
   PetscInt ix,jy;
   PetscMalloc( (ng+1)*sizeof(PetscInt *), &vxdof);
   PetscMalloc( (ng+1)*sizeof(PetscInt *), &vydof);
   PetscMalloc( ng*sizeof(PetscInt *), &pdof);
-  PetscMalloc( ng*sizeof(PetscInt *), &vzdof);
+  //  PetscMalloc( ng*sizeof(PetscInt *), &vzdof);
   
   vxdof++; vydof++;
   ierr=PetscMalloc( (mg+1)*sizeof(PetscInt), &vxdof[-1]);CHKERRQ(ierr); vxdof[-1]++;
@@ -221,7 +220,7 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
     ierr=PetscMalloc( (mg+1)*sizeof(PetscInt), &vxdof[jy]);CHKERRQ(ierr); vxdof[jy]++;
     ierr=PetscMalloc( (mg+1)*sizeof(PetscInt), &vydof[jy]);CHKERRQ(ierr); vydof[jy]++;
     ierr=PetscMalloc( mg*sizeof(PetscInt), &pdof[jy]);CHKERRQ(ierr);
-    ierr=PetscMalloc( mg*sizeof(PetscInt), &vzdof[jy]);CHKERRQ(ierr);
+    //ierr=PetscMalloc( mg*sizeof(PetscInt), &vzdof[jy]);CHKERRQ(ierr);
   }
 
   for(jy=-1;jy<ng;jy++){
@@ -233,7 +232,7 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 	pdof[jy][ix] = 3*globalIdx[ix+mg*jy]+DOF_P;
 	vxdof[jy][ix] = 3*globalIdx[ix+mg*jy]+DOF_U;
 	vydof[jy][ix] = 3*globalIdx[ix+mg*jy]+DOF_V;
-	vzdof[jy][ix] = globalIdx[ix+mg*jy];/* vz goes into a separate matrix*/
+	//vzdof[jy][ix] = globalIdx[ix+mg*jy];/* vz goes into a separate matrix*/
       }
     }
   }
@@ -330,10 +329,10 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 	PetscScalar v0011 = etaNZ[v0005][ix];
 	PetscScalar v0012 = etaNZ[v0005][v0004];
 	if( ix == NX-1 ) v0012 = v0011;
-	PetscScalar v0013 = 1/(v0000 - v0007);
-	PetscScalar v0014 = 1/(v0002 - grid->x[v0004]);
+	PetscScalar v0013 = 1.0/(v0000 - v0007);
+	PetscScalar v0014 = 1.0/(v0002 - grid->x[v0004]);
 	if( ix == NX-1){
-	  v0014 = grid->x[NX-1] - grid->x[NX-2];
+	  v0014 = 1.0/(grid->x[NX-2] - grid->x[NX-1]);
 	}
 
 	PetscScalar v0015 = 1/(v0003 - v0008);
@@ -635,37 +634,37 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
   ierr=DMDAVecRestoreArray(grid->da,rhodotl,&rhodot);CHKERRQ(ierr);
   ierr=DMDAVecRestoreArray(grid->da,etaSZl,&etaSZ);CHKERRQ(ierr);
   ierr=DMDAVecRestoreArray(grid->da,etaNZl,&etaNZ);CHKERRQ(ierr);
-  ierr=DMDAVecRestoreArray(grid->da,etavxZl,&etavxZ);CHKERRQ(ierr);
-  ierr=DMDAVecRestoreArray(grid->da,etavyZl,&etavyZ);CHKERRQ(ierr);
+  //  ierr=DMDAVecRestoreArray(grid->da,etavxZl,&etavxZ);CHKERRQ(ierr);
+  //ierr=DMDAVecRestoreArray(grid->da,etavyZl,&etavyZ);CHKERRQ(ierr);
   ierr=DMDAVecRestoreArray(grid->da,soxxZl,&soxxZ);CHKERRQ(ierr);
   ierr=DMDAVecRestoreArray(grid->da,soyyZl,&soyyZ);CHKERRQ(ierr);
 
   ierr=DMDAVecRestoreArray(grid->da,soxyZl,&soxyZ);CHKERRQ(ierr);
-  ierr=DMDAVecRestoreArray(grid->da,soxzZl,&soxzZ);CHKERRQ(ierr);
-  ierr=DMDAVecRestoreArray(grid->da,soyzZl,&soyzZ);CHKERRQ(ierr);
+  //ierr=DMDAVecRestoreArray(grid->da,soxzZl,&soxzZ);CHKERRQ(ierr);
+  //ierr=DMDAVecRestoreArray(grid->da,soyzZl,&soyzZ);CHKERRQ(ierr);
 
   ierr=VecDestroy(& rhol);CHKERRQ(ierr);
   ierr=VecDestroy(&  rhodotl);CHKERRQ(ierr);
   ierr=VecDestroy(&  etaNZl);CHKERRQ(ierr);
   ierr=VecDestroy(&  etaSZl);CHKERRQ(ierr);
-  ierr=VecDestroy(&  etavxZl);CHKERRQ(ierr);
-  ierr=VecDestroy(&  etavyZl);CHKERRQ(ierr);
+  //ierr=VecDestroy(&  etavxZl);CHKERRQ(ierr);
+  //ierr=VecDestroy(&  etavyZl);CHKERRQ(ierr);
   ierr=VecDestroy(&  soxxZl);CHKERRQ(ierr);
   ierr=VecDestroy(&  soxyZl);CHKERRQ(ierr);
-  ierr=VecDestroy(&  soxzZl);CHKERRQ(ierr);
-  ierr=VecDestroy(&  soyzZl);CHKERRQ(ierr);
+  //ierr=VecDestroy(&  soxzZl);CHKERRQ(ierr);
+  //ierr=VecDestroy(&  soyzZl);CHKERRQ(ierr);
   ierr=VecDestroy(&  soyyZl);CHKERRQ(ierr);
   ierr=VecDestroy(&  soxxZg);CHKERRQ(ierr);
   ierr=VecDestroy(&  soyyZg);CHKERRQ(ierr);
-  ierr=VecDestroy(&  sozzZg);CHKERRQ(ierr);
+  //ierr=VecDestroy(&  sozzZg);CHKERRQ(ierr);
   ierr=VecDestroy(&  soxyZg);CHKERRQ(ierr);
-  ierr=VecDestroy(&  soxzZg);CHKERRQ(ierr);
-  ierr=VecDestroy(&  soyzZg);CHKERRQ(ierr);
+  //ierr=VecDestroy(&  soxzZg);CHKERRQ(ierr);
+  //ierr=VecDestroy(&  soyzZg);CHKERRQ(ierr);
 
   ierr=VecDestroy(&  etaSZg);CHKERRQ(ierr);
   ierr=VecDestroy(&  etaNZg);CHKERRQ(ierr);
-  ierr=VecDestroy(&  etavxZg);CHKERRQ(ierr);
-  ierr=VecDestroy(&  etavyZg);CHKERRQ(ierr);
+  //ierr=VecDestroy(&  etavxZg);CHKERRQ(ierr);
+  //ierr=VecDestroy(&  etavyZg);CHKERRQ(ierr);
 
   ierr=VecDestroy(&  X);CHKERRQ(ierr);
 
@@ -679,7 +678,7 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
     ierr=PetscFree(vxdof[jy]);CHKERRQ(ierr);
     ierr=PetscFree(vydof[jy]);CHKERRQ(ierr);
     ierr=PetscFree(pdof[jy]); CHKERRQ(ierr);
-    ierr=PetscFree(vzdof[jy]);CHKERRQ(ierr);
+    //ierr=PetscFree(vzdof[jy]);CHKERRQ(ierr);
   }
   vxdof[-1] --;
   vydof[-1] --;
@@ -690,7 +689,7 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
   ierr=PetscFree(vxdof);CHKERRQ(ierr);
   ierr=PetscFree(vydof);CHKERRQ(ierr);
   ierr=PetscFree(pdof);CHKERRQ(ierr);
-  ierr=PetscFree(vzdof);CHKERRQ(ierr);
+  //  ierr=PetscFree(vzdof);CHKERRQ(ierr);
 
 /*   PetscScalar rhsnorm; */
 /*   ierr = VecNorm( RHS, NORM_2, &rhsnorm); CHKERRQ(ierr); */

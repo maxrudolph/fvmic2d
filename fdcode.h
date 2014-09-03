@@ -49,7 +49,7 @@ typedef struct {
   /* fields defined at gridline intersections */
 
   Vec rho, rhodot, etaS, etaN; /* mechanical properties */
-  Vec etavx, etavy; /* mechanical properties stored at mid-side nodes for problems with out-of-plane motion */
+  //  Vec etavx, etavy; /* mechanical properties stored at mid-side nodes for problems with out-of-plane motion */
   Vec thisT, lastT, kThermal, Cp; /*thermal*/
   PetscScalar boundaryT; /* boundary condition value*/
 
@@ -57,12 +57,12 @@ typedef struct {
   Vec edotyy, edotzz, edotxz, edotyz;
 
   Vec soxx, soxy;/* nodal stresses*/
-  Vec soyy, sozz, soxz, soyz; /* additional stress components - needed for 2.5d simulations*/
-  Vec dsxx, dsyy, dszz, dsxy, dsxz, dsyz;/* stress changes*/
+  Vec soyy; /* additional stress components - needed for 2.5d simulations*/
+  Vec dsxx, dsyy, dsxy;/* stress changes*/
   Vec muS, muN;  /*elastic mu*/
-  Vec muvx, muvy; /* mid-side properties */
-  Vec vx,vy,vz,p;
-  Vec eii,sii,wxy,wxz,wyz;/* stress and strain-rate 2nd invariants, vorticity*/
+/*   Vec muvx, muvy; */ /* mid-side properties */
+  Vec vx,vy,p;
+  Vec eii,sii,wxy;/* stress and strain-rate 2nd invariants, vorticity*/
   Vec ha;         /* adiabatic heating*/
   Vec nodalHeating; /* shear + adiabatic heating */
   Vec VPTensorC; /*viscoplasticity tensor, cell-centered*/
@@ -110,10 +110,10 @@ typedef struct {
 typedef struct {/* an individual marker */
   PetscScalar X;
   PetscScalar Y;
-  PetscScalar Z;
+
   PetscScalar VX;
   PetscScalar VY;
-  PetscScalar VZ;
+
   PetscInt Mat;
   PetscScalar T, Tdot;
   /*PetscScalar *sxx, *syy, *szz, *sxy, *sxz, *syz;*/
@@ -128,8 +128,8 @@ typedef struct {/* an individual marker */
   /*   PetscScalar *Exx, *Exy, *Eyy, *Exz, *Eyz; */ /* total strain*/
   Tensor33s E;
   PetscScalar Eii; /* total strain second invariant */
-  PetscScalar wxy, wxz, wyz; /* vorticity vector */
-  PetscScalar D, Ddot;/* scalar damage, damage rate*/
+  PetscScalar wxy; /* vorticity vector */
+
   PetscInt cellX, cellY, cpu;/* I,J cell (using upper right basic node) of each marker, cpu that I belong to*/
   PetscScalar strainRateResidual;
   PetscInt isYielding;

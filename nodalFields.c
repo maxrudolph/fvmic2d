@@ -78,10 +78,10 @@ PetscErrorCode initializeNodalFields( NodalFields *nodalFields, GridData *grid, 
   ierr = VecDuplicate( nodalFields->lastT, &nodalFields->etaN);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) nodalFields->etaS,"etaS");CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) nodalFields->etaN,"etaN");CHKERRQ(ierr);
-  ierr = VecDuplicate( nodalFields->lastT, &nodalFields->etavx);CHKERRQ(ierr);
-  ierr = PetscObjectSetName((PetscObject) nodalFields->etavx,"etavx");CHKERRQ(ierr);
-  ierr = VecDuplicate( nodalFields->lastT, &nodalFields->etavy);CHKERRQ(ierr);
-  ierr = PetscObjectSetName((PetscObject) nodalFields->etavy,"etavy");CHKERRQ(ierr);
+/*   ierr = VecDuplicate( nodalFields->lastT, &nodalFields->etavx);CHKERRQ(ierr); */
+/*   ierr = PetscObjectSetName((PetscObject) nodalFields->etavx,"etavx");CHKERRQ(ierr); */
+/*   ierr = VecDuplicate( nodalFields->lastT, &nodalFields->etavy);CHKERRQ(ierr); */
+/*   ierr = PetscObjectSetName((PetscObject) nodalFields->etavy,"etavy");CHKERRQ(ierr); */
 
 
   /* arrays to hold nodal strain rates*/
@@ -94,19 +94,19 @@ PetscErrorCode initializeNodalFields( NodalFields *nodalFields, GridData *grid, 
   ierr = PetscObjectSetName((PetscObject) nodalFields->edotzz, "rho");CHKERRQ(ierr);
   ierr = VecDuplicate( nodalFields->lastT, &nodalFields->edotxy);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) nodalFields->edotxy, "edotxy");CHKERRQ(ierr);
-  ierr = VecDuplicate( nodalFields->lastT, &nodalFields->edotxz);CHKERRQ(ierr);
-  ierr = PetscObjectSetName((PetscObject) nodalFields->edotxz, "edotxz");CHKERRQ(ierr);
-  ierr = VecDuplicate( nodalFields->lastT, &nodalFields->edotyz);CHKERRQ(ierr);
-  ierr = PetscObjectSetName((PetscObject) nodalFields->edotyz, "edotyz");CHKERRQ(ierr);
+/*   ierr = VecDuplicate( nodalFields->lastT, &nodalFields->edotxz);CHKERRQ(ierr); */
+/*   ierr = PetscObjectSetName((PetscObject) nodalFields->edotxz, "edotxz");CHKERRQ(ierr); */
+/*   ierr = VecDuplicate( nodalFields->lastT, &nodalFields->edotyz);CHKERRQ(ierr); */
+/*   ierr = PetscObjectSetName((PetscObject) nodalFields->edotyz, "edotyz");CHKERRQ(ierr); */
   ierr = VecDuplicate( nodalFields->lastT, &nodalFields->eii);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) nodalFields->eii, "eii");CHKERRQ(ierr);
   /* same for nodal stresses*/
   ierr = VecDuplicate( nodalFields->lastT, &nodalFields->dsxx);CHKERRQ(ierr);
   ierr = VecDuplicate( nodalFields->lastT, &nodalFields->dsyy);CHKERRQ(ierr);
-  ierr = VecDuplicate( nodalFields->lastT, &nodalFields->dszz);CHKERRQ(ierr);
+/*   ierr = VecDuplicate( nodalFields->lastT, &nodalFields->dszz);CHKERRQ(ierr); */
   ierr = VecDuplicate( nodalFields->lastT, &nodalFields->dsxy);CHKERRQ(ierr);
-  ierr = VecDuplicate( nodalFields->lastT, &nodalFields->dsxz);CHKERRQ(ierr);
-  ierr = VecDuplicate( nodalFields->lastT, &nodalFields->dsyz);CHKERRQ(ierr);
+/*   ierr = VecDuplicate( nodalFields->lastT, &nodalFields->dsxz);CHKERRQ(ierr); */
+/*   ierr = VecDuplicate( nodalFields->lastT, &nodalFields->dsyz);CHKERRQ(ierr); */
   ierr = VecDuplicate( nodalFields->lastT, &nodalFields->sii);CHKERRQ(ierr);
   ierr = VecDuplicate( nodalFields->lastT, &nodalFields->ha);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) nodalFields->ha,"ha");CHKERRQ(ierr);
@@ -115,38 +115,38 @@ PetscErrorCode initializeNodalFields( NodalFields *nodalFields, GridData *grid, 
   ierr = VecDuplicate( nodalFields->lastT, &nodalFields->muS);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) nodalFields->muN, "muN");CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) nodalFields->muS, "muS");CHKERRQ(ierr);
-  ierr = VecDuplicate( nodalFields->lastT, &nodalFields->muvx);CHKERRQ(ierr);
-  ierr = PetscObjectSetName((PetscObject) nodalFields->muvx,"muvx");CHKERRQ(ierr);
-  ierr = VecDuplicate( nodalFields->lastT, &nodalFields->muvy);CHKERRQ(ierr);
-  ierr = PetscObjectSetName((PetscObject) nodalFields->muvy,"muvy");CHKERRQ(ierr);
+/*   ierr = VecDuplicate( nodalFields->lastT, &nodalFields->muvx);CHKERRQ(ierr); */
+/*   ierr = PetscObjectSetName((PetscObject) nodalFields->muvx,"muvx");CHKERRQ(ierr); */
+/*   ierr = VecDuplicate( nodalFields->lastT, &nodalFields->muvy);CHKERRQ(ierr); */
+/*   ierr = PetscObjectSetName((PetscObject) nodalFields->muvy,"muvy");CHKERRQ(ierr); */
 
   /* same for last deviatoric stresses*/
   ierr = VecDuplicate( nodalFields->lastT, &nodalFields->soxx);CHKERRQ(ierr);
   ierr = VecDuplicate( nodalFields->lastT, &nodalFields->soyy);CHKERRQ(ierr);
-  ierr = VecDuplicate( nodalFields->lastT, &nodalFields->sozz);CHKERRQ(ierr);
+/*   ierr = VecDuplicate( nodalFields->lastT, &nodalFields->sozz);CHKERRQ(ierr); */
   ierr = VecDuplicate( nodalFields->lastT, &nodalFields->soxy);CHKERRQ(ierr);
-  ierr = VecDuplicate( nodalFields->lastT, &nodalFields->soxz);CHKERRQ(ierr);
-  ierr = VecDuplicate( nodalFields->lastT, &nodalFields->soyz);CHKERRQ(ierr);
+/*   ierr = VecDuplicate( nodalFields->lastT, &nodalFields->soxz);CHKERRQ(ierr); */
+/*   ierr = VecDuplicate( nodalFields->lastT, &nodalFields->soyz);CHKERRQ(ierr); */
   ierr = PetscObjectSetName((PetscObject) nodalFields->soxx, "soxx");CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) nodalFields->soyy, "soyy");CHKERRQ(ierr);
-  ierr = PetscObjectSetName((PetscObject) nodalFields->sozz, "sozz");CHKERRQ(ierr);
+/*   ierr = PetscObjectSetName((PetscObject) nodalFields->sozz, "sozz");CHKERRQ(ierr); */
   ierr = PetscObjectSetName((PetscObject) nodalFields->soxy, "soxy");CHKERRQ(ierr);
-  ierr = PetscObjectSetName((PetscObject) nodalFields->soxz, "soxz");CHKERRQ(ierr);
-  ierr = PetscObjectSetName((PetscObject) nodalFields->soyz, "soyz");CHKERRQ(ierr);
+/*   ierr = PetscObjectSetName((PetscObject) nodalFields->soxz, "soxz");CHKERRQ(ierr); */
+/*   ierr = PetscObjectSetName((PetscObject) nodalFields->soyz, "soyz");CHKERRQ(ierr); */
   ierr = VecDuplicate( nodalFields->lastT, &nodalFields->vx);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) nodalFields->vx, "vx");CHKERRQ(ierr);
   ierr = VecDuplicate( nodalFields->lastT, &nodalFields->vy);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) nodalFields->vy, "vy");CHKERRQ(ierr);
-  ierr = VecDuplicate( nodalFields->lastT, &nodalFields->vz);CHKERRQ(ierr);
-  ierr = PetscObjectSetName((PetscObject) nodalFields->vz, "vz");CHKERRQ(ierr);
+/*   ierr = VecDuplicate( nodalFields->lastT, &nodalFields->vz);CHKERRQ(ierr); */
+/*   ierr = PetscObjectSetName((PetscObject) nodalFields->vz, "vz");CHKERRQ(ierr); */
   ierr = VecDuplicate( nodalFields->lastT, &nodalFields->p);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) nodalFields->p, "p");CHKERRQ(ierr);
   ierr = VecDuplicate( nodalFields->lastT, &nodalFields->wxy);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject) nodalFields->wxy, "wxy");CHKERRQ(ierr);
-  ierr = VecDuplicate( nodalFields->lastT, &nodalFields->wxz);CHKERRQ(ierr);
-  ierr = PetscObjectSetName((PetscObject) nodalFields->wxz, "wxz");CHKERRQ(ierr);
-  ierr = VecDuplicate( nodalFields->lastT, &nodalFields->wyz);CHKERRQ(ierr);
-  ierr = PetscObjectSetName((PetscObject) nodalFields->wyz, "wyz");CHKERRQ(ierr);
+/*   ierr = VecDuplicate( nodalFields->lastT, &nodalFields->wxz);CHKERRQ(ierr); */
+/*   ierr = PetscObjectSetName((PetscObject) nodalFields->wxz, "wxz");CHKERRQ(ierr); */
+/*   ierr = VecDuplicate( nodalFields->lastT, &nodalFields->wyz);CHKERRQ(ierr); */
+/*   ierr = PetscObjectSetName((PetscObject) nodalFields->wyz, "wyz");CHKERRQ(ierr); */
 
   PetscFunctionReturn(ierr);
 }
@@ -177,8 +177,8 @@ PetscErrorCode resetNodalFields( NodalFields *nodalFields, GridData *grid, Optio
   ierr = VecZeroEntries(nodalFields->etaS);CHKERRQ(ierr);
 /*     nodalFields->etaN[i] = 0; */
   ierr = VecZeroEntries(nodalFields->etaN);CHKERRQ(ierr);
-  ierr = VecZeroEntries(nodalFields->etavx);CHKERRQ(ierr);
-  ierr = VecZeroEntries(nodalFields->etavy);CHKERRQ(ierr);
+/*   ierr = VecZeroEntries(nodalFields->etavx);CHKERRQ(ierr); */
+/*   ierr = VecZeroEntries(nodalFields->etavy);CHKERRQ(ierr); */
 /*     nodalFields->edotxx[i] = 0; */
   ierr = VecZeroEntries(nodalFields->edotxx);CHKERRQ(ierr);
 /*     nodalFields->edotyy[i] = 0; */
@@ -188,21 +188,21 @@ PetscErrorCode resetNodalFields( NodalFields *nodalFields, GridData *grid, Optio
 /*     nodalFields->edotxy[i] = 0; */
   ierr = VecZeroEntries(nodalFields->edotxy);CHKERRQ(ierr);
 /*     nodalFields->edotxz[i] = 0; */
-  ierr = VecZeroEntries(nodalFields->edotxz);CHKERRQ(ierr);
+/*   ierr = VecZeroEntries(nodalFields->edotxz);CHKERRQ(ierr); */
 /*     nodalFields->edotyz[i] = 0; */
-  ierr = VecZeroEntries(nodalFields->edotyz);CHKERRQ(ierr);
+/*   ierr = VecZeroEntries(nodalFields->edotyz);CHKERRQ(ierr); */
 /*     nodalFields->dsxx[i] = 0; */
   ierr = VecZeroEntries(nodalFields->dsxx);CHKERRQ(ierr);
 /*     nodalFields->dsyy[i] = 0; */
   ierr = VecZeroEntries(nodalFields->dsyy);CHKERRQ(ierr);
 /*     nodalFields->dszz[i] = 0; */
-  ierr = VecZeroEntries(nodalFields->dszz);CHKERRQ(ierr);
+/*   ierr = VecZeroEntries(nodalFields->dszz);CHKERRQ(ierr); */
 /*     nodalFields->dsxy[i] = 0; */
   ierr = VecZeroEntries(nodalFields->dsxy);CHKERRQ(ierr);
 /*     nodalFields->dsxz[i] = 0; */
-  ierr = VecZeroEntries(nodalFields->dsxz);CHKERRQ(ierr);
+/*   ierr = VecZeroEntries(nodalFields->dsxz);CHKERRQ(ierr); */
 /*     nodalFields->dsyz[i] = 0; */
-  ierr = VecZeroEntries(nodalFields->dsyz);CHKERRQ(ierr);
+/*   ierr = VecZeroEntries(nodalFields->dsyz);CHKERRQ(ierr); */
 /*     nodalFields->eii[i] = 0; */
   ierr = VecZeroEntries(nodalFields->eii);CHKERRQ(ierr);
 /*     nodalFields->sii[i] = 0; */
@@ -212,8 +212,8 @@ PetscErrorCode resetNodalFields( NodalFields *nodalFields, GridData *grid, Optio
   //ierr = VecZeroEntries(nodalFields->nodalHeating);CHKERRQ(ierr);
 /*     nodalFields->muN[i] = 0; */
   ierr = VecZeroEntries(nodalFields->muN);CHKERRQ(ierr);
-  ierr = VecZeroEntries(nodalFields->muvx);CHKERRQ(ierr);
-  ierr = VecZeroEntries(nodalFields->muvy);CHKERRQ(ierr);
+/*   ierr = VecZeroEntries(nodalFields->muvx);CHKERRQ(ierr); */
+/*   ierr = VecZeroEntries(nodalFields->muvy);CHKERRQ(ierr); */
 /*     nodalFields->muS[i] = 0; */
   ierr = VecZeroEntries(nodalFields->muS);CHKERRQ(ierr);
 /*     nodalFields->soxx[i] = 0; */
@@ -221,19 +221,19 @@ PetscErrorCode resetNodalFields( NodalFields *nodalFields, GridData *grid, Optio
 /*     nodalFields->soyy[i] = 0; */
   ierr = VecZeroEntries(nodalFields->soyy);CHKERRQ(ierr);
 /*     nodalFields->sozz[i] = 0; */
-  ierr = VecZeroEntries(nodalFields->sozz);CHKERRQ(ierr);
+/*   ierr = VecZeroEntries(nodalFields->sozz);CHKERRQ(ierr); */
 /*     nodalFields->soxy[i] = 0; */
   ierr = VecZeroEntries(nodalFields->soxy);CHKERRQ(ierr);
 /*     nodalFields->soxz[i] = 0; */
-  ierr = VecZeroEntries(nodalFields->soxz);CHKERRQ(ierr);
-  ierr = VecZeroEntries(nodalFields->soyz);CHKERRQ(ierr);
+/*   ierr = VecZeroEntries(nodalFields->soxz);CHKERRQ(ierr); */
+/*   ierr = VecZeroEntries(nodalFields->soyz);CHKERRQ(ierr); */
   ierr = VecZeroEntries(nodalFields->vx);CHKERRQ(ierr);
   ierr = VecZeroEntries(nodalFields->vy);CHKERRQ(ierr);
-  ierr = VecZeroEntries(nodalFields->vz);CHKERRQ(ierr);
+/*   ierr = VecZeroEntries(nodalFields->vz);CHKERRQ(ierr); */
   ierr = VecZeroEntries(nodalFields->p);CHKERRQ(ierr);
   ierr = VecZeroEntries(nodalFields->wxy);CHKERRQ(ierr);
-  ierr = VecZeroEntries(nodalFields->wxz);CHKERRQ(ierr);
-  ierr = VecZeroEntries(nodalFields->wyz);CHKERRQ(ierr);
+/*   ierr = VecZeroEntries(nodalFields->wxz);CHKERRQ(ierr); */
+/*   ierr = VecZeroEntries(nodalFields->wyz);CHKERRQ(ierr); */
 
   PetscFunctionReturn(ierr);
 }
@@ -257,8 +257,8 @@ PetscErrorCode destroyNodalFields( NodalFields *nodalFields, GridData *grid){
   ierr = VecDestroy(&nodalFields->etaS);CHKERRQ(ierr);
 /*     nodalFields->etaN[i] = 0; */
   ierr = VecDestroy(&nodalFields->etaN);CHKERRQ(ierr);
-  ierr = VecDestroy(&nodalFields->etavx);CHKERRQ(ierr);
-  ierr = VecDestroy(&nodalFields->etavy);CHKERRQ(ierr);
+/*   ierr = VecDestroy(&nodalFields->etavx);CHKERRQ(ierr); */
+/*   ierr = VecDestroy(&nodalFields->etavy);CHKERRQ(ierr); */
 
 /*     nodalFields->edotxx[i] = 0; */
   ierr = VecDestroy(&nodalFields->edotxx);CHKERRQ(ierr);
@@ -269,21 +269,21 @@ PetscErrorCode destroyNodalFields( NodalFields *nodalFields, GridData *grid){
 /*     nodalFields->edotxy[i] = 0; */
   ierr = VecDestroy(&nodalFields->edotxy);CHKERRQ(ierr);
 /*     nodalFields->edotxz[i] = 0; */
-  ierr = VecDestroy(&nodalFields->edotxz);CHKERRQ(ierr);
+/*   ierr = VecDestroy(&nodalFields->edotxz);CHKERRQ(ierr); */
 /*     nodalFields->edotyz[i] = 0; */
-  ierr = VecDestroy(&nodalFields->edotyz);CHKERRQ(ierr);
+/*   ierr = VecDestroy(&nodalFields->edotyz);CHKERRQ(ierr); */
 /*     nodalFields->dsxx[i] = 0; */
   ierr = VecDestroy(&nodalFields->dsxx);CHKERRQ(ierr);
 /*     nodalFields->dsyy[i] = 0; */
   ierr = VecDestroy(&nodalFields->dsyy);CHKERRQ(ierr);
 /*     nodalFields->dszz[i] = 0; */
-  ierr = VecDestroy(&nodalFields->dszz);CHKERRQ(ierr);
+/*   ierr = VecDestroy(&nodalFields->dszz);CHKERRQ(ierr); */
 /*     nodalFields->dsxy[i] = 0; */
   ierr = VecDestroy(&nodalFields->dsxy);CHKERRQ(ierr);
 /*     nodalFields->dsxz[i] = 0; */
-  ierr = VecDestroy(&nodalFields->dsxz);CHKERRQ(ierr);
+/*   ierr = VecDestroy(&nodalFields->dsxz);CHKERRQ(ierr); */
 /*     nodalFields->dsyz[i] = 0; */
-  ierr = VecDestroy(&nodalFields->dsyz);CHKERRQ(ierr);
+/*   ierr = VecDestroy(&nodalFields->dsyz);CHKERRQ(ierr); */
 /*     nodalFields->eii[i] = 0; */
   ierr = VecDestroy(&nodalFields->eii);CHKERRQ(ierr);
 /*     nodalFields->sii[i] = 0; */
@@ -294,35 +294,35 @@ PetscErrorCode destroyNodalFields( NodalFields *nodalFields, GridData *grid){
   ierr = VecDestroy(&nodalFields->muN);CHKERRQ(ierr);
 /*     nodalFields->muS[i] = 0; */
   ierr = VecDestroy(&nodalFields->muS);CHKERRQ(ierr);
-  ierr = VecDestroy(&nodalFields->muvx);CHKERRQ(ierr);
-  ierr = VecDestroy(&nodalFields->muvy);CHKERRQ(ierr);
+/*   ierr = VecDestroy(&nodalFields->muvx);CHKERRQ(ierr); */
+/*   ierr = VecDestroy(&nodalFields->muvy);CHKERRQ(ierr); */
 
 /*     nodalFields->soxx[i] = 0; */
   ierr = VecDestroy(&nodalFields->soxx);CHKERRQ(ierr);
 /*     nodalFields->soyy[i] = 0; */
   ierr = VecDestroy(&nodalFields->soyy);CHKERRQ(ierr);
 /*     nodalFields->sozz[i] = 0; */
-  ierr = VecDestroy(&nodalFields->sozz);CHKERRQ(ierr);
+/*   ierr = VecDestroy(&nodalFields->sozz);CHKERRQ(ierr); */
 /*     nodalFields->soxy[i] = 0; */
   ierr = VecDestroy(&nodalFields->soxy);CHKERRQ(ierr);
 /*     nodalFields->soxz[i] = 0; */
-  ierr = VecDestroy(&nodalFields->soxz);CHKERRQ(ierr);
+/*   ierr = VecDestroy(&nodalFields->soxz);CHKERRQ(ierr); */
 /*     nodalFields->soyz[i] = 0; */
-  ierr = VecDestroy(&nodalFields->soyz);CHKERRQ(ierr);
+/*   ierr = VecDestroy(&nodalFields->soyz);CHKERRQ(ierr); */
 /*     nodalFields->vx[i] = 0; */
   ierr = VecDestroy(&nodalFields->vx);CHKERRQ(ierr);
 /*     nodalFields->vy[i] = 0; */
   ierr = VecDestroy(&nodalFields->vy);CHKERRQ(ierr);
 /*     nodalFields->vz[i] = 0; */
-  ierr = VecDestroy(&nodalFields->vz);CHKERRQ(ierr);
+/*   ierr = VecDestroy(&nodalFields->vz);CHKERRQ(ierr); */
 /*     nodalFields->p[i] = 0; */
   ierr = VecDestroy(&nodalFields->p);CHKERRQ(ierr);
 /*     nodalFields->wxy[i] = 0; */
   ierr = VecDestroy(&nodalFields->wxy);CHKERRQ(ierr);
 /*     nodalFields->wxz[i] = 0; */
-  ierr = VecDestroy(&nodalFields->wxz);CHKERRQ(ierr);
+/*   ierr = VecDestroy(&nodalFields->wxz);CHKERRQ(ierr); */
 /*     nodalFields->wyz[i] = 0; */
-  ierr = VecDestroy(&nodalFields->wyz);CHKERRQ(ierr);
+/*   ierr = VecDestroy(&nodalFields->wyz);CHKERRQ(ierr); */
 
 #ifdef TEXTURE
   ierr = VecDestroy(&nodalFields->VPTensorB);CHKERRQ(ierr);

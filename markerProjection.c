@@ -20,8 +20,8 @@ PetscErrorCode projectMarkersNodesAll2( MarkerSet *markerset, GridData *grid, No
   projectMarkerFieldToNodes( grid, markerset, PETSC_NULL, &markers[0].rhodot, nodalFields->rhodot, 0, 0, ARITHMETIC);
   projectMarkerFieldToNodes( grid, markerset, PETSC_NULL, &markers[0].eta, nodalFields->etaN, -1, -1, ARITHMETIC );  
   projectMarkerFieldToNodes( grid, markerset, PETSC_NULL, &markers[0].eta, nodalFields->etaS,  0,  0, ARITHMETIC );
-  projectMarkerFieldToNodes( grid, markerset, PETSC_NULL, &markers[0].eta, nodalFields->etavx, 0,  1, ARITHMETIC );
-  projectMarkerFieldToNodes( grid, markerset, PETSC_NULL, &markers[0].eta, nodalFields->etavy, 1,  0, ARITHMETIC );
+  //  projectMarkerFieldToNodes( grid, markerset, PETSC_NULL, &markers[0].eta, nodalFields->etavx, 0,  1, ARITHMETIC );
+  //projectMarkerFieldToNodes( grid, markerset, PETSC_NULL, &markers[0].eta, nodalFields->etavy, 1,  0, ARITHMETIC );
 #ifdef TEXTURE
   printf("NOT IMPLEMENTED\n");fflush(stdout);
   abort();
@@ -34,10 +34,10 @@ PetscErrorCode projectMarkersNodesAll2( MarkerSet *markerset, GridData *grid, No
   projectMarkerFieldToNodes( grid, markerset, PETSC_NULL, &markers[0].mu, nodalFields->muS,  0,  0, HARMONIC);
   /* muvx     */
   //projectMarkerFieldToNodes( grid, markerset, materials->materialMu, PETSC_NULL, nodalFields->muvx,  0,  1, HARMONIC);
-  projectMarkerFieldToNodes( grid, markerset, PETSC_NULL, &markers[0].mu, nodalFields->muvx,  0,  1, HARMONIC);
+  //projectMarkerFieldToNodes( grid, markerset, PETSC_NULL, &markers[0].mu, nodalFields->muvx,  0,  1, HARMONIC);
   /* muvy     */
   //projectMarkerFieldToNodes( grid, markerset, materials->materialMu, PETSC_NULL, nodalFields->muvy,  1,  0, HARMONIC);
-  projectMarkerFieldToNodes( grid, markerset, PETSC_NULL, &markers[0].mu, nodalFields->muvy,  1,  0, HARMONIC);
+  //projectMarkerFieldToNodes( grid, markerset, PETSC_NULL, &markers[0].mu, nodalFields->muvy,  1,  0, HARMONIC);
   //  kThermal
   projectMarkerFieldToNodes( grid, markerset, materials->materialkThermal, PETSC_NULL, nodalFields->kThermal,  0,   0, ARITHMETIC);
   //lastT   
@@ -49,13 +49,13 @@ PetscErrorCode projectMarkersNodesAll2( MarkerSet *markerset, GridData *grid, No
   /*   soyy     */
   projectMarkerFieldToNodes( grid, markerset, PETSC_NULL, &markers[0].s.T22, nodalFields->soyy,  -1,   -1, ARITHMETIC_LOCAL);
   /*   sozz     */
-  projectMarkerFieldToNodes( grid, markerset, PETSC_NULL, &markers[0].s.T33, nodalFields->sozz,  -1,   -1, ARITHMETIC_LOCAL);
+  //projectMarkerFieldToNodes( grid, markerset, PETSC_NULL, &markers[0].s.T33, nodalFields->sozz,  -1,   -1, ARITHMETIC_LOCAL);
   /*   soxy     */
   projectMarkerFieldToNodes( grid, markerset, PETSC_NULL, &markers[0].s.T12, nodalFields->soxy,   0,    0, ARITHMETIC_LOCAL);
   /*   soxz     */
-  projectMarkerFieldToNodes( grid, markerset, PETSC_NULL, &markers[0].s.T13, nodalFields->soxz,   0,    0, ARITHMETIC_LOCAL);
+  //projectMarkerFieldToNodes( grid, markerset, PETSC_NULL, &markers[0].s.T13, nodalFields->soxz,   0,    0, ARITHMETIC_LOCAL);
   /*   soyz     */
-  projectMarkerFieldToNodes( grid, markerset, PETSC_NULL, &markers[0].s.T23, nodalFields->soyz,   0,    0, ARITHMETIC_LOCAL);
+  //projectMarkerFieldToNodes( grid, markerset, PETSC_NULL, &markers[0].s.T23, nodalFields->soyz,   0,    0, ARITHMETIC_LOCAL);
   /*   ha       */
   //  ierr= interpolateCellCentersBasicNodes( grid, nodalFields->etaN , nodalFields->etaS , HARMONIC );
 

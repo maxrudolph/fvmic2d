@@ -18,36 +18,36 @@ PetscErrorCode updateMarkerStress( GridData *grid, NodalFields *nodalFields,Mark
 /*   PetscScalar *dsxy = nodalFields->dsxy; */
 /*   PetscScalar *dsxz = nodalFields->dsxz; */
 /*   PetscScalar *dsyz = nodalFields->dsyz; */
-  Vec dsxxl, dsyyl, dszzl, dsxyl, dsxzl, dsyzl;
-  PetscScalar **dsxx, **dsyy, **dszz, **dsxy, **dsxz, **dsyz;
+  Vec dsxxl, dsyyl, dsxyl;
+  PetscScalar **dsxx, **dsyy, **dsxy;
 
   /* dsxx */
   ierr=DMCreateLocalVector(grid->da,&dsxxl);CHKERRQ(ierr);
   ierr=VecDuplicate(dsxxl,&dsyyl);CHKERRQ(ierr);
-  ierr=VecDuplicate(dsxxl,&dszzl);CHKERRQ(ierr);
+  //  ierr=VecDuplicate(dsxxl,&dszzl);CHKERRQ(ierr);
   ierr=VecDuplicate(dsxxl,&dsxyl);CHKERRQ(ierr);
-  ierr=VecDuplicate(dsxxl,&dsxzl);CHKERRQ(ierr);
-  ierr=VecDuplicate(dsxxl,&dsyzl);CHKERRQ(ierr);
+  //ierr=VecDuplicate(dsxxl,&dsxzl);CHKERRQ(ierr);
+  //ierr=VecDuplicate(dsxxl,&dsyzl);CHKERRQ(ierr);
   /* populate the local arrays with global values*/
   ierr=DMGlobalToLocalBegin(grid->da,nodalFields->dsxx,INSERT_VALUES,dsxxl);CHKERRQ(ierr);
   ierr=DMGlobalToLocalEnd(grid->da,nodalFields->dsxx,INSERT_VALUES,dsxxl);CHKERRQ(ierr);
   ierr=DMGlobalToLocalBegin(grid->da,nodalFields->dsyy,INSERT_VALUES,dsyyl);CHKERRQ(ierr);
   ierr=DMGlobalToLocalEnd(grid->da,nodalFields->dsyy,INSERT_VALUES,dsyyl);CHKERRQ(ierr);
-  ierr=DMGlobalToLocalBegin(grid->da,nodalFields->dszz,INSERT_VALUES,dszzl);CHKERRQ(ierr);
-  ierr=DMGlobalToLocalEnd(grid->da,nodalFields->dszz,INSERT_VALUES,dszzl);CHKERRQ(ierr);
+  //ierr=DMGlobalToLocalBegin(grid->da,nodalFields->dszz,INSERT_VALUES,dszzl);CHKERRQ(ierr);
+  //ierr=DMGlobalToLocalEnd(grid->da,nodalFields->dszz,INSERT_VALUES,dszzl);CHKERRQ(ierr);
   ierr=DMGlobalToLocalBegin(grid->da,nodalFields->dsxy,INSERT_VALUES,dsxyl);CHKERRQ(ierr);
   ierr=DMGlobalToLocalEnd(grid->da,nodalFields->dsxy,INSERT_VALUES,dsxyl);CHKERRQ(ierr);
-  ierr=DMGlobalToLocalBegin(grid->da,nodalFields->dsxz,INSERT_VALUES,dsxzl);CHKERRQ(ierr);
-  ierr=DMGlobalToLocalEnd(grid->da,nodalFields->dsxz,INSERT_VALUES,dsxzl);CHKERRQ(ierr);
-  ierr=DMGlobalToLocalBegin(grid->da,nodalFields->dsyz,INSERT_VALUES,dsyzl);CHKERRQ(ierr);
-  ierr=DMGlobalToLocalEnd(grid->da,nodalFields->dsyz,INSERT_VALUES,dsyzl);CHKERRQ(ierr);
+  //ierr=DMGlobalToLocalBegin(grid->da,nodalFields->dsxz,INSERT_VALUES,dsxzl);CHKERRQ(ierr);
+  //ierr=DMGlobalToLocalEnd(grid->da,nodalFields->dsxz,INSERT_VALUES,dsxzl);CHKERRQ(ierr);
+  //ierr=DMGlobalToLocalBegin(grid->da,nodalFields->dsyz,INSERT_VALUES,dsyzl);CHKERRQ(ierr);
+  //ierr=DMGlobalToLocalEnd(grid->da,nodalFields->dsyz,INSERT_VALUES,dsyzl);CHKERRQ(ierr);
   /* get arrays */
   ierr=DMDAVecGetArray( grid->da,dsxxl,&dsxx);CHKERRQ(ierr);
   ierr=DMDAVecGetArray( grid->da,dsyyl,&dsyy);CHKERRQ(ierr);
-  ierr=DMDAVecGetArray( grid->da,dszzl,&dszz);CHKERRQ(ierr);
+  //ierr=DMDAVecGetArray( grid->da,dszzl,&dszz);CHKERRQ(ierr);
   ierr=DMDAVecGetArray( grid->da,dsxyl,&dsxy);CHKERRQ(ierr);
-  ierr=DMDAVecGetArray( grid->da,dsxzl,&dsxz);CHKERRQ(ierr);
-  ierr=DMDAVecGetArray( grid->da,dsyzl,&dsyz);CHKERRQ(ierr);
+  //ierr=DMDAVecGetArray( grid->da,dsxzl,&dsxz);CHKERRQ(ierr);
+  //ierr=DMDAVecGetArray( grid->da,dsyzl,&dsyz);CHKERRQ(ierr);
   // PetscScalar *soxx = nodalFields->soxx;
   //PetscScalar *soxy = nodalFields->soxy;
   //PetscScalar *exx = nodalFields->edotxx;
@@ -92,17 +92,17 @@ PetscErrorCode updateMarkerStress( GridData *grid, NodalFields *nodalFields,Mark
       mdsyy+=mdx*(1.0-mdy)*dsyy[cellY][cellX+1];
       mdsyy+=mdx*mdy*dsyy[cellY+1][cellX+1];
 #ifndef TEXTURE
-      PetscScalar mdszz=0.0;
-      mdszz+=(1.0-mdx)*(1.0-mdy)*dszz[cellY][cellX];
-      mdszz+=(1.0-mdx)*mdy*dszz[cellY+1][cellX];
-      mdszz+=mdx*(1.0-mdy)*dszz[cellY][cellX+1];
-      mdszz+=mdx*mdy*dszz[cellY+1][cellX+1];
+      //PetscScalar mdszz=0.0;
+      //mdszz+=(1.0-mdx)*(1.0-mdy)*dszz[cellY][cellX];
+      //mdszz+=(1.0-mdx)*mdy*dszz[cellY+1][cellX];
+      //mdszz+=mdx*(1.0-mdy)*dszz[cellY][cellX+1];
+      //mdszz+=mdx*mdy*dszz[cellY+1][cellX+1];
 #endif
       /* apply new stress*/
       markers[m].s.T11 += mdsxx;
       markers[m].s.T22 += mdsyy;
 #ifndef TEXTURE
-      markers[m].s.T33 += mdszz;
+      //markers[m].s.T33 += mdszz;
 #endif
       /* interpolate quantities from basic nodes*/
       cellX=markers[m].cellX;
@@ -120,18 +120,18 @@ PetscErrorCode updateMarkerStress( GridData *grid, NodalFields *nodalFields,Mark
       mdsxy+=mdx*mdy*dsxy[cellY+1][cellX+1];
       markers[m].s.T12 += mdsxy;
 #ifndef TEXTURE
-      PetscScalar mdsxz=0.0;
-      mdsxz+=(1.0-mdx)*(1.0-mdy)*dsxz[cellY][cellX];
-      mdsxz+=(1.0-mdx)*mdy*dsxz[cellY+1][cellX];
-      mdsxz+=mdx*(1.0-mdy)*dsxz[cellY][cellX+1];
-      mdsxz+=mdx*mdy*dsxz[cellY+1][cellX+1];
-      markers[m].s.T13 += mdsxz;
-      PetscScalar mdsyz=0.0;
-      mdsyz+=(1.0-mdx)*(1.0-mdy)*dsyz[cellY][cellX];
-      mdsyz+=(1.0-mdx)*mdy*dsyz[cellY+1][cellX];
-      mdsyz+=mdx*(1.0-mdy)*dsyz[cellY][cellX+1];
-      mdsyz+=mdx*mdy*dsyz[cellY+1][cellX+1];
-      markers[m].s.T23 += mdsyz;
+      //PetscScalar mdsxz=0.0;
+      //mdsxz+=(1.0-mdx)*(1.0-mdy)*dsxz[cellY][cellX];
+      //mdsxz+=(1.0-mdx)*mdy*dsxz[cellY+1][cellX];
+      //mdsxz+=mdx*(1.0-mdy)*dsxz[cellY][cellX+1];
+      //mdsxz+=mdx*mdy*dsxz[cellY+1][cellX+1];
+      //markers[m].s.T13 += mdsxz;
+      //PetscScalar mdsyz=0.0;
+      //mdsyz+=(1.0-mdx)*(1.0-mdy)*dsyz[cellY][cellX];
+      //mdsyz+=(1.0-mdx)*mdy*dsyz[cellY+1][cellX];
+      //mdsyz+=mdx*(1.0-mdy)*dsyz[cellY][cellX+1];
+      //mdsyz+=mdx*mdy*dsyz[cellY+1][cellX+1];
+      //markers[m].s.T23 += mdsyz;
 #endif
       if(isnan(mdsxy)){
 	PetscInt x,y,m1,n;
@@ -145,17 +145,17 @@ PetscErrorCode updateMarkerStress( GridData *grid, NodalFields *nodalFields,Mark
   
   ierr=DMDAVecRestoreArray( grid->da,dsxxl,&dsxx);CHKERRQ(ierr);
   ierr=DMDAVecRestoreArray( grid->da,dsyyl,&dsyy);CHKERRQ(ierr);
-  ierr=DMDAVecRestoreArray( grid->da,dszzl,&dszz);CHKERRQ(ierr);
+  //  ierr=DMDAVecRestoreArray( grid->da,dszzl,&dszz);CHKERRQ(ierr);
   ierr=DMDAVecRestoreArray( grid->da,dsxyl,&dsxy);CHKERRQ(ierr);
-  ierr=DMDAVecRestoreArray( grid->da,dsxzl,&dsxz);CHKERRQ(ierr);
-  ierr=DMDAVecRestoreArray( grid->da,dsyzl,&dsyz);CHKERRQ(ierr);
+  //  ierr=DMDAVecRestoreArray( grid->da,dsxzl,&dsxz);CHKERRQ(ierr);
+  //ierr=DMDAVecRestoreArray( grid->da,dsyzl,&dsyz);CHKERRQ(ierr);
   
   ierr=VecDestroy(& dsxxl );CHKERRQ(ierr);
   ierr=VecDestroy(& dsyyl );CHKERRQ(ierr);
-  ierr=VecDestroy(& dszzl );CHKERRQ(ierr);
+  //ierr=VecDestroy(& dszzl );CHKERRQ(ierr);
   ierr=VecDestroy(& dsxyl );CHKERRQ(ierr);
-  ierr=VecDestroy(& dsxzl );CHKERRQ(ierr);
-  ierr=VecDestroy(& dsyzl );CHKERRQ(ierr);
+  //  ierr=VecDestroy(& dsxzl );CHKERRQ(ierr);
+  //  ierr=VecDestroy(& dsyzl );CHKERRQ(ierr);
 
 
   PetscFunctionReturn(0);

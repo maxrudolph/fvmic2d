@@ -222,7 +222,6 @@ PetscErrorCode saveNodalFields( NodalFields *nodalFields, GridData *grid,PetscIn
 
   ierr=  VecView( nodalFields->vx,viewer );CHKERRQ(ierr);
   ierr=  VecView( nodalFields->vy,viewer );CHKERRQ(ierr);
-  ierr=  VecView( nodalFields->vz,viewer );CHKERRQ(ierr);
   ierr=  VecView( nodalFields->p,viewer );CHKERRQ(ierr);
   ierr=  VecView( nodalFields->rho,viewer );CHKERRQ(ierr);
   ierr=  VecView( nodalFields->rhodot,viewer );CHKERRQ(ierr);
@@ -230,16 +229,16 @@ PetscErrorCode saveNodalFields( NodalFields *nodalFields, GridData *grid,PetscIn
   //ierr=  VecView( nodalFields->Ddot,viewer );CHKERRQ(ierr);
   ierr=  VecView( nodalFields->etaN,viewer );CHKERRQ(ierr);
   ierr=  VecView( nodalFields->etaS,viewer );CHKERRQ(ierr);
-  ierr=  VecView( nodalFields->etavx,viewer );CHKERRQ(ierr);
-  ierr=  VecView( nodalFields->etavy,viewer );CHKERRQ(ierr);
+  //ierr=  VecView( nodalFields->etavx,viewer );CHKERRQ(ierr);
+  //ierr=  VecView( nodalFields->etavy,viewer );CHKERRQ(ierr);
 
   ierr=  VecView( nodalFields->kThermal,viewer);CHKERRQ(ierr);
   ierr=  VecView( nodalFields->lastT,viewer );CHKERRQ(ierr);
   ierr=  VecView( nodalFields->Cp,viewer);CHKERRQ(ierr);
   ierr=  VecView( nodalFields->muN,viewer);CHKERRQ(ierr);
   ierr=  VecView( nodalFields->muS,viewer);CHKERRQ(ierr);
-  ierr=  VecView( nodalFields->muvx,viewer);CHKERRQ(ierr);
-  ierr=  VecView( nodalFields->muvy,viewer);CHKERRQ(ierr);
+  //ierr=  VecView( nodalFields->muvx,viewer);CHKERRQ(ierr);
+  //ierr=  VecView( nodalFields->muvy,viewer);CHKERRQ(ierr);
 
 #ifdef TEXTURE
   ierr=  VecView( nodalFields->VPTensorB,viewer);CHKERRQ(ierr);
@@ -247,20 +246,20 @@ PetscErrorCode saveNodalFields( NodalFields *nodalFields, GridData *grid,PetscIn
 #endif
   ierr=  VecView( nodalFields->soxx,viewer);CHKERRQ(ierr);
   ierr=  VecView( nodalFields->soyy,viewer);CHKERRQ(ierr);
-  ierr=  VecView( nodalFields->sozz,viewer);CHKERRQ(ierr);
+/*   ierr=  VecView( nodalFields->sozz,viewer);CHKERRQ(ierr); */
   ierr=  VecView( nodalFields->soxy,viewer);CHKERRQ(ierr);
-  ierr=  VecView( nodalFields->soxz,viewer);CHKERRQ(ierr);
-  ierr=  VecView( nodalFields->soyz,viewer);CHKERRQ(ierr);
+/*   ierr=  VecView( nodalFields->soxz,viewer);CHKERRQ(ierr); */
+/*   ierr=  VecView( nodalFields->soyz,viewer);CHKERRQ(ierr); */
   /* strain rate components */
   ierr=  VecView( nodalFields->edotxx,viewer);CHKERRQ(ierr);
   ierr=  VecView( nodalFields->edotyy,viewer);CHKERRQ(ierr);
   ierr=  VecView( nodalFields->edotxy,viewer);CHKERRQ(ierr);
-  ierr=  VecView( nodalFields->edotxz,viewer);CHKERRQ(ierr);
-  ierr=  VecView( nodalFields->edotyz,viewer);CHKERRQ(ierr);
+/*   ierr=  VecView( nodalFields->edotxz,viewer);CHKERRQ(ierr); */
+/*   ierr=  VecView( nodalFields->edotyz,viewer);CHKERRQ(ierr); */
   /* rotation tensor */
   ierr=  VecView( nodalFields->wxy,viewer);CHKERRQ(ierr);
-  ierr=  VecView( nodalFields->wxz,viewer);CHKERRQ(ierr);
-  ierr=  VecView( nodalFields->wyz,viewer);CHKERRQ(ierr);
+/*   ierr=  VecView( nodalFields->wxz,viewer);CHKERRQ(ierr); */
+/*   ierr=  VecView( nodalFields->wyz,viewer);CHKERRQ(ierr); */
 
 
   ierr=  VecView( nodalFields->ha,viewer);CHKERRQ(ierr);
@@ -355,10 +354,10 @@ PetscErrorCode saveMarkersBinary( MarkerSet *markerset, PetscInt iMonte, PetscIn
   saveMarkerFieldI(markerset,& markers[0].cellY, &nMarks[0], of);
   saveMarkerFieldS(markerset,& markers[0].X, &nMarks[0], of);
   saveMarkerFieldS(markerset,& markers[0].Y, &nMarks[0], of);
-  saveMarkerFieldS(markerset,& markers[0].Z, &nMarks[0], of);
+  //  saveMarkerFieldS(markerset,& markers[0].Z, &nMarks[0], of);
   saveMarkerFieldS(markerset,& markers[0].VX, &nMarks[0], of);
   saveMarkerFieldS(markerset,& markers[0].VY, &nMarks[0], of);
-  saveMarkerFieldS(markerset,& markers[0].VZ, &nMarks[0], of);
+  //saveMarkerFieldS(markerset,& markers[0].VZ, &nMarks[0], of);
   saveMarkerFieldI(markerset,& markers[0].Mat, &nMarks[0], of);
   saveMarkerFieldS(markerset,& markers[0].T, &nMarks[0], of);
   saveMarkerFieldS(markerset,& markers[0].Tdot, &nMarks[0], of);
@@ -374,8 +373,8 @@ PetscErrorCode saveMarkersBinary( MarkerSet *markerset, PetscInt iMonte, PetscIn
 #endif
   //Damage
   /*   fwrite( markers->D, sizeof(PetscScalar), markers->nMark, of); */
-  saveMarkerFieldS(markerset,& markers[0].D, &nMarks[0], of);
-  saveMarkerFieldS(markerset,& markers[0].Ddot, &nMarks[0], of);
+  //  saveMarkerFieldS(markerset,& markers[0].D, &nMarks[0], of);
+  //saveMarkerFieldS(markerset,& markers[0].Ddot, &nMarks[0], of);
   //exx
   /*   fwrite( markers->exx, sizeof(PetscScalar), markers->nMark, of); */
   saveMarkerFieldS(markerset,& markers[0].e.T11, &nMarks[0], of);

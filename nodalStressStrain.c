@@ -16,40 +16,40 @@ PetscErrorCode nodalStressStrain( GridData *grid, NodalFields *nodalFields, Opti
 
 
   /* retrieve local arrays of nodal fields, including ghost node values*/
-  Vec vxl,vyl,vzl;
-  Vec exxl,eyyl,ezzl,exyl,exzl,eyzl;
+  Vec vxl,vyl;
+  Vec exxl,eyyl,exyl;
 
   ierr=DMDAGetCorners(grid->da,&x,&y,PETSC_NULL,&m,&n,PETSC_NULL);CHKERRQ(ierr);
   
   ierr=DMCreateLocalVector(grid->da,&vxl);
   ierr=VecDuplicate(vxl,&vyl);
-  ierr=VecDuplicate(vxl,&vzl);
+  //  ierr=VecDuplicate(vxl,&vzl);
   ierr=DMGlobalToLocalBegin(grid->da,nodalFields->vx,INSERT_VALUES,vxl);CHKERRQ(ierr);
   ierr=DMGlobalToLocalEnd(grid->da,nodalFields->vx,INSERT_VALUES,vxl);CHKERRQ(ierr);
   
   ierr=DMGlobalToLocalBegin(grid->da,nodalFields->vy,INSERT_VALUES,vyl);CHKERRQ(ierr);
   ierr=DMGlobalToLocalEnd(grid->da,nodalFields->vy,INSERT_VALUES,vyl);CHKERRQ(ierr);
 
-  ierr=DMGlobalToLocalBegin(grid->da,nodalFields->vz,INSERT_VALUES,vzl);CHKERRQ(ierr);
-  ierr=DMGlobalToLocalEnd(grid->da,nodalFields->vz,INSERT_VALUES,vzl);CHKERRQ(ierr);
+/*   ierr=DMGlobalToLocalBegin(grid->da,nodalFields->vz,INSERT_VALUES,vzl);CHKERRQ(ierr); */
+/*   ierr=DMGlobalToLocalEnd(grid->da,nodalFields->vz,INSERT_VALUES,vzl);CHKERRQ(ierr); */
 
   ierr=VecDuplicate(vxl,&exxl);CHKERRQ(ierr);
   ierr=VecDuplicate(vxl,&eyyl);CHKERRQ(ierr);
-  ierr=VecDuplicate(vxl,&ezzl);CHKERRQ(ierr);
+/*   ierr=VecDuplicate(vxl,&ezzl);CHKERRQ(ierr); */
   ierr=VecDuplicate(vxl,&exyl);CHKERRQ(ierr);
-  ierr=VecDuplicate(vxl,&exzl);CHKERRQ(ierr);
-  ierr=VecDuplicate(vxl,&eyzl);CHKERRQ(ierr);
+/*   ierr=VecDuplicate(vxl,&exzl);CHKERRQ(ierr); */
+/*   ierr=VecDuplicate(vxl,&eyzl);CHKERRQ(ierr); */
 
-  PetscScalar **vx, **vy, **vz, **exx, **eyy, **ezz, **exy, **exz, **eyz;  
+  PetscScalar **vx, **vy, **exx, **eyy, **exy;  
   ierr=DMDAVecGetArray( grid->da,vxl,&vx);CHKERRQ(ierr);
   ierr=DMDAVecGetArray( grid->da,vyl,&vy);CHKERRQ(ierr);
-  ierr=DMDAVecGetArray( grid->da,vzl,&vz);CHKERRQ(ierr);
+  //  ierr=DMDAVecGetArray( grid->da,vzl,&vz);CHKERRQ(ierr);
   ierr=DMDAVecGetArray( grid->da,exxl,&exx);CHKERRQ(ierr);
   ierr=DMDAVecGetArray( grid->da,eyyl,&eyy);CHKERRQ(ierr);
-  ierr=DMDAVecGetArray( grid->da,ezzl,&ezz);CHKERRQ(ierr);
+/*   ierr=DMDAVecGetArray( grid->da,ezzl,&ezz);CHKERRQ(ierr); */
   ierr=DMDAVecGetArray( grid->da,exyl,&exy);CHKERRQ(ierr);
-  ierr=DMDAVecGetArray( grid->da,exzl,&exz);CHKERRQ(ierr);
-  ierr=DMDAVecGetArray( grid->da,eyzl,&eyz);CHKERRQ(ierr);
+/*   ierr=DMDAVecGetArray( grid->da,exzl,&exz);CHKERRQ(ierr); */
+/*   ierr=DMDAVecGetArray( grid->da,eyzl,&eyz);CHKERRQ(ierr); */
 
 
   for(ix=x;ix<x+m;ix++){
@@ -58,7 +58,7 @@ PetscErrorCode nodalStressStrain( GridData *grid, NodalFields *nodalFields, Opti
 	/* account for ghost cells */
 	exx[jy][ix] = 0.0;
 	eyy[jy][ix] = 0.0;
-	ezz[jy][ix] = 0.0;
+/* 	ezz[jy][ix] = 0.0; */
       }else{
 	/* this is a cell-centered quantity*/
 	//      PetscScalar divv = (vx[i-1+j*NY]-vx[i-1+(j-1)*NY])/dx +(vy[i+NY*(j-1)]-vy[i-1+NY*(j-1)])/dy;
@@ -69,22 +69,22 @@ PetscErrorCode nodalStressStrain( GridData *grid, NodalFields *nodalFields, Opti
 	/* exx[j*NY+i]=(vx[i-1+j*NY]-vx[i-1+(j-1)*NY])/dx - divv/3.0; */ /* should be deviatoric strain rate*/
 	exx[jy][ix]=(vx[jy-1][ix]-vx[jy-1][ix-1])/dx - divv/3.0; /* should be deviatoric strain rate*/
 	eyy[jy][ix]=(vy[jy][ix-1]-vy[jy-1][ix-1])/dy - divv/3.0; /* should be deviatoric strain rate*/
-	ezz[jy][ix]=-divv/3.0; /* deviatoric strain rate in z direction. ezz = 0 but e'zz is nonzero*/
+	//ezz[jy][ix]=-divv/3.0; /* deviatoric strain rate in z direction. ezz = 0 but e'zz is nonzero*/
       }
     }
   }
   /* scatter deviatoric strain rates back to global vectors*/
   ierr=DMDAVecRestoreArray( grid->da,exxl,&exx);CHKERRQ(ierr);
   ierr=DMDAVecRestoreArray( grid->da,eyyl,&eyy);CHKERRQ(ierr);
-  ierr=DMDAVecRestoreArray( grid->da,ezzl,&ezz);CHKERRQ(ierr);
+/*   ierr=DMDAVecRestoreArray( grid->da,ezzl,&ezz);CHKERRQ(ierr); */
   ierr=DMLocalToGlobalBegin(grid->da,exxl,INSERT_VALUES,nodalFields->edotxx);CHKERRQ(ierr);
   ierr=DMLocalToGlobalEnd(grid->da,exxl,INSERT_VALUES,nodalFields->edotxx);CHKERRQ(ierr);
 
   ierr=DMLocalToGlobalBegin(grid->da,eyyl,INSERT_VALUES,nodalFields->edotyy);CHKERRQ(ierr);
   ierr=DMLocalToGlobalEnd(grid->da,eyyl,INSERT_VALUES,nodalFields->edotyy);CHKERRQ(ierr);
 
-  ierr=DMLocalToGlobalBegin(grid->da,ezzl,INSERT_VALUES,nodalFields->edotzz);CHKERRQ(ierr);
-  ierr=DMLocalToGlobalEnd(grid->da,ezzl,INSERT_VALUES,nodalFields->edotzz);CHKERRQ(ierr);
+/*   ierr=DMLocalToGlobalBegin(grid->da,ezzl,INSERT_VALUES,nodalFields->edotzz);CHKERRQ(ierr); */
+/*   ierr=DMLocalToGlobalEnd(grid->da,ezzl,INSERT_VALUES,nodalFields->edotzz);CHKERRQ(ierr); */
 
 
   /* Compute cell-centered quantities: ds_{ii}, s_{ii} */
@@ -123,23 +123,23 @@ PetscErrorCode nodalStressStrain( GridData *grid, NodalFields *nodalFields, Opti
   ierr = VecCopy(stemp,nodalFields->soyy);CHKERRQ(ierr);
   /* new szz */
   /*PetscScalar szznew = (1.0-X)*2.0*etaN[i+NY*j]*ezz[i+NY*j] + X*sozz[i+NY*j]; */
-  ierr = VecPointwiseMult( etemp, X1, nodalFields->edotzz);CHKERRQ(ierr);
-  ierr = VecPointwiseMult( stemp, X, nodalFields->sozz);CHKERRQ(ierr);
-  ierr = VecAXPY( stemp,1.0,etemp);CHKERRQ(ierr);
-  ierr = VecCopy(nodalFields->sozz,nodalFields->dszz);CHKERRQ(ierr);
-  ierr = VecAYPX(nodalFields->dszz,-1.0,stemp);CHKERRQ(ierr);
-  ierr = VecCopy(stemp,nodalFields->sozz);CHKERRQ(ierr);
+  /*   ierr = VecPointwiseMult( etemp, X1, nodalFields->edotzz);CHKERRQ(ierr); */
+  /*   ierr = VecPointwiseMult( stemp, X, nodalFields->sozz);CHKERRQ(ierr); */
+  /*   ierr = VecAXPY( stemp,1.0,etemp);CHKERRQ(ierr); */
+  /*   ierr = VecCopy(nodalFields->sozz,nodalFields->dszz);CHKERRQ(ierr); */
+  /*   ierr = VecAYPX(nodalFields->dszz,-1.0,stemp);CHKERRQ(ierr); */
+  /*   ierr = VecCopy(stemp,nodalFields->sozz);CHKERRQ(ierr); */
 
   /* end cell-centered quantities */
-  Vec wxyl, wxzl, wyzl;
-  PetscScalar **wxy, **wxz, **wyz;
+  Vec wxyl;
+  PetscScalar **wxy;
   ierr=DMCreateLocalVector(grid->da,&wxyl);CHKERRQ(ierr);
-  ierr=VecDuplicate(wxyl,&wxzl);CHKERRQ(ierr);
-  ierr=VecDuplicate(wxyl,&wyzl);CHKERRQ(ierr);
+/*   ierr=VecDuplicate(wxyl,&wxzl);CHKERRQ(ierr); */
+/*   ierr=VecDuplicate(wxyl,&wyzl);CHKERRQ(ierr); */
 
   ierr=DMDAVecGetArray( grid->da,wxyl,&wxy);CHKERRQ(ierr);
-  ierr=DMDAVecGetArray( grid->da,wxzl,&wxz);CHKERRQ(ierr);
-  ierr=DMDAVecGetArray( grid->da,wyzl,&wyz);CHKERRQ(ierr);
+/*   ierr=DMDAVecGetArray( grid->da,wxzl,&wxz);CHKERRQ(ierr); */
+/*   ierr=DMDAVecGetArray( grid->da,wyzl,&wyz);CHKERRQ(ierr); */
 
   /* compute internal basic node quantities */
 
@@ -158,7 +158,7 @@ PetscErrorCode nodalStressStrain( GridData *grid, NodalFields *nodalFields, Opti
     for(ix=x1;ix<x1+m1;ix++){
       PetscScalar vxm, vym, vxp, vyp;/* ghost values - these depend on type of boundary condition */
 
-      PetscScalar vzul, vzur, vzll, vzlr; /* z values depend on whether we are at a boundary */
+      //      PetscScalar vzul, vzur, vzll, vzlr; /* z values depend on whether we are at a boundary */
 
       if(!grid->xperiodic && ix == 0){/* if grid is periodic in x-direction, do not worry about left boundary */
 	if( bv->mechBCLeft.type[1] == 0 ){/* prescribed velocity */
@@ -176,7 +176,7 @@ PetscErrorCode nodalStressStrain( GridData *grid, NodalFields *nodalFields, Opti
 	  vxm = 2.0*bv->mechBCTop.value[0] - vx[jy][ix];
 	}else if(bv->mechBCTop.type[0] == 1){
 	  vxm = vx[jy][ix];
-	}
+	}        
       }else{
 	vxm = vx[jy-1][ix];
       }
@@ -186,88 +186,72 @@ PetscErrorCode nodalStressStrain( GridData *grid, NodalFields *nodalFields, Opti
 	if( ix == NX-1 && jy < NY-1 ){
 	  /* implicit ghost z-velocity nodes */
 	  if( bv->mechBCRight.type[2] == 0){	  
-	    vzur = 2.0*bv->mechBCRight.value[2]-vz[jy][ix];
-	    vzlr = 2.0*bv->mechBCRight.value[2]-vz[jy+1][ix];
+	    //vzur = 2.0*bv->mechBCRight.value[2]-vz[jy][ix];
+	    //vzlr = 2.0*bv->mechBCRight.value[2]-vz[jy+1][ix];
 	  } else if( bv->mechBCRight.type[2] == 1){
-	    vzur = vz[jy][ix];
-	    vzlr = vz[jy+1][ix];
+	    //vzur = vz[jy][ix];
+	    //vzlr = vz[jy+1][ix];
 	  }
-	  vzul = vz[jy][ix];
-	  vzll = vz[jy+1][ix];
+	  //	  vzul = vz[jy][ix];
+	  //vzll = vz[jy+1][ix];
 	}
 	if( jy == NY-1 ){
 	  if( ix < NX-1 ){
 	    if(bv->mechBCBottom.type[2] == 1){
-	      vzll = vz[jy][ix];
-	      vzlr = vz[jy][ix+1];
+	      //vzll = vz[jy][ix];
+	      //vzlr = vz[jy][ix+1];
 	    }
-	    vzul = vz[jy][ix];
-	    vzur = vz[jy][ix+1];
+	    //vzul = vz[jy][ix];
+	    //vzur = vz[jy][ix+1];
 	  }else{
 	    /* special case for lower right corner */
 	    if(bv->mechBCRight.type[2] == 0){/* prescribed velocity */
-	      vzur = 2.0*bv->mechBCRight.value[2]-vz[jy][ix];
+	      //vzur = 2.0*bv->mechBCRight.value[2]-vz[jy][ix];
 	    }else if(bv->mechBCRight.type[2] == 1){
-	      vzur = vz[jy][ix];
+	      //vzur = vz[jy][ix];
 	    }
 	    if( bv->mechBCBottom.type[2] == 1){
-	      vzlr = vzur; /* this imposes free slip on lower boundary */
-	      vzll = vz[jy][ix];
+	      //vzlr = vzur; /* this imposes free slip on lower boundary */
+	      //vzll = vz[jy][ix];
 	    }
-	    vzul = vz[jy][ix];
+	    //vzul = vz[jy][ix];
 	  }
 	}
       }else{
-	vzul = vz[jy][ix];
-	vzur = vz[jy][ix+1];
-	vzll = vz[jy+1][ix];
-	vzlr = vz[jy+1][ix+1];
+/* 	vzul = vz[jy][ix]; */
+/* 	vzur = vz[jy][ix+1]; */
+/* 	vzll = vz[jy+1][ix]; */
+/* 	vzlr = vz[jy+1][ix+1]; */
       }
       
 
       PetscScalar dx=grid->xc[ix+1]-grid->xc[ix];
       PetscScalar dy=grid->yc[jy+1]-grid->yc[jy];
-
+      
       wxy[jy][ix] = 0.5*((vxp-vxm)/dy-(vyp-vym)/dx);
       exy[jy][ix] = 0.5*((vxp-vxm)/dy+(vyp-vym)/dx);
 
 
-      dx=grid->xc[ix+1]-grid->xc[ix];
-      //      exz[jy][ix] = 0.25/dx*( vz[jy][ix+1]+vz[jy+1][ix+1] - vz[jy][ix] - vz[jy+1][ix]);
-      exz[jy][ix] = 0.25/dx*( vzur + vzlr - vzul - vzll );
-
-      dy = grid->yc[jy+1]-grid->yc[jy];
-      /*       eyz[jy][ix] = 0.25/dy*( vz[jy+1][ix] + vz[jy+1][ix+1] - vz[jy][ix] - vz[jy][ix+1]); */
-      eyz[jy][ix] = 0.25/dy*( (vzll + vzlr) - (vzul + vzur) );
-
-      dx=grid->xc[ix+1]-grid->xc[ix];
-      /*       wxz[jy][ix] = 0.5*( 0.0 - ( (vz[jy][ix+1]+vz[jy+1][ix+1])/2.0-(vz[jy][ix] + vz[jy+1][ix])/2.0)/dx); */
-      wxz[jy][ix] = 0.5*((vzur+vzlr)/2.0 - (vzul+vzll)/2.0)/dx;
-
-      dy=grid->yc[jy+1]-grid->yc[jy];
-      /*       wyz[jy][ix] = 0.5*( 0.0 - ( (vz[jy+1][ix]+vz[jy+1][ix+1])/2.0 - (vz[jy][ix] + vz[jy][ix+1])/2.0)/dy); */
-      wyz[jy][ix] = 0.5*( (vzll+vzlr)/2.0 - (vzul+vzur)/2.0)/dy;
-
     }
   }
   ierr=DMDAVecRestoreArray( grid->da,wxyl,&wxy);CHKERRQ(ierr);
-  ierr=DMDAVecRestoreArray( grid->da,wxzl,&wxz);CHKERRQ(ierr);
-  ierr=DMDAVecRestoreArray( grid->da,wyzl,&wyz);CHKERRQ(ierr);
+/*   ierr=DMDAVecRestoreArray( grid->da,wxzl,&wxz);CHKERRQ(ierr); */
+/*   ierr=DMDAVecRestoreArray( grid->da,wyzl,&wyz);CHKERRQ(ierr); */
   ierr=DMDAVecRestoreArray( grid->da,exyl,&exy);CHKERRQ(ierr);
-  ierr=DMDAVecRestoreArray( grid->da,exzl,&exz);CHKERRQ(ierr);
-  ierr=DMDAVecRestoreArray( grid->da,eyzl,&eyz);CHKERRQ(ierr);
+/*   ierr=DMDAVecRestoreArray( grid->da,exzl,&exz);CHKERRQ(ierr); */
+/*   ierr=DMDAVecRestoreArray( grid->da,eyzl,&eyz);CHKERRQ(ierr); */
   ierr=DMLocalToGlobalBegin(grid->da,wxyl,INSERT_VALUES,nodalFields->wxy);CHKERRQ(ierr);
   ierr=DMLocalToGlobalEnd(grid->da,wxyl,INSERT_VALUES,nodalFields->wxy);CHKERRQ(ierr);
-  ierr=DMLocalToGlobalBegin(grid->da,wxzl,INSERT_VALUES,nodalFields->wxz);CHKERRQ(ierr);
-  ierr=DMLocalToGlobalEnd(grid->da,wxzl,INSERT_VALUES,nodalFields->wxz);CHKERRQ(ierr);
-  ierr=DMLocalToGlobalBegin(grid->da,wyzl,INSERT_VALUES,nodalFields->wyz);CHKERRQ(ierr);
-  ierr=DMLocalToGlobalEnd(grid->da,wyzl,INSERT_VALUES,nodalFields->wyz);CHKERRQ(ierr);
+/*   ierr=DMLocalToGlobalBegin(grid->da,wxzl,INSERT_VALUES,nodalFields->wxz);CHKERRQ(ierr); */
+/*   ierr=DMLocalToGlobalEnd(grid->da,wxzl,INSERT_VALUES,nodalFields->wxz);CHKERRQ(ierr); */
+/*   ierr=DMLocalToGlobalBegin(grid->da,wyzl,INSERT_VALUES,nodalFields->wyz);CHKERRQ(ierr); */
+/*   ierr=DMLocalToGlobalEnd(grid->da,wyzl,INSERT_VALUES,nodalFields->wyz);CHKERRQ(ierr); */
   ierr=DMLocalToGlobalBegin(grid->da,exyl,INSERT_VALUES,nodalFields->edotxy);CHKERRQ(ierr);
   ierr=DMLocalToGlobalEnd(grid->da,exyl,INSERT_VALUES,nodalFields->edotxy);CHKERRQ(ierr);
-  ierr=DMLocalToGlobalBegin(grid->da,exzl,INSERT_VALUES,nodalFields->edotxz);CHKERRQ(ierr);
-  ierr=DMLocalToGlobalEnd(grid->da,exzl,INSERT_VALUES,nodalFields->edotxz);CHKERRQ(ierr);
-  ierr=DMLocalToGlobalBegin(grid->da,eyzl,INSERT_VALUES,nodalFields->edotyz);CHKERRQ(ierr);
-  ierr=DMLocalToGlobalEnd(grid->da,eyzl,INSERT_VALUES,nodalFields->edotyz);CHKERRQ(ierr);
+/*   ierr=DMLocalToGlobalBegin(grid->da,exzl,INSERT_VALUES,nodalFields->edotxz);CHKERRQ(ierr); */
+/*   ierr=DMLocalToGlobalEnd(grid->da,exzl,INSERT_VALUES,nodalFields->edotxz);CHKERRQ(ierr); */
+/*   ierr=DMLocalToGlobalBegin(grid->da,eyzl,INSERT_VALUES,nodalFields->edotyz);CHKERRQ(ierr); */
+/*   ierr=DMLocalToGlobalEnd(grid->da,eyzl,INSERT_VALUES,nodalFields->edotyz);CHKERRQ(ierr); */
   
   /* PetscScalar X = etaS[idxnode]/(etaS[idxnode]+dt*muS[idxnode]); */
   ierr=VecCopy(nodalFields->etaS,X); CHKERRQ(ierr);
@@ -300,20 +284,7 @@ PetscErrorCode nodalStressStrain( GridData *grid, NodalFields *nodalFields, Opti
     ierr = PetscViewerDestroy(viewer);CHKERRQ(ierr);
   }
 #endif
-  /*sxz*/
-  ierr=VecPointwiseMult(etemp,X1,nodalFields->edotxz);CHKERRQ(ierr); /* etemp = X1.*exx */
-  ierr=VecPointwiseMult(stemp,X,nodalFields->soxz);  /* stemp = X.*soxx */
-  ierr=VecAXPY(stemp,1.0,etemp);CHKERRQ(ierr);/* stemp = stemp+1.0*etmp */  /*dsxx = sxxnew-soxx*/
-  ierr=VecCopy(nodalFields->soxz,nodalFields->dsxz);CHKERRQ(ierr); /* dsxx = soxx */
-  ierr=VecAYPX(nodalFields->dsxz,-1.0,stemp);CHKERRQ(ierr);/*dsxx = sxxnew - 1.0*soxx*/
-  ierr=VecCopy(stemp,nodalFields->soxz);CHKERRQ(ierr); /* soxx[i+NY*j]= sxxnew; */
-  /*syz*/
-  ierr=VecPointwiseMult(etemp,X1,nodalFields->edotyz);CHKERRQ(ierr); /* etemp = X1.*exx */
-  ierr=VecPointwiseMult(stemp,X,nodalFields->soyz);  /* stemp = X.*soxx */
-  ierr=VecAXPY(stemp,1.0,etemp);CHKERRQ(ierr);/* stemp = stemp+1.0*etmp */  /*dsxx = sxxnew-soxx*/
-  ierr=VecCopy(nodalFields->soyz,nodalFields->dsyz);CHKERRQ(ierr); /* dsxx = soxx */
-  ierr=VecAYPX(nodalFields->dsyz,-1.0,stemp);CHKERRQ(ierr);/*dsxx = sxxnew - 1.0*soxx*/
-  ierr=VecCopy(stemp,nodalFields->soyz);CHKERRQ(ierr); /* soxx[i+NY*j]= sxxnew; */
+
 
 /*   PetscScalar sxynew = (1-X)*2.0*etaS[idxnode]*exy[idxnode]+X*soxy[idxnode]; */
   
@@ -331,14 +302,14 @@ PetscErrorCode nodalStressStrain( GridData *grid, NodalFields *nodalFields, Opti
   /* shear heating*/
 
   /* get all of the stress tensor components and viscosity as locally-accessible arrays */
-  Vec soxxl,soyyl,sozzl,soxyl,soxzl,soyzl,etaNl,etaSl,eiil,siil;
+  Vec soxxl,soyyl,soxyl,etaNl,etaSl,eiil,siil;
   
   ierr=DMCreateLocalVector(grid->da,&soxxl);CHKERRQ(ierr);
   ierr=VecDuplicate(soxxl,&soyyl);CHKERRQ(ierr);
-  ierr=VecDuplicate(soxxl,&sozzl);CHKERRQ(ierr);
+/*   ierr=VecDuplicate(soxxl,&sozzl);CHKERRQ(ierr); */
   ierr=VecDuplicate(soxxl,&soxyl);CHKERRQ(ierr);
-  ierr=VecDuplicate(soxxl,&soxzl);CHKERRQ(ierr);
-  ierr=VecDuplicate(soxxl,&soyzl);CHKERRQ(ierr);
+/*   ierr=VecDuplicate(soxxl,&soxzl);CHKERRQ(ierr); */
+/*   ierr=VecDuplicate(soxxl,&soyzl);CHKERRQ(ierr); */
   ierr=VecDuplicate(soxxl,&etaNl);CHKERRQ(ierr);
   ierr=VecDuplicate(soxxl,&etaSl);CHKERRQ(ierr);
   ierr=VecDuplicate(soxxl,&eiil);CHKERRQ(ierr);
@@ -349,27 +320,27 @@ PetscErrorCode nodalStressStrain( GridData *grid, NodalFields *nodalFields, Opti
   ierr=DMGlobalToLocalEnd(grid->da,nodalFields->soxx,INSERT_VALUES,soxxl);CHKERRQ(ierr);
   ierr=DMGlobalToLocalBegin(grid->da,nodalFields->soyy,INSERT_VALUES,soyyl);CHKERRQ(ierr);
   ierr=DMGlobalToLocalEnd(grid->da,nodalFields->soyy,INSERT_VALUES,soyyl);CHKERRQ(ierr);
-  ierr=DMGlobalToLocalBegin(grid->da,nodalFields->sozz,INSERT_VALUES,sozzl);CHKERRQ(ierr);
-  ierr=DMGlobalToLocalEnd(grid->da,nodalFields->sozz,INSERT_VALUES,sozzl);CHKERRQ(ierr);
+/*   ierr=DMGlobalToLocalBegin(grid->da,nodalFields->sozz,INSERT_VALUES,sozzl);CHKERRQ(ierr); */
+/*   ierr=DMGlobalToLocalEnd(grid->da,nodalFields->sozz,INSERT_VALUES,sozzl);CHKERRQ(ierr); */
   ierr=DMGlobalToLocalBegin(grid->da,nodalFields->soxy,INSERT_VALUES,soxyl);CHKERRQ(ierr);
   ierr=DMGlobalToLocalEnd(grid->da,nodalFields->soxy,INSERT_VALUES,soxyl);CHKERRQ(ierr);
-  ierr=DMGlobalToLocalBegin(grid->da,nodalFields->soxz,INSERT_VALUES,soxzl);CHKERRQ(ierr);
-  ierr=DMGlobalToLocalEnd(grid->da,nodalFields->soxz,INSERT_VALUES,soxzl);CHKERRQ(ierr);
-  ierr=DMGlobalToLocalBegin(grid->da,nodalFields->soyz,INSERT_VALUES,soyzl);CHKERRQ(ierr);
-  ierr=DMGlobalToLocalEnd(grid->da,nodalFields->soyz,INSERT_VALUES,soyzl);CHKERRQ(ierr);
+/*   ierr=DMGlobalToLocalBegin(grid->da,nodalFields->soxz,INSERT_VALUES,soxzl);CHKERRQ(ierr); */
+/*   ierr=DMGlobalToLocalEnd(grid->da,nodalFields->soxz,INSERT_VALUES,soxzl);CHKERRQ(ierr); */
+/*   ierr=DMGlobalToLocalBegin(grid->da,nodalFields->soyz,INSERT_VALUES,soyzl);CHKERRQ(ierr); */
+/*   ierr=DMGlobalToLocalEnd(grid->da,nodalFields->soyz,INSERT_VALUES,soyzl);CHKERRQ(ierr); */
   /* strain rate*/
   ierr=DMGlobalToLocalBegin(grid->da,nodalFields->edotxx,INSERT_VALUES,exxl);CHKERRQ(ierr);
   ierr=DMGlobalToLocalEnd(grid->da,nodalFields->edotxx,INSERT_VALUES,exxl);CHKERRQ(ierr);
   ierr=DMGlobalToLocalBegin(grid->da,nodalFields->edotyy,INSERT_VALUES,eyyl);CHKERRQ(ierr);
   ierr=DMGlobalToLocalEnd(grid->da,nodalFields->edotyy,INSERT_VALUES,eyyl);CHKERRQ(ierr);
-  ierr=DMGlobalToLocalBegin(grid->da,nodalFields->edotzz,INSERT_VALUES,ezzl);CHKERRQ(ierr);
-  ierr=DMGlobalToLocalEnd(grid->da,nodalFields->edotzz,INSERT_VALUES,ezzl);CHKERRQ(ierr);
+/*   ierr=DMGlobalToLocalBegin(grid->da,nodalFields->edotzz,INSERT_VALUES,ezzl);CHKERRQ(ierr); */
+/*   ierr=DMGlobalToLocalEnd(grid->da,nodalFields->edotzz,INSERT_VALUES,ezzl);CHKERRQ(ierr); */
   ierr=DMGlobalToLocalBegin(grid->da,nodalFields->edotxy,INSERT_VALUES,exyl);CHKERRQ(ierr);
   ierr=DMGlobalToLocalEnd(grid->da,nodalFields->edotxy,INSERT_VALUES,exyl);CHKERRQ(ierr);
-  ierr=DMGlobalToLocalBegin(grid->da,nodalFields->edotxz,INSERT_VALUES,exzl);CHKERRQ(ierr);
-  ierr=DMGlobalToLocalEnd(grid->da,nodalFields->edotxz,INSERT_VALUES,exzl);CHKERRQ(ierr);
-  ierr=DMGlobalToLocalBegin(grid->da,nodalFields->edotyz,INSERT_VALUES,eyzl);CHKERRQ(ierr);
-  ierr=DMGlobalToLocalEnd(grid->da,nodalFields->edotyz,INSERT_VALUES,eyzl);CHKERRQ(ierr);
+/*   ierr=DMGlobalToLocalBegin(grid->da,nodalFields->edotxz,INSERT_VALUES,exzl);CHKERRQ(ierr); */
+/*   ierr=DMGlobalToLocalEnd(grid->da,nodalFields->edotxz,INSERT_VALUES,exzl);CHKERRQ(ierr); */
+/*   ierr=DMGlobalToLocalBegin(grid->da,nodalFields->edotyz,INSERT_VALUES,eyzl);CHKERRQ(ierr); */
+/*   ierr=DMGlobalToLocalEnd(grid->da,nodalFields->edotyz,INSERT_VALUES,eyzl);CHKERRQ(ierr); */
   /* viscosity*/
   ierr=DMGlobalToLocalBegin(grid->da,nodalFields->etaN,INSERT_VALUES,etaNl);CHKERRQ(ierr);
   ierr=DMGlobalToLocalEnd(grid->da,nodalFields->etaN,INSERT_VALUES,etaNl);CHKERRQ(ierr);
@@ -377,21 +348,21 @@ PetscErrorCode nodalStressStrain( GridData *grid, NodalFields *nodalFields, Opti
   ierr=DMGlobalToLocalEnd(grid->da,nodalFields->etaS,INSERT_VALUES,etaSl);CHKERRQ(ierr);
   /* get local arrays*/
   
-  PetscScalar **soxx, **soyy, **sozz, **soxy, **soxz, **soyz, **etaN, **etaS, **sii, **eii;  
+  PetscScalar **soxx, **soyy, **soxy, **etaN, **etaS, **sii, **eii;  
   ierr=DMDAVecGetArray( grid->da,soxxl,&soxx);CHKERRQ(ierr);
   ierr=DMDAVecGetArray( grid->da,soyyl,&soyy);CHKERRQ(ierr);
-  ierr=DMDAVecGetArray( grid->da,sozzl,&sozz);CHKERRQ(ierr);
+
   ierr=DMDAVecGetArray( grid->da,soxyl,&soxy);CHKERRQ(ierr);
-  ierr=DMDAVecGetArray( grid->da,soxzl,&soxz);CHKERRQ(ierr);
-  ierr=DMDAVecGetArray( grid->da,soyzl,&soyz);CHKERRQ(ierr);
+/*   ierr=DMDAVecGetArray( grid->da,soxzl,&soxz);CHKERRQ(ierr); */
+/*   ierr=DMDAVecGetArray( grid->da,soyzl,&soyz);CHKERRQ(ierr); */
   ierr=DMDAVecGetArray( grid->da,etaNl,&etaN);CHKERRQ(ierr);  
   ierr=DMDAVecGetArray( grid->da,etaSl,&etaS);CHKERRQ(ierr);
   ierr=DMDAVecGetArray( grid->da,exxl,&exx);CHKERRQ(ierr);
   ierr=DMDAVecGetArray( grid->da,eyyl,&eyy);CHKERRQ(ierr);
-  ierr=DMDAVecGetArray( grid->da,ezzl,&ezz);CHKERRQ(ierr);
+/*   ierr=DMDAVecGetArray( grid->da,ezzl,&ezz);CHKERRQ(ierr); */
   ierr=DMDAVecGetArray( grid->da,exyl,&exy);CHKERRQ(ierr);
-  ierr=DMDAVecGetArray( grid->da,exzl,&exz);CHKERRQ(ierr);
-  ierr=DMDAVecGetArray( grid->da,eyzl,&eyz);CHKERRQ(ierr);
+/*   ierr=DMDAVecGetArray( grid->da,exzl,&exz);CHKERRQ(ierr); */
+/*   ierr=DMDAVecGetArray( grid->da,eyzl,&eyz);CHKERRQ(ierr); */
   ierr=DMDAVecGetArray( grid->da,eiil,&eii);CHKERRQ(ierr);
   ierr=DMDAVecGetArray( grid->da,siil,&sii);CHKERRQ(ierr);
 
@@ -426,43 +397,40 @@ PetscErrorCode nodalStressStrain( GridData *grid, NodalFields *nodalFields, Opti
       PetscScalar hs;
       hs=(soxx[jy][ix]*soxx[jy][ix]/etaN[jy][ix]+soxx[jy+1][ix]*soxx[jy+1][ix]/etaN[jy+1][ix]+soxx[jy][ix+1]*soxx[jy][ix+1]/etaN[jy][ix+1]+soxx[jy+1][ix+1]*soxx[jy+1][ix+1]/etaN[jy+1][ix+1])/8.0;
       hs+=(soyy[jy][ix]*soyy[jy][ix]/etaN[jy][ix]+soyy[jy+1][ix]*soyy[jy+1][ix]/etaN[jy+1][ix]+soyy[jy][ix+1]*soyy[jy][ix+1]/etaN[jy][ix+1]+soyy[jy+1][ix+1]*soyy[jy+1][ix+1]/etaN[jy+1][ix+1])/8.0 ;
-      hs+=(sozz[jy][ix]*sozz[jy][ix]/etaN[jy][ix]+sozz[jy+1][ix]*sozz[jy+1][ix]/etaN[jy+1][ix]+sozz[jy][ix+1]*sozz[jy][ix+1]/etaN[jy][ix+1]+sozz[jy+1][ix+1]*sozz[jy+1][ix+1]/etaN[jy+1][ix+1])/8.0;
+      //hs+=(sozz[jy][ix]*sozz[jy][ix]/etaN[jy][ix]+sozz[jy+1][ix]*sozz[jy+1][ix]/etaN[jy+1][ix]+sozz[jy][ix+1]*sozz[jy][ix+1]/etaN[jy][ix+1]+sozz[jy+1][ix+1]*sozz[jy+1][ix+1]/etaN[jy+1][ix+1])/8.0;
       hs+= soxy[jy][ix]*soxy[jy][ix]/etaS[jy][ix] ;
-      hs+= soxz[jy][ix]*soxz[jy][ix]/etaS[jy][ix] ;
-      hs+= soyz[jy][ix]*soyz[jy][ix]/etaS[jy][ix] ; /* factors of 8 are to do nodal averaging (1/4) and then to assume soxx = exx/(2*eta) */
+      //hs+= soxz[jy][ix]*soxz[jy][ix]/etaS[jy][ix] ;
+      //hs+= soyz[jy][ix]*soyz[jy][ix]/etaS[jy][ix] ; /* factors of 8 are to do nodal averaging (1/4) and then to assume soxx = exx/(2*eta) */
       
       nodalHeatingA[jy][ix]+=hs;/* adiabatic heating is already in nodalHeating. add shear heating*/
       
       
       eii[jy][ix] =     sqrt((exx[jy][ix]*exx[jy][ix]+exx[jy+1][ix]*exx[jy+1][ix]+exx[jy][ix+1]*exx[jy][ix+1]+exx[jy+1][ix+1]*exx[jy+1][ix+1])/8.0 + \
 			     (eyy[jy][ix]*eyy[jy][ix]+eyy[jy+1][ix]*eyy[jy+1][ix]+eyy[jy][ix+1]*eyy[jy][ix+1]+eyy[jy+1][ix+1]*eyy[jy+1][ix+1])/8.0 + \
-			     (ezz[jy][ix]*ezz[jy][ix]+ezz[jy+1][ix]*ezz[jy+1][ix]+ezz[jy][ix+1]*ezz[jy][ix+1]+ezz[jy+1][ix+1]*ezz[jy+1][ix+1])/8.0 + \
-			     exy[jy][ix]*exy[jy][ix] +			\
-			     exz[jy][ix]*exz[jy][ix] +			\
-			     eyz[jy][ix]*eyz[jy][ix]);
+			     exy[jy][ix]*exy[jy][ix]) ;
+      
       sii[jy][ix] =     sqrt((soxx[jy][ix]*soxx[jy][ix]+soxx[jy+1][ix]*soxx[jy+1][ix]+soxx[jy][ix+1]*soxx[jy][ix+1]+soxx[jy+1][ix+1]*soxx[jy+1][ix+1])/8.0 + \
 			     (soyy[jy][ix]*soyy[jy][ix]+soyy[jy+1][ix]*soyy[jy+1][ix]+soyy[jy][ix+1]*soyy[jy][ix+1]+soyy[jy+1][ix+1]*soyy[jy+1][ix+1])/8.0 + \
-			     (sozz[jy][ix]*sozz[jy][ix]+sozz[jy+1][ix]*sozz[jy+1][ix]+sozz[jy][ix+1]*sozz[jy][ix+1]+sozz[jy+1][ix+1]*sozz[jy+1][ix+1])/8.0 + \
-			     soxy[jy][ix]*soxy[jy][ix] +		\
-			     soxz[jy][ix]*soxz[jy][ix] +		\
-			     soyz[jy][ix]*soyz[jy][ix]);
-
+			     soxy[jy][ix]*soxy[jy][ix]);		
+      
+      
     }
   }
+  
   /* restore local arrays */
   ierr=DMDAVecRestoreArray(grid->da,soxxl,&soxx);CHKERRQ(ierr);
   ierr=DMDAVecRestoreArray(grid->da,soyyl,&soyy);CHKERRQ(ierr);
-  ierr=DMDAVecRestoreArray(grid->da,sozzl,&sozz);CHKERRQ(ierr);
+  /*   ierr=DMDAVecRestoreArray(grid->da,sozzl,&sozz);CHKERRQ(ierr); */
   ierr=DMDAVecRestoreArray(grid->da,soxyl,&soxy);CHKERRQ(ierr);
-  ierr=DMDAVecRestoreArray(grid->da,soxzl,&soxz);CHKERRQ(ierr);
-  ierr=DMDAVecRestoreArray(grid->da,soyzl,&soyz);CHKERRQ(ierr);
+  /*   ierr=DMDAVecRestoreArray(grid->da,soxzl,&soxz);CHKERRQ(ierr); */
+  /*   ierr=DMDAVecRestoreArray(grid->da,soyzl,&soyz);CHKERRQ(ierr); */
   ierr=DMDAVecRestoreArray( grid->da,exxl,&exx);CHKERRQ(ierr);
   ierr=DMDAVecRestoreArray( grid->da,eyyl,&eyy);CHKERRQ(ierr);
-  ierr=DMDAVecRestoreArray( grid->da,ezzl,&ezz);CHKERRQ(ierr);
-  ierr=DMDAVecRestoreArray( grid->da,wyzl,&exy);CHKERRQ(ierr);
-  ierr=DMDAVecRestoreArray( grid->da,wyzl,&exz);CHKERRQ(ierr);
-  ierr=DMDAVecRestoreArray( grid->da,wyzl,&eyz);CHKERRQ(ierr);
-
+  /*   ierr=DMDAVecRestoreArray( grid->da,ezzl,&ezz);CHKERRQ(ierr); */
+  /*   ierr=DMDAVecRestoreArray( grid->da,wyzl,&exy);CHKERRQ(ierr); */
+  /*   ierr=DMDAVecRestoreArray( grid->da,wyzl,&exz);CHKERRQ(ierr); */
+  /*   ierr=DMDAVecRestoreArray( grid->da,wyzl,&eyz);CHKERRQ(ierr); */
+  
   ierr=DMDAVecRestoreArray(grid->da,nodalHeatingl,&nodalHeatingA);CHKERRQ(ierr);
   ierr=DMDAVecRestoreArray(grid->da,siil,&sii);CHKERRQ(ierr);
   ierr=DMDAVecRestoreArray(grid->da,eiil,&eii);CHKERRQ(ierr);
@@ -475,44 +443,44 @@ PetscErrorCode nodalStressStrain( GridData *grid, NodalFields *nodalFields, Opti
   ierr=DMLocalToGlobalEnd(grid->da,siil,INSERT_VALUES,nodalFields->sii);CHKERRQ(ierr);
   ierr=DMLocalToGlobalBegin(grid->da,nodalHeatingl,INSERT_VALUES,nodalHeating);CHKERRQ(ierr);
   ierr=DMLocalToGlobalEnd(grid->da,nodalHeatingl,INSERT_VALUES,nodalHeating);CHKERRQ(ierr);
-
-
+  
+  
   ierr=VecDestroy(&nodalHeatingl);CHKERRQ(ierr);
   ierr=VecDestroy(&wxyl);CHKERRQ(ierr);
-  ierr=VecDestroy(&wxzl);CHKERRQ(ierr);
-  ierr=VecDestroy(&wyzl);CHKERRQ(ierr);
+  /*   ierr=VecDestroy(&wxzl);CHKERRQ(ierr); */
+  /*   ierr=VecDestroy(&wyzl);CHKERRQ(ierr); */
   ierr=VecDestroy(&exxl);CHKERRQ(ierr);
   ierr=VecDestroy(&eyyl);CHKERRQ(ierr);
-  ierr=VecDestroy(&ezzl);CHKERRQ(ierr);
+  /*   ierr=VecDestroy(&ezzl);CHKERRQ(ierr); */
   ierr=VecDestroy(&exyl);CHKERRQ(ierr);
-  ierr=VecDestroy(&exzl);CHKERRQ(ierr);
-  ierr=VecDestroy(&eyzl);CHKERRQ(ierr);
+  /*   ierr=VecDestroy(&exzl);CHKERRQ(ierr); */
+  /*   ierr=VecDestroy(&eyzl);CHKERRQ(ierr); */
   ierr=VecDestroy(&eiil);CHKERRQ(ierr);
   /* stress*/
   ierr=VecDestroy(&soxxl);CHKERRQ(ierr);
   ierr=VecDestroy(&soyyl);CHKERRQ(ierr);
-  ierr=VecDestroy(&sozzl);CHKERRQ(ierr);
+  /*   ierr=VecDestroy(&sozzl);CHKERRQ(ierr); */
   ierr=VecDestroy(&soxyl);CHKERRQ(ierr);
-  ierr=VecDestroy(&soxzl);CHKERRQ(ierr);
-  ierr=VecDestroy(&soyzl);CHKERRQ(ierr);
+  /*   ierr=VecDestroy(&soxzl);CHKERRQ(ierr); */
+  /*   ierr=VecDestroy(&soyzl);CHKERRQ(ierr); */
   ierr=VecDestroy(&siil);CHKERRQ(ierr);
   /* viscosity */
   ierr=VecDestroy(&etaNl);CHKERRQ(ierr);
   ierr=VecDestroy(&etaSl);CHKERRQ(ierr);
-
+  
   ierr = VecDestroy(&stemp);CHKERRQ(ierr);
   ierr = VecDestroy(&etemp);CHKERRQ(ierr);
   ierr = VecDestroy(&X);CHKERRQ(ierr);
   ierr = VecDestroy(&X1);CHKERRQ(ierr);
-
-
+  
+  
   ierr=DMDAVecRestoreArray( grid->da,vxl,&vx);CHKERRQ(ierr);
   ierr=DMDAVecRestoreArray( grid->da,vyl,&vy);CHKERRQ(ierr);
-  ierr=DMDAVecRestoreArray( grid->da,vzl,&vz);CHKERRQ(ierr);
+  /*   ierr=DMDAVecRestoreArray( grid->da,vzl,&vz);CHKERRQ(ierr); */
   ierr = VecDestroy(&vxl);CHKERRQ(ierr);
   ierr = VecDestroy(&vyl);CHKERRQ(ierr);
-  ierr = VecDestroy(&vzl);CHKERRQ(ierr);
-
+  //  ierr = VecDestroy(&vzl);CHKERRQ(ierr);
+  
   PetscFunctionReturn(ierr);
 }
 
