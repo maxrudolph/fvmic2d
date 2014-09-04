@@ -30,14 +30,14 @@ PetscErrorCode initializeSubductionGrid(GridData *grid, Options *options){
   const PetscInt Nextrax = NX +2 - Nwedge - Nplate;
   //uniform spacing in "extra" x-region
   PetscScalar dxextra = (LX-LY)/(Nextrax-1.0);
-  PetscScalar dxmin = 1000.0;
-
+  
+  
   //use linear element spacing in overriding plate
   gridSpacingUniform( grid->x, 0.0, cornerx, Nplate );
   gridSpacingUniform( grid->y, 0.0, cornery, Nplate );
   // use ramp spacing in mantle wedge
-  gridSpacingRamp( grid->x + Nplate-1, cornerx, slab_bottom_x, Nwedge, 10.0);
-  gridSpacingRamp( grid->y + Nplate-1, cornery, LY, Nwedge, 10.0);
+  gridSpacingRamp( grid->x + Nplate-1, cornerx, slab_bottom_x, Nwedge, 5.0);
+  gridSpacingRamp( grid->y + Nplate-1, cornery, LY, Nwedge, 5.0);
   //use uniform spacing in "Extra" x region
   gridSpacingUniform( grid->x + Nplate + Nwedge - 2, LY, LX , Nextrax);
 
