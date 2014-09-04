@@ -15,7 +15,7 @@ maxMarkers,1000
 dtMax,1.5779e13
 displacementStepLimit,0.2
 maxTempChange,20.0
-nTime,10001
+nTime,11
 restartStep,0
 #maximum model time to run:
 totalTime,4.4e30

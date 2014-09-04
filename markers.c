@@ -722,8 +722,9 @@ PetscErrorCode checkMarkerDensity( MarkerSet *markerset, GridData *grid, Options
 	markers[idx].Y = newY[i];
 	if( markers[idx].X <= grid->x[1] ){//enforce slab geotherm
 	  markers[idx].T = slab_inflow_temperature( markers[idx].X, markers[idx].Y,options->slabAngle );
-	}else if(markers[idx].X >= grid->x[NX-1]){//enforce mantle inflow temperature
+	}else if(markers[idx].X >= grid->x[NX-2]){//enforce mantle inflow temperature
 	  markers[idx].T = mantle_temperature();
+	  printf("assigning mantle temperature\n");
 	}
 
       } else{
