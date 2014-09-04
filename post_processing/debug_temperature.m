@@ -61,7 +61,7 @@ LY=max(grid.y);
 xc = nf.gridx(1,1:end-1) + diff(nf.gridx(1,:))/2;
 yc = nf.gridy(1:end-1,1) + diff(nf.gridy(:,1))/2;
 [X,Y] = meshgrid(xc,yc);
-figure, pcolor(xc,yc,sqrt(vxc.^2+vyc.^2)); shading flat;colorbar; caxis([-slabv slabv]);
+figure, pcolor(xc,yc,sqrt(vxc.^2+vyc.^2)); shading faceted; colorbar; caxis([-slabv slabv]);
 set(gca,'YDir','reverse');
 nsl = 50;
 

@@ -5,3 +5,4 @@ void gridSpacingConstantInnerOuter( PetscScalar *, PetscScalar , PetscInt , Pets
 void smoothGrid( PetscScalar *, PetscScalar , PetscInt );
 void gridSpacingRefinedCenter( PetscScalar *, PetscScalar, PetscInt, PetscScalar );
 void circShift( PetscScalar *, PetscScalar, PetscInt , PetscInt );
+void gridSpacingRamp( PetscScalar *x, PetscScalar xmin, PetscScalar xmax, PetscInt NX, PetscScalar hcontrast);

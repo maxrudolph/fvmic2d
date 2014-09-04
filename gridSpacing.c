@@ -132,6 +132,21 @@ void gridSpacingConstantInnerOuter( PetscScalar *x, PetscScalar LX, PetscInt NX,
   x[NX-1] = LX; 
 }
 
+void gridSpacingRamp( PetscScalar *x, PetscScalar xmin, PetscScalar xmax, PetscInt NX, PetscScalar hcontrast){
+  /* Make a grid spaced so that the left side is more finely spaced than the right and the with contrast set by hcontrast and a smooth transition between the two regions */
+  PetscScalar NE = ((PetscScalar) NX-1);
+  PetscScalar L = xmax-xmin;
+  PetscScalar f = pow(hcontrast,1.0/(NE-1.0));
+  PetscScalar amin = L*(f-1)/(pow(f,NE)-1);
+  PetscInt ix;
+  x[0] = xmin;
+  for(ix=1;ix<NX-1;ix++){
+    PetscScalar dx = amin*pow(f,((double) ix-1.0 ));
+    x[ix] = x[ix-1] + dx;
+  }
+  x[NX-1] = xmax;
+}
+
 void getCellCenters( PetscScalar *x, PetscScalar *xc, PetscScalar LX, PetscInt NX){
   PetscInt ix;
   for(ix=1;ix<NX;ix++){

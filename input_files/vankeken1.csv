@@ -1,14 +1,14 @@
 # Van Keken subduction benchmark
 LX,660000
 LY,600000
-NX,221
-NY,201			
-NMX,4
-NMY,4
+NX,133
+NY,121			
+NMX,15
+NMY,15
 gridRatio,1.0
 maxMarkFactor,2.0; /*memory to allocate for markers is this number*original number of markers*/
-minMarkers,3; /* munimum number of markers per quarter-cell */
-maxMarkers,100
+minMarkers,2; /* munimum number of markers per quarter-cell */
+maxMarkers,1000
 #
 #Time step Stuff
 #

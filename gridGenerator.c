@@ -5,6 +5,48 @@
 
 PetscErrorCode allocateGrid(GridData *, Options *);
 
+PetscErrorCode initializeSubductionGrid(GridData *grid, Options *options){
+  PetscFunctionBegin;
+  PetscInt NX = options->NX;
+  PetscInt NY = options->NY;
+  PetscScalar LX = options->LX;
+  PetscScalar LY = options->LY;
+  PetscErrorCode ierr=0;
+  if( NX <= NY ){
+    fprintf(stderr,"ERROR: NX MUST be greater than NY\n");
+    abort();
+  }
+  ierr = allocateGrid( grid, options);CHKERRQ(ierr);
+
+  // for subduction problem - tweak y-gridlines so that slab falls exactly on a cell corner
+  const PetscScalar cornerx = plate_depth(LY)/tan(options->slabAngle);
+  const PetscScalar slab_bottom_x = LY/tan(options->slabAngle);
+  const PetscScalar cornery = plate_depth(LX);
+
+  const PetscInt Nplate = floor( cornery/LY * ((PetscScalar) NY) );
+
+  const PetscInt Nwedge = NY - Nplate + 1;
+
+  const PetscInt Nextrax = NX +2 - Nwedge - Nplate;
+  //uniform spacing in "extra" x-region
+  PetscScalar dxextra = (LX-LY)/(Nextrax-1.0);
+  PetscScalar dxmin = 1000.0;
+
+  //use linear element spacing in overriding plate
+  gridSpacingUniform( grid->x, 0.0, cornerx, Nplate );
+  gridSpacingUniform( grid->y, 0.0, cornery, Nplate );
+  // use ramp spacing in mantle wedge
+  gridSpacingRamp( grid->x + Nplate-1, cornerx, slab_bottom_x, Nwedge, 10.0);
+  gridSpacingRamp( grid->y + Nplate-1, cornery, LY, Nwedge, 10.0);
+  //use uniform spacing in "Extra" x region
+  gridSpacingUniform( grid->x + Nplate + Nwedge - 2, LY, LX , Nextrax);
+
+  getCellCenters( grid->x, grid->xc, LX, NX);
+  getCellCenters( grid->y, grid->yc, LY, NY);
+
+  PetscFunctionReturn(ierr);
+}
+
 PetscErrorCode initializeRegularGrid(GridData *grid, Options *options){
   PetscFunctionBegin;
   PetscInt NX = options->NX;
