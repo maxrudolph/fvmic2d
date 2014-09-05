@@ -38,12 +38,56 @@ PetscErrorCode destroyMarkers( MarkerSet *markerset ,Options *options){
   PetscFunctionReturn(ierr);
 }
 
-void findMarkerCells( MarkerSet *markerset, GridData *grid){
-  /* go through list of local markers and figure out which cell I belong to using a bisection method*/
+void findMarkerCell( Marker *marker, GridData *grid ){
   const PetscInt NX =grid->NX;
   const PetscInt NY =grid->NY;
   const PetscScalar LX =grid->LX;
   const PetscScalar LY =grid->LY;
+  if( marker->X >= 0.0 && marker->Y >= 0.0 && marker->X <= LX && marker->Y <= LY){
+    /* marker is in bounds*/
+    PetscInt idxmin=0;
+    PetscInt idxmax= grid->xperiodic ? NX : NX-1;
+    while( (idxmax - idxmin) >1){
+      PetscInt idxc = (idxmax+idxmin)/2;
+      if(idxc == idxmin){idxc++;}else if(idxc == idxmax){idxc--;}
+      if( marker->X >= grid->x[idxc]){ 
+	idxmin=idxc;
+      }else{
+	idxmax=idxc;
+      }
+    }
+    marker->cellX = idxmin; 
+    idxmin=0; 
+    idxmax=NY-1; 
+    while( idxmax - idxmin>1){
+      PetscInt idxc = (idxmax+idxmin)/2;
+      if(idxc == idxmin){idxc++;}else if(idxc == idxmax){idxc--;}
+      if( marker->Y >= grid->y[idxc]){ 
+	idxmin=idxc;
+      }else{
+	idxmax=idxc;
+      }
+    }
+    marker->cellY = idxmin;
+    
+    idxmax= grid->xperiodic ? NX-1 : NX-2;
+    if( marker->cellX < 0 || marker->cellX > idxmax || marker->cellY < 0 || marker->cellY > NY-2){
+      printf("cell out of bounds marker cellX - %d, cellY = %d\n",marker->cellX, marker->cellY);
+      abort();
+    }      
+  } else {
+    marker->cellX = -1;
+    marker->cellY = -1;
+  }
+  
+}
+
+void findMarkerCells( MarkerSet *markerset, GridData *grid){
+  /* go through list of local markers and figure out which cell I belong to using a bisection method*/
+  // const PetscInt NX =grid->NX;
+  // const PetscInt NY =grid->NY;
+  // const PetscScalar LX =grid->LX;
+  // const PetscScalar LY =grid->LY;
   PetscMPIInt rank;
   MPI_Comm_rank(PETSC_COMM_WORLD,&rank);
   PetscInt nout=0;
@@ -52,49 +96,9 @@ void findMarkerCells( MarkerSet *markerset, GridData *grid){
   Marker *markers = markerset->markers;
 
   for(m=0;m<markerset->nMark;m++){
-    if( markers[m].X >= 0.0 && markers[m].Y >= 0.0 && markers[m].X <= LX && markers[m].Y <= LY){
-      /* marker is in bounds*/
-      PetscInt idxmin=0;
-      PetscInt idxmax= grid->xperiodic ? NX : NX-1;
-      while( (idxmax - idxmin) >1){
-	PetscInt idxc = (idxmax+idxmin)/2;
-	if(idxc == idxmin){idxc++;}else if(idxc == idxmax){idxc--;}
-	if( markers[m].X >= grid->x[idxc]){ 
-	  idxmin=idxc;
-	}else{
-	  idxmax=idxc;
-	}
-	//	printf("marker%d X = %e, idxmin %d idxmax %d\n",m,markers->X[m],idxmin,idxmax);
-      }
-      markers[m].cellX = idxmin; 
-      idxmin=0; 
-      idxmax=NY-1; 
-      while( idxmax - idxmin>1){
-	PetscInt idxc = (idxmax+idxmin)/2;
-	if(idxc == idxmin){idxc++;}else if(idxc == idxmax){idxc--;}
-	if( markers[m].Y >= grid->y[idxc]){ 
-	  idxmin=idxc;
-	}else{
-	  idxmax=idxc;
-	}
-	//	printf("marker%d X = %e, idxmin %d idxmax %d\n",m,markers->X[m],idxmin,idxmax);
-      }
-      markers[m].cellY = idxmin;
-
-      idxmax= grid->xperiodic ? NX-1 : NX-2;
-      if( markers[m].cellX < 0 || markers[m].cellX > idxmax || markers[m].cellY < 0 || markers[m].cellY > NY-2){
-	printf("cell out of bounds marker %d, cellX - %d, cellY = %d\n",m,markers[m].cellX, markers[m].cellY);
-	abort();
-      }
-      
-
-
-    } else {
-      markers[m].cellX = -1;
-      markers[m].cellY = -1;
-      nout++;
-    }
+    findMarkerCell( &(markers[m]) , grid);
     markers[m].cpu = rank;
+    if( markers[m].cellX == -1 ) nout++;
   }
   markerset->nOut=nout;
 }
@@ -246,86 +250,90 @@ PetscErrorCode exchangeMarkers( MarkerSet *markerset, GridData *grid,Options *op
 }
 
 
+void resetMarker( Marker *m ){
+  m->X = -1;
+  m->Y = -1;
+  /*     m->Z = -1; */
+  m->VX = 0;
+  m->VY = 0;
+  /*     m->VZ = 0; */
+  m->p = 0.0;
+  m->Mat = -1;
+  m->T = 0.0;
+  m->Tdot = 0.0;
+  m->eta =0.0;
+  m->s.T11 = 0.0;
+  m->s.T22 = 0.0;
+  m->s.T33 = 0.0;
+  m->s.T13 = 0.0;
+  m->s.T23 = 0.0;
+  m->s.T12 = 0.0;    
+  m->e.T11 = 0.0;
+  m->e.T22 = 0.0;
+  m->e.T33 = 0.0;
+  m->e.T13 = 0.0;
+  m->e.T23 = 0.0;
+  m->e.T12 = 0.0;
+  
+#ifndef TEXTURE
+  m->eta = 0.0;
+#else
+  m->mu = 0.0;
+  PetscInt i,j;
+  m->texture.N[0][0]=0.0;
+  m->texture.N[0][1]=0.0;
+  m->texture.N[1][0]=0.0;
+  m->texture.N[1][1]=0.0;
+  for(i=0;i<6;i++){
+    for(j=0;j<6;j++){
+      m->texture.M[i][j]=0.0;
+    }
+  }
+#endif
+  
+  m->p = 0.0;
+  /* stress */
+  m->s.T11 = 0.0;
+  m->s.T22 = 0.0;
+  m->s.T33 = 0.0;
+  m->s.T23 = 0.0;
+  m->s.T13 = 0.0;
+  m->s.T12 = 0.0; 
+  
+  m->rho = 0.0;
+  m->rhodot = 0.0;
+  /* strain rate */
+  m->e.T11 = 0.0;
+  m->e.T22 = 0.0;
+  m->e.T33 = 0.0;
+  m->e.T23 = 0.0;
+  m->e.T13 = 0.0;
+  m->e.T12 = 0.0;
+  /* total strain */
+  m->E.T11 = 0.0; 
+  m->E.T22 = 0.0; 
+  m->E.T33 = 0.0; 
+  m->E.T23 = 0.0; 
+  m->E.T13 = 0.0; 
+  m->E.T12 = 0.0; 
+  m->Eii = 0.0;
+  /* rotation rate */
+  //m->wxz = 0.0;
+  m->wxy = 0.0;
+  //    m->wyz = 0.0;
+  
+  //m->D = 0.0;
+  //m->Ddot = 0.0;
+  m->isYielding = 0;
+}
+
 void resetMarkers( MarkerSet *markerset,Options *options){
 /*   PetscErrorCode ierr=0; */
   PetscInt nMark = markerset->maxMark;
   PetscInt m;
   Marker *markers = markerset->markers;
   for(m=0;m<nMark;m++){
-    markers[m].X = -1;
-    markers[m].Y = -1;
-/*     markers[m].Z = -1; */
-    markers[m].VX = 0;
-    markers[m].VY = 0;
-/*     markers[m].VZ = 0; */
-    markers[m].p = 0.0;
-    markers[m].Mat = -1;
-    markers[m].T = 0.0;
-    markers[m].Tdot = 0.0;
-    markers[m].eta =0.0;
-    markers[m].s.T11 = 0.0;
-    markers[m].s.T22 = 0.0;
-    markers[m].s.T33 = 0.0;
-    markers[m].s.T13 = 0.0;
-    markers[m].s.T23 = 0.0;
-    markers[m].s.T12 = 0.0;    
-    markers[m].e.T11 = 0.0;
-    markers[m].e.T22 = 0.0;
-    markers[m].e.T33 = 0.0;
-    markers[m].e.T13 = 0.0;
-    markers[m].e.T23 = 0.0;
-    markers[m].e.T12 = 0.0;
-
-#ifndef TEXTURE
-    markers[m].eta = 0.0;
-#else
-    markers[m].mu = 0.0;
-    PetscInt i,j;
-    markers[m].texture.N[0][0]=0.0;
-    markers[m].texture.N[0][1]=0.0;
-    markers[m].texture.N[1][0]=0.0;
-    markers[m].texture.N[1][1]=0.0;
-    for(i=0;i<6;i++){
-      for(j=0;j<6;j++){
-	markers[m].texture.M[i][j]=0.0;
-      }
-    }
-#endif
-    
-    markers[m].p = 0.0;
-    /* stress */
-    markers[m].s.T11 = 0.0;
-    markers[m].s.T22 = 0.0;
-    markers[m].s.T33 = 0.0;
-    markers[m].s.T23 = 0.0;
-    markers[m].s.T13 = 0.0;
-    markers[m].s.T12 = 0.0; 
-    
-    markers[m].rho = 0.0;
-    markers[m].rhodot = 0.0;
-    /* strain rate */
-    markers[m].e.T11 = 0.0;
-    markers[m].e.T22 = 0.0;
-    markers[m].e.T33 = 0.0;
-    markers[m].e.T23 = 0.0;
-    markers[m].e.T13 = 0.0;
-    markers[m].e.T12 = 0.0;
-    /* total strain */
-    markers[m].E.T11 = 0.0; 
-    markers[m].E.T22 = 0.0; 
-    markers[m].E.T33 = 0.0; 
-    markers[m].E.T23 = 0.0; 
-    markers[m].E.T13 = 0.0; 
-    markers[m].E.T12 = 0.0; 
-    markers[m].Eii = 0.0;
-    /* rotation rate */
-    //markers[m].wxz = 0.0;
-    markers[m].wxy = 0.0;
-    //    markers[m].wyz = 0.0;
-    
-    //markers[m].D = 0.0;
-    //markers[m].Ddot = 0.0;
-    markers[m].isYielding = 0;
+    resetMarker( &(markers[m]) );
   }
 }
 
@@ -444,7 +452,7 @@ PetscErrorCode distributeMarkersUniformInCells( MarkerSet *markerset, Options *o
 
 PetscErrorCode checkMarkerDensity( MarkerSet *markerset, GridData *grid, Options *options, PetscRandom r){
   PetscErrorCode ierr=0;
-
+  setLogStage( LOG_MARK_ADD );
   PetscInt NX = grid->NX;
   PetscInt NY = grid->NY;
   PetscScalar LX = grid->LX;
@@ -690,47 +698,49 @@ PetscErrorCode checkMarkerDensity( MarkerSet *markerset, GridData *grid, Options
     /* One would be to weight neighbor values by distance*/
     /* just inherit nearest neighbor's values*/   
     for(i=0;i<nAdd;i++){
-      /* find nearest neighbor to the new marker*/
-      PetscScalar mindist = LX*LY; /* initialize mindist with something very large*/
-      PetscInt minidx = -1;
-      for(m1=0;m1<nMark;m1++){/* note that this is the original number of markers*/
-	//if( !isout[m]){
-	if( markers[m1].cellX != -1){
-	  /* require that the marker be within one cell width*/
-	  if( fabs(markers[m1].X - newX[i]) <= (grid->x[markers[m1].cellX +1] - grid->x[markers[m1].cellX]) && fabs(markers[m1].Y - newY[i]) <= (grid->y[markers[m1].cellY+1] - grid->y[markers[m1].cellY])){
-	    /* this is a candidate. compute euclidean distances*/
-	    PetscScalar x1= (markers[m1].X - newX[i]);
-	    PetscScalar y1= (markers[m1].Y - newY[i]);
-	    PetscScalar r1 = sqrt( x1*x1 + y1*y1 );
-	    if(r1 < mindist){ mindist = r1; minidx = m1;}
-	  }	
+      /* if the marker is along the inflow boundary, assign slab properties */
+      PetscInt idx;
+      if(nOut>0){	/* if there are markers out of the domain, recycle one of them*/
+	idx = isout[nOut-1];
+	nOut--;
+	//printf("recycling marker %d\n",idx);
+      }else{
+	idx = markerset->nMark;
+	markerset->nMark++;
+      }
+      if( newX[i] < grid->x[1] ){/* slab inflow marker */
+	markers[idx] = new_slab_marker( newX[i], newY[i], options->slabAngle );
+	findMarkerCell( &(markers[idx]), grid );
+      }else if( newX[i] >= grid->x[NX-2] && newY[i] >= plate_depth( grid->LX) ){
+	markers[idx] = new_inflow_marker(newX[i],newY[i]);
+	findMarkerCell( &(markers[idx]), grid );
+      } else { /* default case - not inflow */
+	/* find nearest neighbor to the new marker*/
+	PetscScalar mindist = LX*LY; /* initialize mindist with something very large*/
+	PetscInt minidx = -1;
+	for(m1=0;m1<nMark;m1++){/* note that this is the original number of markers*/
+	  //if( !isout[m]){
+	  if( m1 != idx && markers[m1].cellX != -1){
+	    /* require that the marker be within one cell width*/
+	    
+	    if( fabs(markers[m1].X - newX[i]) <= (grid->x[markers[m1].cellX +1] - grid->x[markers[m1].cellX]) && fabs(markers[m1].Y - newY[i]) <= (grid->y[markers[m1].cellY+1] - grid->y[markers[m1].cellY])){
+	      /* this is a candidate. compute euclidean distances*/
+	      PetscScalar x1= (markers[m1].X - newX[i]);
+	      PetscScalar y1= (markers[m1].Y - newY[i]);
+	      PetscScalar r1 = sqrt( x1*x1 + y1*y1 );
+	      if(r1 < mindist){ mindist = r1; minidx = m1;}
+	    }	
+	  }
+	}
+	if(minidx != -1){
+	  /* take all properties from nearest marker*/	  
+	  markers[idx] = markers[minidx];
+	  markers[idx].X = newX[i];
+	  markers[idx].Y = newY[i];	 
+	} else{
+	  printf("Error: No markers close enough for nearest-neighbor interpolation\n");
 	}
       }
-      if(minidx != -1){
-	/* take all properties from nearest marker*/
-	PetscInt idx;
-	if(nOut>0){	/* if there are markers out of the domain, recycle one of them*/
-	  idx = isout[nOut-1];
-	  nOut--;
-	  //printf("recycling marker %d\n",idx);
-	}else{
-	  idx = markerset->nMark;
-	  markerset->nMark++;
-	}
-        markers[idx] = markers[minidx];
-	markers[idx].X = newX[i];
-	markers[idx].Y = newY[i];
-	if( markers[idx].X <= grid->x[1] ){//enforce slab geotherm
-	  markers[idx].T = slab_inflow_temperature( markers[idx].X, markers[idx].Y,options->slabAngle );
-	}else if(markers[idx].X >= grid->x[NX-2]){//enforce mantle inflow temperature
-	  markers[idx].T = mantle_temperature();
-	  printf("assigning mantle temperature\n");
-	}
-
-      } else{
-	printf("Error: No markers close enough for nearest-neighbor interpolation\n");
-      }
-      
     } /* end loop over markers to add, finding nearest neighbors*/
     /*     ierr = PetscRandomDestroy(r);CHKERRQ(ierr); */
     ierr = PetscFree2(newX,newY); CHKERRQ(ierr);
@@ -743,7 +753,7 @@ PetscErrorCode checkMarkerDensity( MarkerSet *markerset, GridData *grid, Options
   ierr = PetscFree(isout);CHKERRQ(ierr);  
   ierr = PetscFree(nMarkers); CHKERRQ(ierr);
   /*   ierr = PetscFree(nMarkersp); CHKERRQ(ierr); */
-  
+  ierr = PetscLogStagePop();
   PetscFunctionReturn(ierr);
 }
 

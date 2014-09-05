@@ -19,3 +19,4 @@ PetscErrorCode checkMarkerDensity( MarkerSet *, GridData *, Options *,PetscRando
 PetscErrorCode advectMarkers(MarkerSet *, GridData *, PetscScalar );
 PetscErrorCode advectMarkersRK(MarkerSet *, NodalFields *, GridData *, Options *, BoundaryValues *, PetscScalar );
 PetscErrorCode projectNodalFieldToMarkersS(NodalFields *, Vec, MarkerSet *, PetscScalar *, GridData *);
+void resetMarker( Marker * );

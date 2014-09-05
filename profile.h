@@ -1,6 +1,6 @@
 /* Profiling Information */
 
-#define LOG_N_STAGES 15
+#define LOG_N_STAGES 20
 
 typedef enum {
   LOG_MAIN = 0,
@@ -16,7 +16,8 @@ typedef enum {
   LOG_SUBGRID_TEMP = 10,
   LOG_IO = 11,
   LOG_MARK_STR_PRESS = 12,
-  LOG_MARK_MOVE = 13
+  LOG_MARK_MOVE = 13,
+  LOG_MARK_ADD = 14
 } LogStage;
 
 

@@ -2,7 +2,7 @@
 #include "benchmarkInitialConditions.h"
 #include "viscosity.h"
 #include "math.h"
-
+#include "markers.h"
 
 
 PetscErrorCode initialConditionsVanKeken( MarkerSet *markerset, Options *options, Materials *materials, GridData *grid){
@@ -49,6 +49,27 @@ PetscErrorCode initialConditionsVanKeken( MarkerSet *markerset, Options *options
 
   PetscFunctionReturn(ierr);
 }
+
+Marker new_slab_marker(PetscScalar x, PetscScalar y, PetscScalar angle){
+  Marker m;
+  resetMarker( &m );
+  m.X = x;
+  m.Y = y;
+  m.Mat = 0;
+  m.T = slab_inflow_temperature( x, y, angle );
+  return m;
+}
+
+Marker new_inflow_marker(PetscScalar x, PetscScalar y){
+  Marker m;
+  resetMarker( &m );
+  m.X = x;
+  m.Y = y;
+  m.Mat = 0;
+  m.T = mantle_temperature();
+  return m;
+}
+
 
 PetscScalar mantle_temperature(){
   const PetscScalar t = 1573.0;

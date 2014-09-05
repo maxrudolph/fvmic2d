@@ -22,6 +22,7 @@ PetscLogStage * initializeLogging( ){
   PetscLogStageRegister("I/O",&stages[11]); 
   PetscLogStageRegister("Mark Str Press",&stages[12]);
   PetscLogStageRegister("Advection",&stages[13]);  
+  PetscLogStageRegister("Add Markers",&stages[14]);
   PetscLogStagePush(stages[0]);
 
   return( stages );

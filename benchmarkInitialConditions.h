@@ -10,3 +10,5 @@ PetscScalar plate_geotherm( PetscScalar);
 
 
 PetscScalar mantle_temperature();
+Marker new_slab_marker( PetscScalar, PetscScalar, PetscScalar );
+Marker new_inflow_marker( PetscScalar, PetscScalar );
