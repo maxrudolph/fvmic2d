@@ -17,10 +17,11 @@ typedef enum {
   LOG_IO = 11,
   LOG_MARK_STR_PRESS = 12,
   LOG_MARK_MOVE = 13,
-  LOG_MARK_ADD = 14
+  LOG_MARK_ADD = 14,
+  LOG_FIND_CELLS = 15
 } LogStage;
 
 
-PetscLogStage * initializeLogging();
+void initializeLogging();
 PetscErrorCode setLogStage( LogStage );
 PetscErrorCode finalizeLogging( );

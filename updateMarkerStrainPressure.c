@@ -3,6 +3,7 @@
 //#include "texture.h"
 #include "updateDamageViscosity.h"
 #include "viscosity.h"
+#include "profile.h"
 
 /* subroutine to update the marker strain rate and pressure fields*/
 PetscErrorCode updateMarkerStrainPressure( GridData *grid, NodalFields *nodalFields,MarkerSet *markerset, Materials *materials, Options *options,PetscScalar dt){
@@ -18,6 +19,7 @@ PetscErrorCode updateMarkerStrainPressure( GridData *grid, NodalFields *nodalFie
   Marker *markers = markerset->markers;
 
   PetscFunctionBegin;
+  setLogStage( LOG_MARK_STR_PRESS );
   /* allocate all of the local vectors*/
   /* stress changes*/
   ierr=DMCreateLocalVector(grid->da,&dsxxl);CHKERRQ(ierr);
@@ -392,6 +394,6 @@ PetscErrorCode updateMarkerStrainPressure( GridData *grid, NodalFields *nodalFie
   /*pressure*/
   ierr=VecDestroy(&pl);CHKERRQ(ierr);
   
-  
+  PetscLogStagePop();
   PetscFunctionReturn(ierr);
 }

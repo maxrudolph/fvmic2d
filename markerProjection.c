@@ -4,7 +4,7 @@
 #include "markerProjection.h"
 #include "profile.h"
 
-void findCellStag2D( Marker *, GridData *, PetscInt , PetscInt , PetscInt *, PetscInt *);
+void findCellStag2D( Marker *, const GridData *, const PetscInt , const PetscInt , PetscInt *, PetscInt *);
 PetscErrorCode interpolateCellCentersBasicNodes( GridData *, Vec , Vec , PROJECTION_METHOD );
 
 /* project all marker fields to nodes */
@@ -249,7 +249,7 @@ PetscErrorCode projectMarkerFieldToNodes(GridData *grid, MarkerSet *markerset, P
   PetscFunctionReturn(ierr); 
 }
 
-void findCellStag2D( Marker *marker, GridData *grid, PetscInt stagx, PetscInt stagy, PetscInt *cellX, PetscInt *cellY){
+void findCellStag2D( Marker *marker, const GridData *grid, const PetscInt stagx, const PetscInt stagy, PetscInt *cellX, PetscInt *cellY){
   /* calculate the upper left cell indices */
   cellX[0] = marker->cellX;
   cellY[0] = marker->cellY;

@@ -88,6 +88,7 @@ void findMarkerCells( MarkerSet *markerset, GridData *grid){
   // const PetscInt NY =grid->NY;
   // const PetscScalar LX =grid->LX;
   // const PetscScalar LY =grid->LY;
+  setLogStage( LOG_FIND_CELLS );
   PetscMPIInt rank;
   MPI_Comm_rank(PETSC_COMM_WORLD,&rank);
   PetscInt nout=0;
@@ -101,7 +102,9 @@ void findMarkerCells( MarkerSet *markerset, GridData *grid){
     if( markers[m].cellX == -1 ) nout++;
   }
   markerset->nOut=nout;
+  PetscLogStagePop();
 }
+
 
 PetscErrorCode exchangeMarkers( MarkerSet *markerset, GridData *grid,Options *options){
 
@@ -208,12 +211,11 @@ PetscErrorCode exchangeMarkers( MarkerSet *markerset, GridData *grid,Options *op
       /* take the markers... first use empty (-1 flagged) spots, then add markers*/
       i=0;
       /*       for(i=0;i<nTake;i++){ */
+      PetscInt m1=0;
       while(nTake>0){
-
 	while(  mrecv[i].cellX <x || mrecv[i].cellY <y || mrecv[i].cellX >= (x+m) || mrecv[i].cellY >= (y+n)){
 	  i++;
 	}
-	PetscInt m1=0;
 	if(markerset->nOut>0){
 	  while(markers[m1].cellX != -1) m1++; /* m1 should now hold first -1 flagged entry*/
 	  markerset->nOut--;
@@ -682,7 +684,7 @@ PetscErrorCode checkMarkerDensity( Problem *problem, MarkerSet *markerset, GridD
 
   if(nAdd>0) printf("[%d] nAdd=%d\n",rank,nAdd);
   if(nAdd > 0 && (nAdd+markerset->nMark-nOut) < markerset->maxMark){
-    printf("adding %d markers, currently have %d markers, nOut=%d\n",nAdd,markerset->nMark,nOut); fflush(stdout);
+    printf("[%d] adding %d markers, currently have %d markers, nOut=%d\n",rank,nAdd,markerset->nMark,nOut); fflush(stdout);
     PetscScalar *newX, *newY;
     ierr = PetscMalloc2(nAdd,&newX,nAdd,&newY);  CHKERRQ(ierr);
 

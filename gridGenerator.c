@@ -23,7 +23,7 @@ PetscErrorCode initializeSubductionGrid(GridData *grid, Options *options){
   const PetscScalar slab_bottom_x = LY/tan(options->slabAngle);
   const PetscScalar cornery = plate_depth(LX);
 
-  const PetscInt Nplate = floor( cornery/LY * ((PetscScalar) NY) );
+  const PetscInt Nplate = floor( 2.0*cornery/LY * ((PetscScalar) NY) );
 
   const PetscInt Nwedge = NY - Nplate + 1;
 

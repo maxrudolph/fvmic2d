@@ -1,6 +1,6 @@
 #include "fdcode.h"
 #include "nodalStressStrain.h"
-
+#include "profile.h"
 /* calculate stress and strain at nodes*/
 
 PetscErrorCode nodalStressStrain( GridData *grid, NodalFields *nodalFields, Options *options, BoundaryValues *bv, PetscScalar dt, Vec nodalHeating, PetscScalar gy){
@@ -13,7 +13,7 @@ PetscErrorCode nodalStressStrain( GridData *grid, NodalFields *nodalFields, Opti
   PetscInt ix,jy;  
   
   PetscFunctionBegin;
-
+  setLogStage( LOG_NODAL_STR );
 
   /* retrieve local arrays of nodal fields, including ghost node values*/
   Vec vxl,vyl;
@@ -480,7 +480,7 @@ PetscErrorCode nodalStressStrain( GridData *grid, NodalFields *nodalFields, Opti
   ierr = VecDestroy(&vxl);CHKERRQ(ierr);
   ierr = VecDestroy(&vyl);CHKERRQ(ierr);
   //  ierr = VecDestroy(&vzl);CHKERRQ(ierr);
-  
+  PetscLogStagePop();
   PetscFunctionReturn(ierr);
 }
 

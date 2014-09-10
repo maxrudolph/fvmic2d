@@ -49,9 +49,6 @@ int main(int argc, char **args){
   PetscMPIInt rank,size;
   PetscErrorCode ierr;
 
-  /* logging, debugging infrastructure */
-  PetscLogStage *stages;  
-
   /* Problem context */
   Problem problem;
   problem.mech_system.pc = PETSC_NULL;/* nullify preconditioner */
@@ -67,7 +64,7 @@ int main(int argc, char **args){
   MPI_Comm_rank(PETSC_COMM_WORLD,&rank);
   /* Print welcome message */
   if(!rank) printf("Version Information : %s\n",MARKERCODE_HG_VERSION);
-  stages = initializeLogging();
+  initializeLogging();
   /* read options from input file and distribute to all nodes */
   printf("argc = %d\n",argc);
   printf("%s\n",args[1]);
@@ -206,20 +203,15 @@ int main(int argc, char **args){
     }
 
     /* exchange markers among cpus*/
-    PetscLogStagePush(stages[4]);
     ierr = exchangeMarkers( &problem.markerset, &problem.grid, &problem.options);
  
-    PetscLogStagePop();
     findMarkerCells( &problem.markerset, &problem.grid);
     
     /* make an initial guess at the pressure solution to help iterative solver */
     ierr = initialPressureGuess( &problem.grid, &problem.nodal_fields, &problem.options, problem.mech_system.solution ); CHKERRQ(ierr);
     saveNodalFields( &problem.nodal_fields, &problem.grid, iMonte, -5,0.0,0.0,0);    
     /* save markers for debugging*/
-    PetscLogStagePush(stages[11]);
     ierr=saveMarkersBinary( &problem.markerset, -5,-5,0.0);
-
-    PetscLogStagePop();
 
     PetscInt iTime;
     PetscScalar dt;
@@ -248,10 +240,14 @@ int main(int argc, char **args){
       iPlastic=0;
       dt=problem.options.dtMax;/* try to take a large initial timestep*/
       findMarkerCells( &problem.markerset, &problem.grid);
+      fprintf(stdout,"[%d] beginning marker exchange\n",rank); fflush(stdout);
       ierr = exchangeMarkers( &problem.markerset, &problem.grid,&problem.options);
+      fprintf(stdout,"[%d] done with marker exchange\n",rank); fflush(stdout);
       findMarkerCells( &problem.markerset, &problem.grid);
       /* check marker density, add markers if necessary.*/
+      fprintf(stdout,"[%d] beginning check density\n",rank); fflush(stdout);
       ierr = checkMarkerDensity(&problem, &problem.markerset, &problem.grid, &problem.options, r);
+      printf("[%d] done with check density\n",rank);
       findMarkerCells( &problem.markerset, &problem.grid);
       /* calculate rhodot for markers*/
       //PetscScalar Vmax = 1.0/problem.options.maxPorosity;
@@ -267,10 +263,8 @@ int main(int argc, char **args){
       }
       //updateViscosity( &problem.markerset, &problem.options, &problem.materials );
       
-      PetscLogStagePush(stages[5]);
       /* project all marker fields onto nodes */
       ierr = projectMarkersNodesAll2(&problem.markerset, &problem.grid, &problem.nodal_fields, &problem.materials,&problem.options);
-      PetscLogStagePop();
 
       /* check for overheating (melting). abort if Tmelt exceeded*/
       { /* check for exceedence of maximum temperature */
@@ -306,15 +300,12 @@ int main(int argc, char **args){
 	/* zero out LHS, RHS*/
 	ierr = VecZeroEntries( problem.mech_system.rhs);CHKERRQ(ierr);	
 
-	PetscLogStagePush(stages[1]);
 	ierr=formVEPSystem( &problem.nodal_fields, &problem.grid, problem.mech_system.lhs, problem.mech_system.pc, problem.mech_system.rhs, &Kbond, &Kcont, problem.options.gy, displacementdt, &problem.options, &boundaryValues);
-	PetscLogStagePop();
+
 	/* scale the pressure guess */
 	ierr = VecStrideScale( problem.mech_system.solution, DOF_P, 1.0/Kcont );CHKERRQ(ierr);
 	if( iTime == 0 ){
-	  PetscLogStagePush(stages[3]);
 	  ierr = kspLinearSolve(problem.mech_system.lhs, problem.mech_system.pc,problem.mech_system.rhs, problem.mech_system.solution,"stokes_",problem.mech_system.ns);
-	  PetscLogStagePop();
 	  
 	  ierr = VecCopy( problem.mech_system.solution, steadySolution ); CHKERRQ(ierr);
 	}else{
@@ -327,9 +318,9 @@ int main(int argc, char **args){
 
 	if(fn) {
 	  ierr=PetscPrintf(PETSC_COMM_WORLD,"Found nan in solution\n");CHKERRQ(ierr);
-	  PetscLogStagePush(stages[11]);
+
 	  saveNodalFields( &problem.nodal_fields, &problem.grid, iMonte,iTime,displacementdt,elapsedTime,0);
-	  PetscLogStagePush(stages[11]);
+
 	  /* 	  saveGriddedMarkersBinary( &markers, &problem.grid, 5*problem.grid.NX, 5*problem.grid.NY,iMonte,iTime); */
 	  ierr=saveMarkersBinary( &problem.markerset, iMonte,-iTime,elapsedTime); 
 
@@ -339,11 +330,11 @@ int main(int argc, char **args){
 
 	ierr=nodalStressStrain(&problem.grid, &problem.nodal_fields,&problem.options,&boundaryValues, displacementdt, problem.nodal_heating, problem.options.gy);CHKERRQ(ierr);
 	/* save nodalFields for debugging*/
-	PetscLogStagePush(stages[11]);
+
 	/*ierr=saveNodalFieldsASCIIMatlab( &problem.nodal_fields, &grid,iMonte,iTime, dt, elapsedTime);*/ /* for debugging*/
-	PetscLogStagePop();
+
 	/* compute marker strain and pressure*/
-	PetscLogStagePush(stages[12]); ierr=updateMarkerStrainPressure( &problem.grid,&problem.nodal_fields, &problem.markerset, &problem.materials, &problem.options, displacementdt); PetscLogStagePop();
+	ierr=updateMarkerStrainPressure( &problem.grid,&problem.nodal_fields, &problem.markerset, &problem.materials, &problem.options, displacementdt);
 	/* determine displacement timestep*/
 	
 	/* calculate global strain rate residual */
@@ -366,9 +357,9 @@ int main(int argc, char **args){
       dt = displacementdt;
 
       /* do sub-grid stress diffusion*/
-      PetscLogStagePush(stages[7]);
+
       if(problem.options.subgridStressDiffusivity>0.0)	ierr=subgridStressChanges(&problem.grid, &problem.nodal_fields, &problem.markerset, &problem.materials, displacementdt,problem.options.subgridStressDiffusivity);
-      PetscLogStagePop();
+
       /* update marker stress*/
       ierr= updateMarkerStress( &problem.grid, &problem.nodal_fields,&problem.markerset, &problem.materials);CHKERRQ(ierr);
       /* 1. project velocity field onto markers*/
@@ -385,16 +376,15 @@ int main(int argc, char **args){
       ierr=VecCopy(problem.nodal_heating,problem.thermal_system.rhs);CHKERRQ(ierr);
       /* Form thermal system (diffusion, variable coefficient, non-uniform grid */
       ierr = enforceThermalBCs1( &problem.grid, &problem.options, &problem.nodal_fields);CHKERRQ(ierr);
-      PetscLogStagePush( stages[8] );
+
       ierr = formThermalSystem(&problem, &problem.grid, &problem.nodal_fields, problem.thermal_system.lhs, problem.thermal_system.rhs, dt, &problem.options, 0);CHKERRQ(ierr);
 
-      PetscLogStagePop();
       /* make the solution vector */
       Vec thermalS;
       ierr = VecDuplicate( problem.thermal_system.rhs, &thermalS);CHKERRQ(ierr);
       ierr = VecCopy( problem.nodal_fields.lastT, thermalS); CHKERRQ(ierr);
       /* Solve the thermal system: */
-      PetscLogStagePush( stages[9] );  ierr = kspLinearSolve(problem.thermal_system.lhs, PETSC_NULL, problem.thermal_system.rhs, thermalS,"energy_",PETSC_NULL);CHKERRQ(ierr); PetscLogStagePop();
+      ierr = kspLinearSolve(problem.thermal_system.lhs, PETSC_NULL, problem.thermal_system.rhs, thermalS,"energy_",PETSC_NULL);CHKERRQ(ierr); 
       /* check maximum temperature change */
       Vec dT;
       ierr = VecDuplicate( thermalS, &dT);CHKERRQ(ierr);
@@ -407,19 +397,19 @@ int main(int argc, char **args){
 	printf("[%d] temperature change too large, limiting timestep from %e to %e\n",rank,dt,dt*problem.options.maxTempChange/dTmax);
 	dt = dt*problem.options.maxTempChange/dTmax;
 	/* repeat temperature solution */
-	PetscLogStagePush( stages[8] );
+
 	ierr = VecCopy(problem.nodal_heating,problem.thermal_system.rhs);CHKERRQ(ierr);
 	ierr = enforceThermalBCs1( &problem.grid, &problem.options, &problem.nodal_fields);CHKERRQ(ierr);
-	ierr = formThermalSystem(&problem, &problem.grid, &problem.nodal_fields, problem.thermal_system.lhs, problem.thermal_system.rhs, dt, &problem.options, 0);CHKERRQ(ierr); PetscLogStagePop();
-	PetscLogStagePush( stages[9] );  ierr = kspLinearSolve(problem.thermal_system.lhs, PETSC_NULL, problem.thermal_system.rhs, thermalS,"energy_",PETSC_NULL);CHKERRQ(ierr); PetscLogStagePop();
+	ierr = formThermalSystem(&problem, &problem.grid, &problem.nodal_fields, problem.thermal_system.lhs, problem.thermal_system.rhs, dt, &problem.options, 0);CHKERRQ(ierr);
+	ierr = kspLinearSolve(problem.thermal_system.lhs, PETSC_NULL, problem.thermal_system.rhs, thermalS,"energy_",PETSC_NULL);CHKERRQ(ierr);
 	/* end repeat temperature solution */
       }
       ierr = VecDestroy(&dT);CHKERRQ(ierr);
       
       /* Apply sub-grid temperature corrections and project corrected temperature onto the markers (all integrated into one routine*/
-      PetscLogStagePush( stages[10] );
+
       ierr=subgridTemperatureChanges(thermalS, &problem.grid, &problem.nodal_fields, &problem.markerset, &problem.materials,dt, &problem.options);
-      PetscLogStagePop();
+
 
       PetscScalar Nu;
       PetscScalar vrms;
@@ -432,9 +422,11 @@ int main(int argc, char **args){
       /* save solution */
       if(!(iTime % (problem.options.saveInterval))) {
 	ierr=saveNodalFields( &problem.nodal_fields, &problem.grid,iMonte,iTime, dt, elapsedTime,0);
-	ierr=saveMarkersBinary( &problem.markerset, iMonte,iTime,elapsedTime);
+	if( !(iTime % (problem.options.saveInterval*10))) {
+	  ierr=saveMarkersBinary( &problem.markerset, iMonte,iTime,elapsedTime);
+	}
       }
-
+    
       /* advect markers */
       ierr=advectMarkersRK(&problem.markerset,&problem.nodal_fields, &problem.grid,&problem.options,&boundaryValues,dt);
 
@@ -456,9 +448,9 @@ int main(int argc, char **args){
 
       elapsedTime+=dt;
       if(elapsedTime > problem.options.totalTime || iTime==problem.options.nTime-1){
-	PetscLogStagePush(stages[11]);
+
 	//saveGriddedMarkersBinary( &markers, &problem.grid, 5*problem.grid.NX, 5*problem.grid.NY,iMonte,iTime);
-	PetscLogStagePop();
+
 	ierr=saveMarkersBinary( &problem.markerset,iMonte,iTime,elapsedTime);
 	goto nextMonte;
       }

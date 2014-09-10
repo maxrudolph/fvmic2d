@@ -417,7 +417,7 @@ PetscErrorCode saveMarkersBinary( MarkerSet *markerset, PetscInt iMonte, PetscIn
 
 PetscErrorCode saveMarkerFieldS( MarkerSet *markerset, PetscScalar *fieldptr, PetscInt *nMarks, FILE *of){
   /* save a scalar-valued marker field*/
-  setLogStage( LOG_IO );
+
   PetscErrorCode ierr;
   PetscMPIInt rank,size;
   

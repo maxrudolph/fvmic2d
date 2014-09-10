@@ -1,5 +1,6 @@
 #include "fdcode.h"
 #include "subgridStressChanges.h"
+#include "profile.h"
 
 PetscErrorCode subgridStressChanges(GridData *grid, NodalFields *nodalFields, MarkerSet *markerset, Materials *materials, PetscScalar dt, PetscScalar dsubgrid){
   PetscInt NX = grid->NX;
@@ -9,7 +10,7 @@ PetscErrorCode subgridStressChanges(GridData *grid, NodalFields *nodalFields, Ma
   PetscErrorCode ierr;
   /*   ierr = PetscMalloc */
   PetscFunctionBegin;
-  
+  setLogStage( LOG_SUBGRID_STRESS );
   /* allocate ds??n. these should exist both as global and local vecs with the DA structure. */
   Vec dsxxng, dsyyng, dsxyng, wtetang, wtetasg;
   Vec soxxl, soyyl, soxyl;
@@ -312,6 +313,6 @@ PetscErrorCode subgridStressChanges(GridData *grid, NodalFields *nodalFields, Ma
   ierr=VecDestroy(&wtetang);CHKERRQ(ierr);
   ierr=VecDestroy(&wtetasl);CHKERRQ(ierr);
   ierr=VecDestroy(&wtetasg);CHKERRQ(ierr);
-
+  PetscLogStagePop();
   PetscFunctionReturn(ierr);
 }

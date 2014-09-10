@@ -1,10 +1,12 @@
 #include "fdcode.h"
 #include "thermalSystem.h"
 #include "benchmarkInitialConditions.h"
+#include "profile.h"
 
 PetscErrorCode formThermalSystem(Problem *problem, GridData *grid, NodalFields *nodalFields, Mat thermalLHS, Vec thermalRHS, PetscScalar dt, Options *options, PetscInt doSteady){
   PetscErrorCode ierr;
   PetscFunctionBegin;
+  setLogStage( LOG_THERM_ASM );
   PetscMPIInt rank;
   MPI_Comm_rank(PETSC_COMM_WORLD,&rank);
   PetscInt NX = grid-> NX;
@@ -241,7 +243,7 @@ PetscErrorCode formThermalSystem(Problem *problem, GridData *grid, NodalFields *
   ierr = VecDestroy(& vyl ); CHKERRQ(ierr);
 
 
-
+  PetscLogStagePop();
   PetscFunctionReturn(ierr);
 }
   
