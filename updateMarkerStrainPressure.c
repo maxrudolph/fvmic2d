@@ -300,6 +300,7 @@ PetscErrorCode updateMarkerStrainPressure( GridData *grid, NodalFields *nodalFie
       if( isnan(markers[m].strainRateResidual) ){
 	printf("marker %d has nan strain rate residual, eta=%e\n",m,markers[m].eta);
 	fflush(stdout);  	  
+	abort();
       }
 #else
       /* use nodal stresses to re-compute viscoplasticity tensor (constitutive eqn) */
