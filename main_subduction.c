@@ -251,7 +251,7 @@ int main(int argc, char **args){
       ierr = exchangeMarkers( &problem.markerset, &problem.grid,&problem.options);
       findMarkerCells( &problem.markerset, &problem.grid);
       /* check marker density, add markers if necessary.*/
-      ierr = checkMarkerDensity(&problem.markerset, &problem.grid, &problem.options, r);
+      ierr = checkMarkerDensity(&problem, &problem.markerset, &problem.grid, &problem.options, r);
       findMarkerCells( &problem.markerset, &problem.grid);
       /* calculate rhodot for markers*/
       //PetscScalar Vmax = 1.0/problem.options.maxPorosity;

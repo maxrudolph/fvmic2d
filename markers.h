@@ -15,7 +15,7 @@ PetscErrorCode checkPlasticYielding(GridData*, MarkerSet *, Materials *, PetscSc
 void findMarkerCells(MarkerSet *, GridData *);
 void printMarkersAllASCIIMatlab( MarkerSet*, PetscInt);
 PetscErrorCode exchangeMarkers( MarkerSet* , GridData *,Options *);
-PetscErrorCode checkMarkerDensity( MarkerSet *, GridData *, Options *,PetscRandom );
+PetscErrorCode checkMarkerDensity( Problem *, MarkerSet *, GridData *, Options *,PetscRandom );
 PetscErrorCode advectMarkers(MarkerSet *, GridData *, PetscScalar );
 PetscErrorCode advectMarkersRK(MarkerSet *, NodalFields *, GridData *, Options *, BoundaryValues *, PetscScalar );
 PetscErrorCode projectNodalFieldToMarkersS(NodalFields *, Vec, MarkerSet *, PetscScalar *, GridData *);

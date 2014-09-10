@@ -50,23 +50,25 @@ PetscErrorCode initialConditionsVanKeken( MarkerSet *markerset, Options *options
   PetscFunctionReturn(ierr);
 }
 
-Marker new_slab_marker(PetscScalar x, PetscScalar y, PetscScalar angle){
+Marker new_slab_marker(PetscScalar x, PetscScalar y, Options *options, Materials *materials){
   Marker m;
   resetMarker( &m );
   m.X = x;
   m.Y = y;
   m.Mat = 0;
-  m.T = slab_inflow_temperature( x, y, angle );
+  m.T = slab_inflow_temperature( x, y, options->slabAngle );
+  updateMarkerViscosity( &m, options, materials, 0.0);
   return m;
 }
 
-Marker new_inflow_marker(PetscScalar x, PetscScalar y){
+Marker new_inflow_marker(PetscScalar x, PetscScalar y, Options *options, Materials *materials){
   Marker m;
   resetMarker( &m );
   m.X = x;
   m.Y = y;
   m.Mat = 0;
   m.T = mantle_temperature();
+  updateMarkerViscosity( &m, options, materials, 0.0);
   return m;
 }
 

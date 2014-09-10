@@ -450,7 +450,7 @@ PetscErrorCode distributeMarkersUniformInCells( MarkerSet *markerset, Options *o
 }
 
 
-PetscErrorCode checkMarkerDensity( MarkerSet *markerset, GridData *grid, Options *options, PetscRandom r){
+PetscErrorCode checkMarkerDensity( Problem *problem, MarkerSet *markerset, GridData *grid, Options *options, PetscRandom r){
   PetscErrorCode ierr=0;
   setLogStage( LOG_MARK_ADD );
   PetscInt NX = grid->NX;
@@ -730,10 +730,10 @@ PetscErrorCode checkMarkerDensity( MarkerSet *markerset, GridData *grid, Options
 	markerset->nMark++;
       }
       if( newX[i] < grid->x[1] ){/* slab inflow marker */
-	markers[idx] = new_slab_marker( newX[i], newY[i], options->slabAngle );
+	markers[idx] = new_slab_marker( newX[i], newY[i], options, &(problem->materials) );
 	findMarkerCell( &(markers[idx]), grid );
       }else if( newX[i] >= grid->x[NX-2] && newY[i] >= plate_depth( grid->LX) ){
-	markers[idx] = new_inflow_marker(newX[i],newY[i]);
+	markers[idx] = new_inflow_marker(newX[i],newY[i], options, &(problem->materials) );
 	findMarkerCell( &(markers[idx]), grid );
       } else { /* default case - not inflow */
 	/* find nearest neighbor to the new marker*/
