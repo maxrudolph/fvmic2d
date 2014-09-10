@@ -228,7 +228,7 @@ typedef struct{/* a structure that holds all of the global variables */
   LinearSystem mech_system;
 
   /* out-of-plane system */
-  LinearSystem z_system;
+  //LinearSystem z_system;
   /* thermal system */
   LinearSystem thermal_system;
 

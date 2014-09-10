@@ -62,7 +62,7 @@ int main(int argc, char **args){
 
   /* BEGIN PROGRAM */
 
-  PetscInitialize(&argc,&args,PETSC_NULL,help);  //INITIALIZE PETSC
+  PetscInitialize(&argc,&args,NULL,help);  //INITIALIZE PETSC
   MPI_Comm_size(PETSC_COMM_WORLD,&size);  //Get MPI rank
   MPI_Comm_rank(PETSC_COMM_WORLD,&rank);
   /* Print welcome message */
@@ -478,7 +478,7 @@ int main(int argc, char **args){
   ierr=DMRestoreGlobalVector(problem.grid.da,&problem.thermal_system.rhs);CHKERRQ(ierr);
   
   ierr = MatDestroy(&problem.thermal_system.lhs );CHKERRQ(ierr);
-  ierr = MatDestroy(&problem.z_system.lhs );CHKERRQ(ierr);
+  // ierr = MatDestroy(&problem.z_system.lhs );CHKERRQ(ierr);
   ierr = destroyPressureNullSpace( &problem.mech_system.ns ); CHKERRQ(ierr);
   ierr = MatDestroy(&problem.mech_system.lhs );CHKERRQ(ierr);
   if( problem.mech_system.pc != PETSC_NULL){
