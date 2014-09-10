@@ -387,11 +387,11 @@ PetscErrorCode saveMarkersBinary( MarkerSet *markerset, PetscInt iMonte, PetscIn
   /*   fwrite( markers->sxx, sizeof(PetscScalar), markers->nMark, of); */
   saveMarkerFieldS(markerset,& markers[0].s.T11, &nMarks[0], of);
   saveMarkerFieldS(markerset,& markers[0].s.T22, &nMarks[0], of);
-  saveMarkerFieldS(markerset,& markers[0].s.T33, &nMarks[0], of);
+  //saveMarkerFieldS(markerset,& markers[0].s.T33, &nMarks[0], of);
   //sxy
   /*   fwrite( markers->sxy, sizeof(PetscScalar), markers->nMark, of); */
-  saveMarkerFieldS(markerset,& markers[0].s.T13, &nMarks[0], of);
-  saveMarkerFieldS(markerset,& markers[0].s.T23, &nMarks[0], of);
+  //saveMarkerFieldS(markerset,& markers[0].s.T13, &nMarks[0], of);
+  //saveMarkerFieldS(markerset,& markers[0].s.T23, &nMarks[0], of);
   saveMarkerFieldS(markerset,& markers[0].s.T12, &nMarks[0], of);
 
   //p

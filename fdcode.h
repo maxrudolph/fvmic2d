@@ -25,7 +25,7 @@ typedef struct {
 
 
 typedef struct{
-  PetscScalar T11, T22, T33, T23, T13, T12;
+  PetscScalar T11, T22, T12;
 } Tensor33s;
 
 typedef struct{

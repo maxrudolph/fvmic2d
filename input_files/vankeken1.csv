@@ -1,8 +1,8 @@
 # Van Keken subduction benchmark
 LX,660000
 LY,600000
-NX,111
-NY,101			
+NX,221
+NY,201			
 NMX,12
 NMY,12
 gridRatio,1.0
@@ -15,7 +15,7 @@ maxMarkers,1000
 dtMax,1.5779e13
 displacementStepLimit,0.3
 maxTempChange,20.0
-nTime,10001
+nTime,11
 restartStep,0
 #maximum model time to run:
 totalTime,4.4e30

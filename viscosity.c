@@ -49,7 +49,7 @@ PetscErrorCode computeRheology( Marker *marker, Options *options, Materials *mat
     /* compute strain rate second invariant */
     /* marker strain rate tensor */
     Tensor33s e = marker->e;
-    PetscScalar gamma = sqrt(2.0*(e.T11*e.T11 + e.T22*e.T22 + e.T33*e.T33 + 2.0*(e.T12*e.T12 + e.T23*e.T23 + e.T13*e.T13) ));
+    PetscScalar gamma = sqrt(2.0*(e.T11*e.T11 + e.T22*e.T22  + 2.0*(e.T12*e.T12 ) ));
     if( gamma > gammac){
       thiseta = sy/gamma + materials->materialEta[mymat];
     }else{
@@ -87,7 +87,7 @@ void updateViscosity( MarkerSet *markerset, Options *options, Materials *materia
   for(m=0;m<markerset->nMark;m++){
     if( markerset->markers[m].cellX != - 1){
       /* use stress second invariant from marker */
-      PetscScalar sii = sqrt(0.5*(markers[m].s.T11*markers[m].s.T11 + markers[m].s.T22*markers[m].s.T22+markers[m].s.T33*markers[m].s.T33) + markers[m].s.T12*markers[m].s.T12 + markers[m].s.T13*markers[m].s.T13 + markers[m].s.T23*markers[m].s.T23);
+      PetscScalar sii = sqrt(0.5*(markers[m].s.T11*markers[m].s.T11 + markers[m].s.T22*markers[m].s.T22 ) + markers[m].s.T12*markers[m].s.T12 );
 
       updateMarkerViscosity( &markerset->markers[m], options, materials, sii);
     }

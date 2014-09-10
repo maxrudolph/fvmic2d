@@ -264,15 +264,15 @@ void resetMarker( Marker *m ){
   m->eta =0.0;
   m->s.T11 = 0.0;
   m->s.T22 = 0.0;
-  m->s.T33 = 0.0;
-  m->s.T13 = 0.0;
-  m->s.T23 = 0.0;
+  //m->s.T33 = 0.0;
+  //m->s.T13 = 0.0;
+  //m->s.T23 = 0.0;
   m->s.T12 = 0.0;    
   m->e.T11 = 0.0;
   m->e.T22 = 0.0;
-  m->e.T33 = 0.0;
-  m->e.T13 = 0.0;
-  m->e.T23 = 0.0;
+  //m->e.T33 = 0.0;
+  //m->e.T13 = 0.0;
+  //m->e.T23 = 0.0;
   m->e.T12 = 0.0;
   
 #ifndef TEXTURE
@@ -295,9 +295,9 @@ void resetMarker( Marker *m ){
   /* stress */
   m->s.T11 = 0.0;
   m->s.T22 = 0.0;
-  m->s.T33 = 0.0;
-  m->s.T23 = 0.0;
-  m->s.T13 = 0.0;
+  //m->s.T33 = 0.0;
+  //m->s.T23 = 0.0;
+  //m->s.T13 = 0.0;
   m->s.T12 = 0.0; 
   
   m->rho = 0.0;
@@ -305,16 +305,16 @@ void resetMarker( Marker *m ){
   /* strain rate */
   m->e.T11 = 0.0;
   m->e.T22 = 0.0;
-  m->e.T33 = 0.0;
-  m->e.T23 = 0.0;
-  m->e.T13 = 0.0;
+  //m->e.T33 = 0.0;
+  //m->e.T23 = 0.0;
+  //m->e.T13 = 0.0;
   m->e.T12 = 0.0;
   /* total strain */
   m->E.T11 = 0.0; 
   m->E.T22 = 0.0; 
-  m->E.T33 = 0.0; 
-  m->E.T23 = 0.0; 
-  m->E.T13 = 0.0; 
+  //m->E.T33 = 0.0; 
+  //m->E.T23 = 0.0; 
+  //m->E.T13 = 0.0; 
   m->E.T12 = 0.0; 
   m->Eii = 0.0;
   /* rotation rate */
@@ -682,7 +682,7 @@ PetscErrorCode checkMarkerDensity( MarkerSet *markerset, GridData *grid, Options
 
   if(nAdd>0) printf("[%d] nAdd=%d\n",rank,nAdd);
   if(nAdd > 0 && (nAdd+markerset->nMark-nOut) < markerset->maxMark){
-    printf("adding %d markers, nOut=%d\n",nAdd,nOut); fflush(stdout);
+    printf("adding %d markers, currently have %d markers, nOut=%d\n",nAdd,markerset->nMark,nOut); fflush(stdout);
     PetscScalar *newX, *newY;
     ierr = PetscMalloc2(nAdd,&newX,nAdd,&newY);  CHKERRQ(ierr);
 
@@ -1396,13 +1396,13 @@ PetscErrorCode checkPlasticYielding(GridData *grid,MarkerSet *markerset, Materia
       PetscScalar X = markers[m].eta/(markers[m].mu*dt + markers[m].eta);
       PetscScalar sxxnew = markers[m].s.T11*X + 2*markers[m].eta*markers[m].e.T11*(1.0-X);
       PetscScalar syynew = markers[m].s.T22*X + 2*markers[m].eta*markers[m].e.T22*(1.0-X);
-      PetscScalar szznew = markers[m].s.T33*X + 2*markers[m].eta*markers[m].e.T33*(1.0-X);
+      //PetscScalar szznew = markers[m].s.T33*X + 2*markers[m].eta*markers[m].e.T33*(1.0-X);
       PetscScalar sxynew = markers[m].s.T12*X + 2*markers[m].eta*markers[m].e.T12*(1.0-X);
-      PetscScalar sxznew = markers[m].s.T13*X + 2*markers[m].eta*markers[m].e.T13*(1.0-X);
-      PetscScalar syznew = markers[m].s.T23*X + 2*markers[m].eta*markers[m].e.T23*(1.0-X);
+      //PetscScalar sxznew = markers[m].s.T13*X + 2*markers[m].eta*markers[m].e.T13*(1.0-X);
+      //PetscScalar syznew = markers[m].s.T23*X + 2*markers[m].eta*markers[m].e.T23*(1.0-X);
 
       /* PetscScalar siinew = sqrt(sxxnew*sxxnew + sxynew*sxynew); */
-      PetscScalar siinew = sqrt(0.5*(sxxnew*sxxnew + syynew*syynew+szznew*szznew) + sxynew*sxynew + sxznew*sxznew + syznew*syznew);
+      PetscScalar siinew = sqrt(0.5*(sxxnew*sxxnew + syynew*syynew) + sxynew*sxynew);
 
       /* this would be the place to re-compute viscosity based on forecast stress and strain-rate */
       updateMarkerViscosity( &markers[m], options, materials, siinew);
@@ -1462,11 +1462,11 @@ PetscErrorCode checkPlasticYielding(GridData *grid,MarkerSet *markerset, Materia
 	  /* reduce viscosity */
 	  PetscScalar exx = markers[m].e.T11;
 	  PetscScalar eyy = markers[m].e.T22;
-	  PetscScalar ezz = markers[m].e.T33;
+	  //PetscScalar ezz = markers[m].e.T33;
 	  PetscScalar exy = markers[m].e.T12;
-	  PetscScalar exz = markers[m].e.T13;
-	  PetscScalar eyz = markers[m].e.T23;
-	  PetscScalar eiiold = sqrt(0.5*(exx*exx+eyy*eyy+ezz*ezz) + exy*exy + exz*exz + eyz*eyz);
+	  //PetscScalar exz = markers[m].e.T13;
+	  //PetscScalar eyz = markers[m].e.T23;
+	  PetscScalar eiiold = sqrt(0.5*(exx*exx+eyy*eyy) + exy*exy );
 	  etanew = siiyield/2.0/eiiold;
 	  if( etanew/markers[m].eta < fractionalEtamin ){
 	    etanew = fractionalEtamin*markers[m].eta ;
@@ -1476,14 +1476,14 @@ PetscErrorCode checkPlasticYielding(GridData *grid,MarkerSet *markerset, Materia
 	  }else if(etanew > etamax){
 	    etanew = etamax;
 	  }
-	  PetscScalar siiold = sqrt( 0.5*(markers[m].s.T11*markers[m].s.T11 +markers[m].s.T22*markers[m].s.T22 + markers[m].s.T33*markers[m].s.T33) + markers[m].s.T12*markers[m].s.T12+ markers[m].s.T13*markers[m].s.T13+ markers[m].s.T23*markers[m].s.T23);
+	  PetscScalar siiold = sqrt( 0.5*(markers[m].s.T11*markers[m].s.T11 +markers[m].s.T22*markers[m].s.T22 ) + markers[m].s.T12*markers[m].s.T12 );
 	  if(siiold != 0.0){/* if siiold is zero, we expect yielding but cannot adjust old stresses downwards (they are zero already)*/
 	    markers[m].s.T11 *= siiyield/siiold;
 	    markers[m].s.T22 *= siiyield/siiold;
-	    markers[m].s.T33 *= siiyield/siiold;
+	    //markers[m].s.T33 *= siiyield/siiold;
 	    markers[m].s.T12 *= siiyield/siiold;
-	    markers[m].s.T13 *= siiyield/siiold;
-	    markers[m].s.T23 *= siiyield/siiold;
+	    //markers[m].s.T13 *= siiyield/siiold;
+	    //markers[m].s.T23 *= siiyield/siiold;
 	  }
 	isYielding[0]=1;
 	} /* end if yielding */

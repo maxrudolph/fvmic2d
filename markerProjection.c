@@ -17,7 +17,8 @@ PetscErrorCode projectMarkersNodesAll2( MarkerSet *markerset, GridData *grid, No
   PetscFunctionBegin;
   Marker *markers = markerset->markers;
   projectMarkerFieldToNodes( grid, markerset, PETSC_NULL, &markers[0].rho, nodalFields->rho, 0, 0, ARITHMETIC);
-  projectMarkerFieldToNodes( grid, markerset, PETSC_NULL, &markers[0].rhodot, nodalFields->rhodot, 0, 0, ARITHMETIC);
+  //projectMarkerFieldToNodes( grid, markerset, PETSC_NULL, &markers[0].rhodot, nodalFields->rhodot, 0, 0, ARITHMETIC);
+  ierr = VecZeroEntries( nodalFields->rhodot );
   projectMarkerFieldToNodes( grid, markerset, PETSC_NULL, &markers[0].eta, nodalFields->etaN, -1, -1, ARITHMETIC );  
   projectMarkerFieldToNodes( grid, markerset, PETSC_NULL, &markers[0].eta, nodalFields->etaS,  0,  0, ARITHMETIC );
   //  projectMarkerFieldToNodes( grid, markerset, PETSC_NULL, &markers[0].eta, nodalFields->etavx, 0,  1, ARITHMETIC );
@@ -28,10 +29,13 @@ PetscErrorCode projectMarkersNodesAll2( MarkerSet *markerset, GridData *grid, No
 #endif
   // muN     
   //projectMarkerFieldToNodes( grid, markerset, materials->materialMu, PETSC_NULL, nodalFields->muN, -1,  -1, HARMONIC);
-  projectMarkerFieldToNodes( grid, markerset, PETSC_NULL, &markers[0].mu, nodalFields->muN,  -1,  -1, HARMONIC);
+  //projectMarkerFieldToNodes( grid, markerset, PETSC_NULL, &markers[0].mu, nodalFields->muN,  -1,  -1, HARMONIC);
   // muS     
   //projectMarkerFieldToNodes( grid, markerset, materials->materialMu, PETSC_NULL, nodalFields->muS,  0,   0, HARMONIC);
-  projectMarkerFieldToNodes( grid, markerset, PETSC_NULL, &markers[0].mu, nodalFields->muS,  0,  0, HARMONIC);
+  //projectMarkerFieldToNodes( grid, markerset, PETSC_NULL, &markers[0].mu, nodalFields->muS,  0,  0, HARMONIC);
+  ierr = VecSet( nodalFields->muS, 1e99 );CHKERRQ(ierr);
+  ierr = VecSet( nodalFields->muN, 1e99 );CHKERRQ(ierr);
+  
   /* muvx     */
   //projectMarkerFieldToNodes( grid, markerset, materials->materialMu, PETSC_NULL, nodalFields->muvx,  0,  1, HARMONIC);
   //projectMarkerFieldToNodes( grid, markerset, PETSC_NULL, &markers[0].mu, nodalFields->muvx,  0,  1, HARMONIC);
@@ -64,7 +68,7 @@ PetscErrorCode projectMarkersNodesAll2( MarkerSet *markerset, GridData *grid, No
 }
 
 
-PetscErrorCode projectMarkerFieldToNodes(GridData *grid, MarkerSet *markerset, PetscScalar *materialProperty, PetscScalar *markerfield, Vec nodalField, PetscInt stagx, PetscInt stagy, PROJECTION_METHOD pm){
+PetscErrorCode projectMarkerFieldToNodes(GridData *grid, MarkerSet *markerset, PetscScalar *materialProperty, PetscScalar *markerfield, Vec nodalField, const PetscInt stagx, const PetscInt stagy, const PROJECTION_METHOD pm){
   /* if called with materialProperty non-null, this routine should project a material property instead of a property defined on the marker */
   PetscErrorCode ierr =0;
   PetscFunctionBegin;
@@ -169,40 +173,40 @@ PetscErrorCode projectMarkerFieldToNodes(GridData *grid, MarkerSet *markerset, P
       case ARITHMETIC :
 	/*       if( pm == ARITHMETIC ){ */
 	{
-	PetscScalar thiswt = (1.0-mdx)*(1.0-mdy);
-	nf[cellY][cellX] += thiswt * mf[m];
-	wt[cellY][cellX] += thiswt;
-	thiswt = mdx*(1.0-mdy);
-	nf[cellY][cellX+1] += thiswt * mf[m];
-	wt[cellY][cellX+1] += thiswt;
-	thiswt = (1.0-mdx)*(mdy);
-	nf[cellY+1][cellX] += thiswt * mf[m];
-	wt[cellY+1][cellX] += thiswt;
-	thiswt = mdx*mdy;
-	nf[cellY+1][cellX+1] += thiswt * mf[m];
-	wt[cellY+1][cellX+1] += thiswt;
+	const PetscScalar thiswt1 = (1.0-mdx)*(1.0-mdy);
+	nf[cellY][cellX] += thiswt1 * mf[m];
+	wt[cellY][cellX] += thiswt1;
+	const PetscScalar thiswt2 = mdx*(1.0-mdy);
+	nf[cellY][cellX+1] += thiswt2 * mf[m];
+	wt[cellY][cellX+1] += thiswt2;
+	const PetscScalar thiswt3 = (1.0-mdx)*(mdy);
+	nf[cellY+1][cellX] += thiswt3 * mf[m];
+	wt[cellY+1][cellX] += thiswt3;
+	const PetscScalar thiswt4 = mdx*mdy;
+	nf[cellY+1][cellX+1] += thiswt4 * mf[m];
+	wt[cellY+1][cellX+1] += thiswt4;
 	}
 	break;
       case ARITHMETIC_LOCAL :
 	/*       }else if(pm == ARITHMETIC_LOCAL ){ */
 	{
-	PetscScalar thiswt=1.0;
-	if( mdx < 0 ) printf("stagx = %d, stagy = %d, mdx=%e\n",stagx,stagy,mdx);
-	if(mdx > 1.0) printf("mdx=%e\n",mdx);
-	if( mdx >= 0.5 ){ 
-	  cellX++;
-	  thiswt *= mdx;
-	}else{
-	  thiswt *= (1.0-mdx);
-	}
-	if( mdy >= 0.5 ){
-	  cellY++;
-	  thiswt *= mdy;
-	}else{
-	  thiswt *= (1.0-mdy);
-	}
-	nf[cellY][cellX] += thiswt * mf[m];
-	wt[cellY][cellX] += thiswt;
+	  PetscScalar thiswt=1.0;
+	  if( mdx < 0 ) printf("stagx = %d, stagy = %d, mdx=%e\n",stagx,stagy,mdx);
+	  if(mdx > 1.0) printf("mdx=%e\n",mdx);
+	  if( mdx >= 0.5 ){ 
+	    cellX++;
+	    thiswt *= mdx;
+	  }else{
+	    thiswt *= (1.0-mdx);
+	  }
+	  if( mdy >= 0.5 ){
+	    cellY++;
+	    thiswt *= mdy;
+	  }else{
+	    thiswt *= (1.0-mdy);
+	  }
+	  nf[cellY][cellX] += thiswt * mf[m];
+	  wt[cellY][cellX] += thiswt;
 	}
 	break;
       case HARMONIC :
@@ -258,7 +262,7 @@ void findCellStag2D( Marker *marker, GridData *grid, PetscInt stagx, PetscInt st
   }
   if( stagy == 0 ){
   } else if( stagy == 1){
-    if( marker->Y < grid->yc[ marker->cellY ] ) cellY[0] --;
+    if( marker->Y < grid->yc[ marker->cellY+1] ) cellY[0] --;
   } else if( stagy == -1){
     if( marker->Y >= grid->yc[ marker->cellY+1] ) cellY[0] ++;
   }  
