@@ -71,11 +71,11 @@ PetscErrorCode initializeRegularGrid(GridData *grid, Options *options){
     gridSpacingUniform( grid->x, 0.0, cornerx, NXL );
     gridSpacingUniform( grid->x+NXL-1, cornerx, LX , NXR );
   }
-  PetscInt NYT = floor( plate_depth(LX)/LY*((double) NY) );
-  PetscInt NYB = NY - NYT + 1;
-  //  gridSpacingUniform( grid->y, 0.0, LY, NY );
-  gridSpacingUniform( grid->y, 0.0, plate_depth(LX), NYT );
-  gridSpacingUniform( grid->y+NYT-1, plate_depth(LX), LY, NYB );
+  //PetscInt NYT = floor( plate_depth(LX)/LY*((double) NY) );
+  //PetscInt NYB = NY - NYT + 1;
+  gridSpacingUniform( grid->y, 0.0, LY, NY );
+  //gridSpacingUniform( grid->y, 0.0, plate_depth(LX), NYT );
+  //gridSpacingUniform( grid->y+NYT-1, plate_depth(LX), LY, NYB );
 
   getCellCenters( grid->x, grid->xc, LX, NX);
   getCellCenters( grid->y, grid->yc, LY, NY);

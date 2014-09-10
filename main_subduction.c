@@ -103,8 +103,8 @@ int main(int argc, char **args){
   }
   /* note that all processes know the locations of all gridlines and all cell centers */
   if( problem.options.gridRatio == 1.0 ){
-    ierr = initializeRegularGrid( &problem.grid,  &problem.options);CHKERRQ(ierr);
-    //ierr=initializeSubductionGrid( &problem.grid, &problem.options ); CHKERRQ(ierr);
+    //ierr = initializeRegularGrid( &problem.grid,  &problem.options);CHKERRQ(ierr);
+    ierr=initializeSubductionGrid( &problem.grid, &problem.options ); CHKERRQ(ierr);
   }else{
     //    ierr = initializeIrregularGridConstantInnerOuter( &problem.grid, problem.options.LX, problem.options.LY, problem.options.NX, problem.options.NY, &problem.options);CHKERRQ(ierr);
     initializeIrregularGridConstantInnerOuter( &problem.grid, &problem.options );CHKERRQ(ierr);

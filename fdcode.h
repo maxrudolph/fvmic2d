@@ -279,7 +279,7 @@ typedef struct{/* a structure that holds all of the global variables */
 
 /* Error codes for Petsc error handling */
 #define ERR_MICROMACRO_NAN PETSC_ERR_MAX_VALUE+1
-#define FIX_PRESSURE PETSC_FALSE
+#define FIX_PRESSURE PETSC_TRUE
 
 /* end define debug statements */
 
