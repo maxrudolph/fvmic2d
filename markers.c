@@ -562,11 +562,32 @@ PetscErrorCode checkMarkerDensity( MarkerSet *markerset, GridData *grid, Options
     for(j=0;j<2*(n);j++){
       for(i=0;i<2*(m);i++){
 	if(nMarkers[i+2*(m)*j] < minMarkers){
+	  PetscScalar dx, dy;
+	  if( j%2 ){//j odd
+	    dy = grid->y[ (j-1)/2 + 1] - grid->y[ (j-1)/2 ];
+	  }else{
+	    dy = grid->y[ j/2 + 1] - grid->y[j/2 ];
+	  }
+	  if( i%2 ){//j odd
+	    dx = grid->x[ (i-1)/2 + 1] - grid->x[ (i-1)/2 ];
+	  }else{
+	    dx = grid->x[ i/2 + 1] - grid->x[i/2 ];
+	  }
+	  dx /= 2.0;
+	  dy /= 2.0;
+
+	  PetscInt mynmx = ceil(options->NMX*(grid->NX-1)/2.0 * dx/grid->LX);
+	  PetscInt mynmy = ceil(options->NMY*(grid->NY-1)/2.0 * dy/grid->LY);
+	  PetscInt mynadd = mynmx*mynmy - nMarkers[2*j*m + i];
 	  /* add markers to bring number of markers up to original marker density*/
 	  /* 	printf("%d,",(PetscInt)(options->NMX*options->NMY/4.0 - nMarkers[2*j*NY+i])); */
-	  PetscInt tmp1 = (PetscInt) (ceil((PetscScalar)options->NMX*(PetscScalar)options->NMY/4.0) - nMarkers[2*j*(m)+i]);
-	  nAdd += tmp1;
-	  nMarkers[2*(m)*j+i] = tmp1;
+	  //PetscInt tmp1 = (PetscInt) (ceil((PetscScalar)options->NMX*(PetscScalar)options->NMY/4.0) - nMarkers[2*j*(m)+i]);
+	  if( mynadd <= 0 ){
+	    fprintf(stderr,"ERROR: trying to add a negative number of markers\n");
+	    abort();
+	  }
+	  nAdd += mynadd;
+	  nMarkers[2*(m)*j+i] = mynadd;
 	} else if(nMarkers[i+2*(m)*j] > maxMarkers){
 	  PetscInt tmp1 = (PetscInt) (-maxMarkers + nMarkers[2*j*(m)+i]);
 	  nRemove += tmp1;

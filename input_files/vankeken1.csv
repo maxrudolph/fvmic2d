@@ -1,10 +1,10 @@
 # Van Keken subduction benchmark
 LX,660000
 LY,600000
-NX,133
-NY,121			
-NMX,10
-NMY,10
+NX,111
+NY,101			
+NMX,12
+NMY,12
 gridRatio,1.0
 maxMarkFactor,2.0; /*memory to allocate for markers is this number*original number of markers*/
 minMarkers,2; /* munimum number of markers per quarter-cell */
@@ -13,9 +13,9 @@ maxMarkers,1000
 #Time step Stuff
 #
 dtMax,1.5779e13
-displacementStepLimit,0.2
+displacementStepLimit,0.3
 maxTempChange,20.0
-nTime,31
+nTime,10001
 restartStep,0
 #maximum model time to run:
 totalTime,4.4e30
@@ -68,7 +68,7 @@ gx,0.0
 #
 #  /* I/O etc*/
 #
-saveInterval,100
+saveInterval,200
 #
 subgridStressDiffusivity,0.0
 subgridTemperatureDiffusivity,1.0

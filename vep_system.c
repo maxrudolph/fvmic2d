@@ -307,10 +307,12 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 	  ierr=MatSetValue(LHS,vxdof[jyl][ixl], vydof[jyl  ][ixl], 1.0/dxc*Kcont[0],INSERT_VALUES);CHKERRQ(ierr);
 	  ierr=MatSetValue(LHS,vxdof[jyl][ixl], vydof[jyl  ][ixl-1],  -1.0/dxc*Kcont[0],INSERT_VALUES);CHKERRQ(ierr);
 	  ierr=VecSetValue(RHS,vxdof[jyl][ixl], 0.0, INSERT_VALUES);CHKERRQ(ierr);	
-	  /*}else if (jy == NY-1 && ix == NX-1){
-	    ierr=MatSetValue(LHS,vxdof[jyl][ixl], vxdof[jyl][ixl],    1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
-	    ierr=MatSetValue(LHS,vxdof[jyl][ixl], vxdof[jyl-1][ixl], -1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
-	    ierr=VecSetValue(RHS,vxdof[jyl][ixl], 0.0, INSERT_VALUES);CHKERRQ(ierr);	*/
+      }else if (jy == NY-1 && ix == NX-1){
+	PetscScalar dyc = grid->yc[NY]-grid->yc[NY-1];	
+	printf("dyc = %le\n",dyc);
+	ierr=MatSetValue(LHS,vxdof[jyl][ixl], vxdof[jyl][ixl],    1.0/dyc*Kcont[0],INSERT_VALUES);CHKERRQ(ierr);
+	ierr=MatSetValue(LHS,vxdof[jyl][ixl], vxdof[jyl-1][ixl], -1.0/dyc*Kcont[0],INSERT_VALUES);CHKERRQ(ierr);
+	ierr=VecSetValue(RHS,vxdof[jyl][ixl], 0.0, INSERT_VALUES);CHKERRQ(ierr);	
       }else{
 	if( jy == NY-1 ){ fprintf(stderr,"jy==NY-1 !!!\n"); }
 	/* normal x-stokes stencil */
@@ -410,7 +412,7 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
       }else if( in_plate( grid->xc[ix+1], grid->y[jy], options->slabAngle) ){/* plate internal BC */
 	ierr = MatSetValue(LHS, vydof[jyl][ixl],vydof[jyl][ixl], Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
 	ierr = VecSetValue(RHS, vydof[jyl][ixl], 0.0,INSERT_VALUES);CHKERRQ(ierr);     	
-      }else if( ix == NX-1 && !in_plate(grid->x[ix],grid->y[jy],options->slabAngle) /*&& jy < NY-1*/ ){// not in plate - zero shear stress on RIGHT BOUNDARY
+      }else if( ix == NX-1 && !in_plate(grid->x[ix],grid->y[jy],options->slabAngle) /*&& jy < NY-1 */){// not in plate - zero shear stress on RIGHT BOUNDARY
 	  PetscScalar dxc = grid->xc[ix+1] - grid->xc[ix];
 	  PetscScalar dyc = grid->yc[jy+1] - grid->yc[jy];
 	  ierr=MatSetValue(LHS,vydof[jyl][ixl], vxdof[jyl][ixl],   1.0/dyc*Kcont[0],INSERT_VALUES);CHKERRQ(ierr);
@@ -419,8 +421,10 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 	  ierr=MatSetValue(LHS,vydof[jyl][ixl], vydof[jyl][ixl-1],-1.0/dxc*Kcont[0],INSERT_VALUES);CHKERRQ(ierr);
 	  ierr=VecSetValue(RHS,vydof[jyl][ixl], 0.0, INSERT_VALUES);CHKERRQ(ierr);
       }else if( ix == NX-1 && jy == NY-1 ){//fix bottom boundary
-	ierr = MatSetValue(LHS, vydof[jyl][ixl],vydof[jyl][ixl], Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
-	ierr = MatSetValue(LHS, vydof[jyl][ixl],vydof[jyl][ixl-1], -Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
+	PetscScalar dxc = grid->xc[NX]-grid->xc[NX-1];
+	printf("dxc=%le\n",dxc);
+	ierr = MatSetValue(LHS, vydof[jyl][ixl],vydof[jyl][ixl],    1.0/dxc*Kcont[0],INSERT_VALUES);CHKERRQ(ierr);
+	ierr = MatSetValue(LHS, vydof[jyl][ixl],vydof[jyl][ixl-1], -1.0/dxc*Kcont[0],INSERT_VALUES);CHKERRQ(ierr);
 	ierr = VecSetValue(RHS, vydof[jyl][ixl], 0.0,INSERT_VALUES);CHKERRQ(ierr);     	
 
       }else {

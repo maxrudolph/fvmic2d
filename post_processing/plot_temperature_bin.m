@@ -12,7 +12,7 @@ addpath([PETSC_DIR '/share/petsc/matlab']);
 
 % loadgrid
 
-filelist=dir('../output/loadNodalFields_0_20.petscbin');
+filelist=dir('../output/loadNodalFields_0_0.petscbin');
 nskip=1;
 iFile=1;
 
@@ -64,7 +64,7 @@ set(gca,'YDir','reverse');
 nsl = 50;
 streamline(xc,yc,vxc,vyc,xc(end-1)*ones(nsl,1),linspace(51000,599000,nsl)');
 
-figure, imagesc(xc/1e3,yc/1e3,nf.T); title('T'); hold on;
+figure, pcolor(xc/1e3,yc/1e3,nf.T); title('T'); hold on;
 colorbar;
 h = streamline(xc/1e3,yc/1e3,vxc,vyc,xc(end-1)*ones(nsl,1)/1e3,linspace(51000,599000,nsl)'/1e3);
 set(h,'Color','k')
