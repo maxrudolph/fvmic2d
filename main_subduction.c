@@ -240,14 +240,14 @@ int main(int argc, char **args){
       iPlastic=0;
       dt=problem.options.dtMax;/* try to take a large initial timestep*/
       findMarkerCells( &problem.markerset, &problem.grid);
-      fprintf(stdout,"[%d] beginning marker exchange\n",rank); fflush(stdout);
+
       ierr = exchangeMarkers( &problem.markerset, &problem.grid,&problem.options);
-      fprintf(stdout,"[%d] done with marker exchange\n",rank); fflush(stdout);
+
       findMarkerCells( &problem.markerset, &problem.grid);
       /* check marker density, add markers if necessary.*/
-      fprintf(stdout,"[%d] beginning check density\n",rank); fflush(stdout);
+
       ierr = checkMarkerDensity(&problem, &problem.markerset, &problem.grid, &problem.options, r);
-      printf("[%d] done with check density\n",rank);
+
       findMarkerCells( &problem.markerset, &problem.grid);
       /* calculate rhodot for markers*/
       //PetscScalar Vmax = 1.0/problem.options.maxPorosity;
@@ -304,7 +304,7 @@ int main(int argc, char **args){
 
 	/* scale the pressure guess */
 	ierr = VecStrideScale( problem.mech_system.solution, DOF_P, 1.0/Kcont );CHKERRQ(ierr);
-	if( iTime == 0 ){
+	if( iTime == iTime0 ){
 	  ierr = kspLinearSolve(problem.mech_system.lhs, problem.mech_system.pc,problem.mech_system.rhs, problem.mech_system.solution,"stokes_",problem.mech_system.ns);
 	  
 	  ierr = VecCopy( problem.mech_system.solution, steadySolution ); CHKERRQ(ierr);
