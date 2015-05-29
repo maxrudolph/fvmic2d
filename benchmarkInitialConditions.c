@@ -79,6 +79,11 @@ PetscScalar mantle_temperature(){
 }
 
 PetscScalar plate_depth(PetscScalar x){
+  /* create thickened crustal root */
+  double root_thickness = 25000;
+  double root_width     = 
+
+
   return 50000.0;
 }
 

@@ -6,6 +6,7 @@
 #define LINEWIDTH 128
 #endif
 
+
 PetscErrorCode csvOptions(char *csvFileName, Options *options, Materials *materials){
   FILE *csvFile;
   //  PetscErrorCode ierr;
