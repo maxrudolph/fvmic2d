@@ -1,5 +1,5 @@
 # Van Keken subduction benchmark
-LX,660000
+LX,775000
 LY,600000
 NX,221
 NY,201			
@@ -38,7 +38,7 @@ nMonte,1
 #
 maxPorosity,0.0
 #
-slabAngle,45
+slabAngle,40
 slabVelocity,1.58443823e-9
 #
 #  /* model setup/ICs */

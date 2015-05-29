@@ -3,7 +3,7 @@ function [vx vy p T] = load_vankeken_benchmark_results()
 nx = 111;
 ny = 101;
 
-bmfilepath = '~/projects/subduction_model/post_processing/';
+bmfilepath = './';
 
 fh = fopen([bmfilepath 'vx.dat'],'r');
 data = fscanf(fh,'%le');
