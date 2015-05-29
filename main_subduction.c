@@ -207,11 +207,12 @@ int main(int argc, char **args){
  
     findMarkerCells( &problem.markerset, &problem.grid);
     
-    /* make an initial guess at the pressure solution to help iterative solver */
-    ierr = initialPressureGuess( &problem.grid, &problem.nodal_fields, &problem.options, problem.mech_system.solution ); CHKERRQ(ierr);
     saveNodalFields( &problem.nodal_fields, &problem.grid, iMonte, -5,0.0,0.0,0);    
     /* save markers for debugging*/
     ierr=saveMarkersBinary( &problem.markerset, -5,-5,0.0);
+
+    /* make an initial guess at the pressure solution to help iterative solver */
+    ierr = initialPressureGuess( &problem.grid, &problem.nodal_fields, &problem.options, problem.mech_system.solution ); CHKERRQ(ierr);
 
     PetscInt iTime;
     PetscScalar dt;

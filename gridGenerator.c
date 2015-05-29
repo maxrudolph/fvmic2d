@@ -19,9 +19,9 @@ PetscErrorCode initializeSubductionGrid(GridData *grid, Options *options){
   ierr = allocateGrid( grid, options);CHKERRQ(ierr);
 
   // for subduction problem - tweak y-gridlines so that slab falls exactly on a cell corner
-  const PetscScalar cornerx = plate_depth(LY)/tan(options->slabAngle);
-  const PetscScalar slab_bottom_x = LY/tan(options->slabAngle);
-  const PetscScalar cornery = plate_depth(LX);
+  const PetscScalar cornerx = plate_depth(LY)/tan(options->slabAngle); /* x-position of corner of mantle wedge */
+  const PetscScalar slab_bottom_x = LY/tan(options->slabAngle);        /* x-position where slab meets bottom of domain */
+  const PetscScalar cornery = plate_depth(LX);                         /* depth of corner (same as overriding plate thickness) */
 
   const PetscInt Nplate = floor( 2.0*cornery/LY * ((PetscScalar) NY) );
 
@@ -39,7 +39,7 @@ PetscErrorCode initializeSubductionGrid(GridData *grid, Options *options){
   gridSpacingRamp( grid->x + Nplate-1, cornerx, slab_bottom_x, Nwedge, 5.0);
   gridSpacingRamp( grid->y + Nplate-1, cornery, LY, Nwedge, 5.0);
   //use uniform spacing in "Extra" x region
-  gridSpacingUniform( grid->x + Nplate + Nwedge - 2, LY, LX , Nextrax);
+  gridSpacingUniform( grid->x + Nplate + Nwedge - 2, slab_bottom_x , LX , Nextrax);
 
   getCellCenters( grid->x, grid->xc, LX, NX);
   getCellCenters( grid->y, grid->yc, LY, NY);
