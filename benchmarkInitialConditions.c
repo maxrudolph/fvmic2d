@@ -20,7 +20,7 @@ PetscErrorCode initialConditionsVanKeken( MarkerSet *markerset, Options *options
       if( in_slab(markers[m].X, markers[m].Y, slab_angle) ){
 	//slab IC	
 	markers[m].T = slab_inflow_temperature( markers[m].X, markers[m].Y, slab_angle);
-      }else if(markers[m].Y < 50000.0){
+      }else if(in_plate( markers[m].X, markers[m].Y, slab_angle )){
 	//in overriding plate
 	//	markers[m].T = markers[m].Y/50000.0 * (Tlith-273.0) + 273.0;
 	markers[m].T = plate_geotherm( markers[m].Y );
@@ -79,7 +79,17 @@ PetscScalar mantle_temperature(){
 }
 
 PetscScalar plate_depth(PetscScalar x){
-  return 50000.0;
+  const double plate_thickness = 50000.0;
+
+  const double root_thickness         = 1.0e4;// 10 km
+  const double root_center_location   = 1.2e5;// 120 km
+  const double root_width             = 4.0e4;
+  /* introduce root with functional form sin^2( (x-center)/width) ) */
+  if( fabs( x-root_center_location ) < root_width ){   
+    return plate_thickness + root_thickness * pow( cos( M_PI*(x-root_center_location)/root_width/2.0 ) , 2.0 );
+  }else{
+    return plate_thickness;
+  }
 }
 
 PetscScalar plate_geotherm( PetscScalar y){

@@ -1,0 +1,6 @@
+*.o
+*~
+output/*
+*.gch
+version.h
+subduction
