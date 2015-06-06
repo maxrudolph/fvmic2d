@@ -251,10 +251,10 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 
       /* Continuity equation */
       if( ix>0 && jy > 0 && 
-	  in_either( grid->xc[ix], grid->y[jy-1], options->slabAngle) && 
-	  in_either( grid->xc[ix], grid->y[jy], options->slabAngle) && 
-	  in_either( grid->x[ix] , grid->yc[jy], options->slabAngle) && 
-	  in_either( grid->x[ix-1], grid->yc[jy], options->slabAngle) ){
+	  in_either( grid->xc[ix], grid->y[jy-1], options) && 
+	  in_either( grid->xc[ix], grid->y[jy], options) && 
+	  in_either( grid->x[ix] , grid->yc[jy], options) && 
+	  in_either( grid->x[ix-1], grid->yc[jy], options) ){
 	
 	ierr = MatSetValue(LHS,pdof[jyl][ixl], pdof[jyl][ixl],1.0*Kbond[0],INSERT_VALUES); CHKERRQ(ierr);
 	ierr = VecSetValue(RHS,pdof[jyl][ixl], 0.0,INSERT_VALUES); CHKERRQ(ierr);
@@ -267,7 +267,7 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 	ierr = MatSetValue(LHS,pdof[jyl][ixl],pdof[jyl][ixl+1],-1.0*Kbond[0],INSERT_VALUES); CHKERRQ(ierr);
 	ierr = VecSetValue(RHS,pdof[jyl][ixl],0.0,INSERT_VALUES); CHKERRQ(ierr);	       
 	
-      } else if( FIX_PRESSURE && ix==NX-1 && jy > 0 && grid->yc[jy] > plate_depth(grid->LX) && grid->yc[jy-1] <= plate_depth(grid->LX) ){/* pressure specified in one cell */	
+      } else if( FIX_PRESSURE && ix==NX-1 && jy > 0 && grid->yc[jy] > plate_depth(grid->LX,options) && grid->yc[jy-1] <= plate_depth(grid->LX,options) ){/* pressure specified in one cell */	
 	printf("Fixing pressure\n");
 	ierr = MatSetValue(LHS,pdof[jyl][ixl],pdof[jyl][ixl],1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
 	ierr = VecSetValue(RHS,pdof[jyl][ixl],0.0,INSERT_VALUES);CHKERRQ(ierr);
@@ -293,10 +293,10 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
       
       
       /*         %x-momentum */
-      if( in_slab( grid->x[ix], grid->yc[jy+1], options->slabAngle) ){   //slab
+      if( in_slab( grid->x[ix], grid->yc[jy+1], options ) ){   //slab
 	ierr = MatSetValue(LHS, vxdof[jyl][ixl],vxdof[jyl][ixl],1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);	
 	ierr = VecSetValue(RHS, vxdof[jyl][ixl],Kbond[0]*svx,INSERT_VALUES);CHKERRQ(ierr);       
-      }else if( in_plate( grid->x[ix], grid->yc[jy+1], options->slabAngle) ){ //rigid over-riding plate
+      }else if( in_plate( grid->x[ix], grid->yc[jy+1], options) ){ //rigid over-riding plate
 	ierr = MatSetValue(LHS, vxdof[jyl][ixl], vxdof[jyl][ixl],1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);	
 	ierr = VecSetValue(RHS, vxdof[jyl][ixl], 0.0 ,INSERT_VALUES);CHKERRQ(ierr);       		  
       }else if( ix == NX-1 && jy < NY-1){
@@ -413,11 +413,11 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 
       /* %y-momentum */
       /* y-equation has implicit bcs on left, explicit on top, bottom, and right */
-      if( in_slab( grid->xc[ix+1], grid->y[jy], options->slabAngle) ){/* slab internal BC */
+      if( in_slab( grid->xc[ix+1], grid->y[jy], options ) ){/* slab internal BC */
 	ierr = MatSetValue(LHS, vydof[jyl][ixl], vydof[jyl][ixl], Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
 	ierr = VecSetValue(RHS, vydof[jyl][ixl], Kbond[0] * svy,INSERT_VALUES);CHKERRQ(ierr);	
 
-      }else if( in_plate( grid->xc[ix+1], grid->y[jy], options->slabAngle) ){/* plate internal BC */
+      }else if( in_plate( grid->xc[ix+1], grid->y[jy], options ) ){/* plate internal BC */
 	ierr = MatSetValue(LHS, vydof[jyl][ixl],vydof[jyl][ixl], Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
 	ierr = VecSetValue(RHS, vydof[jyl][ixl], 0.0,INSERT_VALUES);CHKERRQ(ierr);     	
       }else if( jy == NY-1 && ix < NX-1){
@@ -428,7 +428,7 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 	ierr = MatSetValue(LHS, vydof[jyl][ixl], pdof[jyl][ixl+1],-Kcont[0], INSERT_VALUES);CHKERRQ(ierr);
 	ierr = VecSetValue(RHS,vydof[jyl][ixl], 0.0, INSERT_VALUES);CHKERRQ(ierr);
 	
-      }else if( ix == NX-1 && !in_plate(grid->x[ix],grid->y[jy],options->slabAngle) /*&& jy < NY-1 */){// not in plate - zero shear stress on RIGHT BOUNDARY
+      }else if( ix == NX-1 && !in_plate(grid->x[ix],grid->y[jy],options) /*&& jy < NY-1 */){// not in plate - zero shear stress on RIGHT BOUNDARY
 	  PetscScalar dxc = grid->xc[ix+1] - grid->xc[ix];
 	  PetscScalar dyc = grid->yc[jy+1] - grid->yc[jy];
 	  ierr=MatSetValue(LHS,vydof[jyl][ixl], vxdof[jyl][ixl],   1.0/dyc*Kcont[0],INSERT_VALUES);CHKERRQ(ierr);
@@ -552,7 +552,7 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
       /* x-stokes equation */     
       /* top boundary - adjust x-stokes equation to account for ghosted values*/
       
-      if(0 && ix == NX-1 && jy < NY-1 && !in_plate( grid->x[ix], grid->yc[jy+1], options->slabAngle) ){// modify for outflow BC
+      if(0 && ix == NX-1 && jy < NY-1 && !in_plate( grid->x[ix], grid->yc[jy+1], options) ){// modify for outflow BC
 	/* get coefficient for vx[ix-1][jy] */
 	PetscScalar dx = grid->x[ix]-grid->x[ix-1];
 	PetscScalar dy = grid->y[jy+1]-grid->y[jy];
@@ -570,7 +570,7 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
       
       /* y-stokes */
       // bottom boundary
-      if( 0 &&  jy == NY-1 && ix < NX-1 && in_slab(grid->xc[ix+1], 2.0*grid->y[jy] - grid->y[jy-1], options->slabAngle) && !in_slab(grid->xc[ix+1],grid->y[jy],options->slabAngle) ){
+      if( 0 &&  jy == NY-1 && ix < NX-1 && in_slab(grid->xc[ix+1], 2.0*grid->y[jy] - grid->y[jy-1], options) && !in_slab(grid->xc[ix+1],grid->y[jy],options) ){
 	// special case where ghost node is in slab
 	PetscScalar eta = etaNZ[jy][ix+1];
 	PetscScalar Pcoef = Kcont[0]/(grid->yc[jy] - grid->yc[1 + jy]);
@@ -584,7 +584,7 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 	ierr = MatSetValue(LHS, vydof[jyl][ixl], vydof[jyl-1][ixl], -Pcoef*2.0*eta/dy/Kcont[0] , ADD_VALUES);CHKERRQ(ierr);
 	ierr = MatSetValue(LHS, vydof[jyl][ixl], pdof[jyl][ixl+1],  -Pcoef, ADD_VALUES);CHKERRQ(ierr);
 	ierr = VecSetValue(RHS, vydof[jyl][ixl], -Pcoef*2.0*eta/dy/Kcont[0] * vyg, ADD_VALUES);CHKERRQ(ierr);
-      } else if( 0 && jy == NY-1 && ix < NX-1 && !in_slab( grid->xc[ix+1], grid->y[jy], options->slabAngle) ){
+      } else if( 0 && jy == NY-1 && ix < NX-1 && !in_slab( grid->xc[ix+1], grid->y[jy], options) ){
 	/* get coefficient for vx[ix-1][jy] */
 	PetscScalar eta = etaNZ[jy][ix+1];
 	PetscScalar Pcoef = Kcont[0]/(grid->yc[jy] - grid->yc[1 + jy]);

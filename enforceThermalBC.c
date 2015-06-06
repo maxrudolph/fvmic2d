@@ -26,8 +26,8 @@ PetscErrorCode enforceThermalBCs1( GridData *grid, Options *options, NodalFields
 	lastT[jy][ix] = slab_inflow_temperature( 0.0, grid->y[jy], options->slabAngle );
 
       }else if(ix == grid->NX-1){/* RIGHT */
-	if( grid->y[jy] <= plate_depth(grid->LX) ){
-	  lastT[jy][ix] = plate_geotherm( grid->y[jy] );	  
+	if( grid->y[jy] <= plate_depth(grid->LX,options) ){
+	  lastT[jy][ix] = plate_geotherm( grid->y[jy],options );	  
 	} 
       }
     }/* end loop over y*/

@@ -98,21 +98,7 @@ PetscErrorCode saveRunInfo( Options *options, Materials *materials, PetscInt iMo
     fprintf(of,"materialGamma,%d,%e,%e\n",i,materials->gamma[i][0], materials->gamma[i][1]);
     fprintf(of,"materialF,%d,%e,%e\n",i,materials->F[i][0], materials->F[i][1]);
     fprintf(of,"materialC,%d,%e,%e\n",i,materials->C[i][0], materials->C[i][1]);
-    fprintf(of,"binghamYieldStress,%d,%e\n",i,materials->binghamYieldStress[i]);
-    fprintf(of,"hasDamage,%d,%d\n",i,materials->hasDamage[i]);
-    fprintf(of,"hasDilation,%d,%d\n",i,materials->hasDilation[i]);
-#ifdef TEXTURE
-    fprintf(of,"hasTexture,%d,%d\n",i,materials->hasTexture[i]);
-#endif
-/*     if( materials->hasDamage[i]){ */
-/*       fprintf(of,"hayhurstAlpha,%d,%e\n",i,materials->hayhurstAlpha[i]); */
-/*       fprintf(of,"hayhurstBeta,%d,%e\n",i,materials->hayhurstBeta[i]); */
-/*       fprintf(of,"damager,%d,%e\n",i, materials->damager[i]); */
-/*       fprintf(of,"damageB,%d,%e\n",i, materials->damageB[i]); */
-/*       fprintf(of,"damagem,%d,%e\n",i,  materials->damagem[i]); */
-/*       fprintf(of,"damagek,%d,%e\n",i, materials->damagek[i]); */
-/*       fprintf(of,"damageAlpha3,%d,%e\n",i,materials->damageAlpha3[i]); */
-/*     } */
+
     fprintf(of,"hasEtaT,%d,%d\n",i,  materials -> hasEtaT[i]);
     if(materials->hasEtaT[i]){
       fprintf(of,"QonR,%d,%e\n",i, materials -> QonR[i]);

@@ -1,20 +1,131 @@
 #include "fdcode.h"
 #include "options.h"
 #include <float.h>
+#include <string.h>
 
 #ifndef LINEWIDTH
 #define LINEWIDTH 128
 #endif
 
 
+/* Improved options handler */
+
+/* maximum number of options */
+#define MAX_OPTIONS 200
+/* maximum length of string describing option */
+#define OPTSTR_LEN  30
+
+/* statically-allocated option database */
+static char option_name_db[MAX_OPTIONS][OPTSTR_LEN];
+static char option_value_db[MAX_OPTIONS][OPTSTR_LEN];
+static option_type option_type_db[MAX_OPTIONS];/* type of option */
+static void *option_ptr_db[MAX_OPTIONS];/* pointer to option value */
+static int  option_default_db[MAX_OPTIONS];
+static int nopt=0;
+
+PetscErrorCode declare_option( const char *pattern, option_type opt, void *option_ptr, const char *default_value ){
+  /* This function should declare an option */
+  PetscErrorCode ierr=0;
+  const int pattern_len = strlen(pattern);
+  /* first, check list of options to see whether this option has yet been declared */
+  int declared=0;
+  int i;
+  for( i=0;i<nopt;i++){
+    if( !strncmp( pattern, option_name_db[i], pattern_len) ){
+      declared=1;
+    }
+  }
+  if( declared && opt != OPTION_SPECIAL1 ){
+    /* if so, abort */
+    SETERRQ(PETSC_COMM_WORLD,101,"Parameters may not be declared twice!");
+    CHKERRQ(ierr);
+  }else{
+    if( nopt >= MAX_OPTIONS ) SETERRQ(PETSC_COMM_SELF,101,"Too many parameters.");
+    /* if not, add it to the list of options */
+    strncpy( option_name_db[nopt] , pattern       , strlen(pattern) );
+    strncpy( option_value_db[nopt], default_value , strlen(default_value) );
+    option_type_db[nopt] = opt;
+    option_ptr_db[nopt] = option_ptr;
+    option_default_db[nopt] = 1;
+    printf("declared option `%s` to '%s'\n",option_name_db[nopt],option_value_db[nopt]);
+    /* parse the default value */
+    nopt++;
+    parse_option( pattern, default_value );
+    option_default_db[i] = 1;/* indicate that default option was set */
+  }
+  return ierr;
+}
+
+PetscErrorCode parse_option( const char *key, const char *value ){
+  /* assume input is in form of key/value pair */
+  /* compare key with each entry in option database */
+  int i;
+  for(i=0;i<nopt;i++){
+    if( !strncmp( key, option_name_db[i], strlen( option_name_db[i]) ) ){
+      /* We have a match */
+      printf("found match for key %s\n",key);
+      option_default_db[i] = 0;
+      strcpy( option_value_db[i], value );
+      if( option_type_db[i] == OPTION_SCALAR ){
+	sscanf( value, "%le", (double *) option_ptr_db[i] );
+	return 0;
+      }else if( option_type_db[i] == OPTION_INTEGER ){
+	sscanf( value, "%d", (int *) option_ptr_db[i] );
+	return 0;
+      }else if( option_type_db[i] == OPTION_III ){
+	sscanf( value, "%d,%d,%d", ((int *) option_ptr_db[i] ), ((int *) option_ptr_db[i])+1, ((int *) option_ptr_db[i])+2 );
+	return 0;
+      }else if( option_type_db[i] == OPTION_SSS ){
+	sscanf( value, "%le,%le,%le", ((PetscScalar *) option_ptr_db[i] ), ((PetscScalar *) option_ptr_db[i])+1, ((PetscScalar *) option_ptr_db[i])+2 );  
+	return 0;
+      }else if( option_type_db[i] == OPTION_II ){
+	sscanf( value, "%d,%d", ((int *) option_ptr_db[i] ), ((int *) option_ptr_db[i])+1 );  
+	return 0;
+      }else if( option_type_db[i] == OPTION_SS ){
+	sscanf( value, "%le,%le", ((PetscScalar *) option_ptr_db[i] ), ((PetscScalar *) option_ptr_db[i])+1);  
+	return 0;
+      }else if( option_type_db[i] == OPTION_ISPAIR ){
+	int tmp1;
+	double tmp2;
+	sscanf( value, "%d,%le",&tmp1,&tmp2 );
+	PetscScalar *val = (PetscScalar *) option_ptr_db[i];
+	val[tmp1]=tmp2;
+	return 0;
+      }else if( option_type_db[i] == OPTION_IIPAIR ){
+	int tmp1;
+	int tmp2;
+	sscanf( value, "%d,%d",&tmp1,&tmp2 );
+	int *val = (int *) option_ptr_db[i];
+	val[tmp1]=tmp2;
+	return 0;
+      }else if( option_type_db[i] == OPTION_SPECIAL1 ){
+	/* for strain-weakening plasticity, put two values into correct location in materials structure */
+	int tmp1,tmp2;
+	double  tmp3;
+	sscanf(value,"%d,%d,%le",&tmp1,&tmp2,&tmp3);
+	double *plastarray = (double *) option_ptr_db[i];
+	*(plastarray + 2*tmp1 + tmp2)= tmp3;/* option_prt_db[i] is a pointer to a statically-allocated MAXMAT x 2 array */
+	return 0;
+      }else{
+	SETERRQ(PETSC_COMM_SELF,101,"Unknown Option type");
+      }
+    }
+  }
+  fprintf(stderr,"No match for key '%s' value '%s'\n",key,value);
+  SETERRQ(PETSC_COMM_SELF,101,"No match for specified option in option db");
+  abort();
+}
+
+/* csvOptions initializes options from a csv (comma-separated values) file */
 PetscErrorCode csvOptions(char *csvFileName, Options *options, Materials *materials){
+  PetscErrorCode ierr=0;
+  PetscFunctionBegin;
   FILE *csvFile;
   //  PetscErrorCode ierr;
   char line[LINEWIDTH];
   PetscMPIInt rank,size;
   char fn[12] = "options.csv";
   char *ifn;
-  setOptions (options);
 
   PetscFunctionBegin;
   /* for testing: */
@@ -31,8 +142,86 @@ PetscErrorCode csvOptions(char *csvFileName, Options *options, Materials *materi
   if(!rank) printf("reading from %s\n",ifn);
 
   if(!rank){ 
+    /* declare each option */
+    declare_option("LX",OPTION_SCALAR, &(options->LX), "1.0");
+    declare_option("LY",OPTION_SCALAR, &(options->LY), "1.0");
+    declare_option("NX",OPTION_INTEGER, &(options->NX), "21");
+    declare_option("NY",OPTION_INTEGER, &(options->NY), "20");
+    declare_option("gridRatio",OPTION_SCALAR, &(options->gridRatio), "1.0");
+    declare_option("NMX",OPTION_INTEGER, &(options->NMX), "4");
+    declare_option("NMY",OPTION_INTEGER, &(options->NMY), "4");
+    declare_option("saveInterval",OPTION_INTEGER,&(options->saveInterval),"100");
+    declare_option("maxMarkFactor",OPTION_SCALAR,&(options->maxMarkFactor),"2.0");
+    declare_option("minMarkers",OPTION_INTEGER, &(options->minMarkers), "1");
+    declare_option("maxMarkers",OPTION_INTEGER, &(options->maxMarkers), "100");
+    declare_option("dtMax",OPTION_SCALAR,&(options->dtMax),"1.0e13");
+    declare_option("displacementStepLimit",OPTION_SCALAR,&(options->displacementStepLimit),"0.1");
+    declare_option("maxTempChange",OPTION_SCALAR,&(options->maxTempChange),"100.0");
+    declare_option("nTime",OPTION_INTEGER,&(options->nTime),"1");
+    declare_option("restartStep",OPTION_INTEGER,&(options->restartStep),"0");
+    declare_option("totalTime",OPTION_SCALAR,&(options->totalTime),"3.15e16");
+    declare_option("maxNumPlasticity",OPTION_INTEGER,&(options->maxNumPlasticity),"1");
+    declare_option("plasticDelay",OPTION_INTEGER,&(options->plasticDelay),"0");
+    declare_option("etamin",OPTION_SCALAR,&(options->etamin),"1.0e14");
+    declare_option("fractionalEtamin",OPTION_SCALAR,&(options->fractionalEtamin),"1e-4");
+    declare_option("etamax",OPTION_SCALAR,&(options->etamax),"1.0e25");
+    declare_option("grainSize",OPTION_SCALAR,&(options->grainSize),"NaN");
+    declare_option("Tperturb",OPTION_SCALAR,&(options->Tperturb),"0.0");
+    declare_option("shearHeating",OPTION_INTEGER,&(options->shearHeating),"0");
+    declare_option("adiabaticHeating",OPTION_INTEGER,&(options->adiabaticHeating),"0");
+    declare_option("mechBCLeftType",OPTION_III,options->mechBCLeft.type,"0,0,0");
+    declare_option("mechBCLeftValue",OPTION_SSS,options->mechBCLeft.value,"0,0,0");
+    declare_option("mechBCRightType",OPTION_III,options->mechBCRight.type,"0,0,0");
+    declare_option("mechBCRightValue",OPTION_SSS,options->mechBCRight.value,"0,0,0");
+    declare_option("mechBCTopType",OPTION_III,options->mechBCTop.type,"0,0,0");
+    declare_option("mechBCTopValue",OPTION_SSS,options->mechBCTop.value,"0,0,0");
+    declare_option("mechBCBottomType",OPTION_III,options->mechBCBottom.type,"0,0,0");
+    declare_option("mechBCBottomValue",OPTION_SSS,options->mechBCBottom.value,"0,0,0");
+    /* thermal BCs */
+    declare_option("thermalBCBottomType",OPTION_INTEGER,options->thermalBCBottom.type,"0");
+    declare_option("thermalBCBottomValue",OPTION_SCALAR,options->thermalBCBottom.value,"0.0");
+    declare_option("thermalBCTopType",OPTION_INTEGER,   options->thermalBCTop.type,"0");
+    declare_option("thermalBCTopValue",OPTION_SCALAR,   options->thermalBCTop.value,"0.0");
+    declare_option("thermalBCLeftType",OPTION_INTEGER,  options->thermalBCLeft.type,"0");
+    declare_option("thermalBCLeftValue",OPTION_SCALAR,  options->thermalBCLeft.value,"0.0");
+    declare_option("thermalBCRightType",OPTION_INTEGER, options->thermalBCRight.type,"0");
+    declare_option("thermalBCRightValue",OPTION_SCALAR, options->thermalBCRight.value,"0.0");
+    
+    declare_option("gy",OPTION_SCALAR,&(options->gy),"9.8");
+    declare_option("gx",OPTION_SCALAR,&(options->gx),"0.0");
+    declare_option("subgridStressDiffusivity",OPTION_SCALAR,&(options->subgridStressDiffusivity),"1.0");
+    declare_option("subgridTemperatureDiffusivity",OPTION_SCALAR,&(options->subgridTemperatureDiffusivity),"1.0");
+    declare_option("nMaterials",OPTION_INTEGER,&(materials->nMaterials),"1");
+    /* material properties */
+    declare_option("materialEta",OPTION_ISPAIR,materials->materialEta,"0,1.0e21");
+    declare_option("materialRho",OPTION_ISPAIR,materials->materialRho,"0,4000.0");
+    declare_option("materialkThermal",OPTION_ISPAIR,materials->materialkThermal,"0,4.0");
+    declare_option("materialCp",OPTION_ISPAIR,materials->materialCp,"0,1250.0");
+    declare_option("materialAlpha",OPTION_ISPAIR,materials->materialAlpha,"0,0.0");
+    declare_option("materialMu",OPTION_ISPAIR,materials->materialMu,"0,1.0e99");
+    declare_option("materialCohesion",OPTION_ISPAIR,materials->materialCohesion,"0,1.0e99");
+    declare_option("materialFriction",OPTION_ISPAIR,materials->materialFriction,"0,1.0");
+    declare_option("hasPlasticity",OPTION_ISPAIR,materials->hasPlasticity,"0,0");
+    declare_option("hasEtaT",OPTION_IIPAIR,materials->hasEtaT,"0,0");
+    declare_option("QonR",OPTION_ISPAIR,materials->QonR,"0,0.0");
+    declare_option("Tref",OPTION_ISPAIR,materials->Tref,"0,273.0");
+    /* special parameters for strain-weakening plasticity */
+    declare_option("materialC",OPTION_SPECIAL1,materials->C,"0,0,1.0e99");
+    declare_option("materialC",OPTION_SPECIAL1,materials->C,"0,1,1.0e99");
+    declare_option("materialF",OPTION_SPECIAL1,materials->F,"0,0,1.0e99");
+    declare_option("materialF",OPTION_SPECIAL1,materials->F,"0,1,1.0e99");
+    declare_option("materialGamma",OPTION_SPECIAL1,materials->gamma,"0,0,1e99"); /* Note - this is not working right now because it will require double-declaration of this parameter*/
+    declare_option("materialGamma",OPTION_SPECIAL1,materials->gamma,"0,1,1e98"); 
+    /* subduction - specific stuff */
+    declare_option("slabAngle",OPTION_SCALAR, &options->slabAngle,"45");
+    declare_option("slabVelocity",OPTION_SCALAR, &(options->slabVelocity),"1.0e-10");
+    declare_option("rootThickness",OPTION_SCALAR,&options->rootThickness,"0.0");
+    declare_option("rootCenter",OPTION_SCALAR,&options->rootCenter,"1.20e5");
+    declare_option("rootWidth",OPTION_SCALAR,&options->rootWidth,"4.0e4");
+
+
+    /* Parse the options file line-by-line */
     csvFile = fopen( ifn, "r");
-    /* get a line*/
     while( fgets(line, sizeof(line), csvFile) != NULL ){
       /* parse the line */
       PetscInt idxComma=0;
@@ -40,500 +229,42 @@ PetscErrorCode csvOptions(char *csvFileName, Options *options, Materials *materi
       if( !strncmp( "#",line,1) ){
 	
       } else {
-	while( line[++idxComma] != ',');
-	//      printf("idxComma=%d\n", idxComma);
-	//printf("comma = %c \n",line[idxComma]);
-	/* parse stuff before the comma */
+	while( line[++idxComma] != ','){
+	  /* do nothing - just increment the comma locator */
+	}
 	
-	/*ignore this line */
-	if( !strncmp( "LX", line, 2) ){
-	  //	  printf("reading LX\n");
-	  sscanf( &line[idxComma+1],"%le\n", &(options -> LX)); printf("LX = %le\n",options->LX);
-	  
-	} else if( !strncmp( "LY", line, 2) ){
-	  //	  printf("reading LY\n");
-	  sscanf( &line[idxComma+1],"%le\n", &(options -> LY)); printf("LY = %le\n",options->LY);
-	} else if( !strncmp( "NX", line, 2) ){
-	  //printf("reading NX\n");
-	  sscanf( &line[idxComma+1],"%d\n", &(options -> NX)); printf("NX = %d\n",options->NX);
-	  
-	} else if( !strncmp( "NY", line, 2) ){
-	  //printf("reading NY\n");
-	  sscanf( &line[idxComma+1],"%d\n", &(options -> NY)); printf("NY = %d\n",options->NY);
-	
-	} else if( !strncmp( "gridRatio", line, 9) ){
-	  //printf("reading NY\n");
-	  sscanf( &line[idxComma+1],"%le\n", &(options -> gridRatio)); printf("gridRatio = %e\n",options->gridRatio);
-	
-	
-	/*options->NMX=10;*//* number of markers per cell, x*/
-	} else if( !strncmp( "NMX", line, 3) ){
-	  //printf("reading NMX\n");
-	  sscanf( &line[idxComma+1],"%d\n", &(options -> NMX)); printf("NMX = %d\n",options->NMX);
-	  
-	  /* options->NMY=10; */ /* markers per cell y*/
-	} else if( !strncmp( "NMY", line, 2) ){
-	  //printf("reading NMY\n");
-	  sscanf( &line[idxComma+1],"%d\n", &(options -> NMY)); printf("NMY = %d\n",options->NMY);
-	 
-	/*   options->maxMarkFactor = 1.5; */ /*memory to allocate for markers is this number*original number of markers*/
-	} else if( !strncmp( "maxMarkFactor", line,13 ) ){
-	  //printf("reading maxMarkFactor\n");
-	  sscanf( &line[idxComma+1],"%le\n", &(options -> maxMarkFactor)); printf("maxMarkFactor = %le\n",options->maxMarkFactor);
-	  
-	  /* options->minMarkers = 60; */ /* munimum number of markers per cell */
-	} else if( !strncmp( "minMarkers", line, 10) ){
-	  //printf("reading minMarkers\n");
-	  sscanf( &line[idxComma+1],"%d\n", &(options -> minMarkers)); printf("minMarkers = %d\n",options->minMarkers);
-	} else if( !strncmp( "maxMarkers", line, 10) ){
-	  //printf("reading minMarkers\n");
-	  sscanf( &line[idxComma+1],"%d\n", &(options -> maxMarkers)); printf("maxMarkers = %d\n",options->maxMarkers);
-	
-
-	} else if( !strncmp( "slabAngle", line, 9) ){
-	  sscanf( &line[idxComma+1],"%le\n", &(options -> slabAngle)); printf("slabAngle = %le\n",options->slabAngle);
-	  options->slabAngle *= M_PI/180.0;
-	  printf("slabAngle in radians %le\n",options->slabAngle);
-	} else if( !strncmp( "slabVelocity", line, 12) ){
-	  sscanf( &line[idxComma+1],"%le\n", &(options -> slabVelocity)); printf("slabVelocity = %le\n",options->slabVelocity);
-	  
-	  /* time step, plastic iteration*/
-
-	  /*   options->dtMax = 1e0*(365.25*24*3600); */
-	} else if( !strncmp( "dtMax", line, 5) ){
-	  //printf("reading dtMax\n");
-	  sscanf( &line[idxComma+1],"%le\n", &(options -> dtMax)); printf("dtMax = %le\n",options->dtMax);
-	} else if( !strncmp( "displacementStepLimit", line, 21) ){
-	  sscanf( &line[idxComma+1],"%le\n", &(options -> displacementStepLimit)); printf("displacementStepLimit = %le\n",options->displacementStepLimit);
-	
-	} else if( !strncmp( "maxTempChange", line, 13) ){
-	  //printf("reading dtMax\n");
-	  sscanf( &line[idxComma+1],"%le\n", &(options -> maxTempChange)); printf("maxTempChange = %le\n",options->maxTempChange);
-
-	  /*   options->nTime = 2001; */ /* max number of timesteps*/
-	} else if( !strncmp( "nTime", line, 5) ){
-	  //printf("reading nTime\n");
-	  sscanf( &line[idxComma+1],"%d\n", &(options -> nTime)); printf("nTime = %d\n",options->nTime);
-	} else if( !strncmp( "restartStep", line, 11) ){
-	  //printf("reading nTime\n");
-	  sscanf( &line[idxComma+1],"%d\n", &(options -> restartStep)); printf("restartStep = %d\n",options->restartStep);
-	
-	  /* options->totalTime = 4e6*(365.25*24*3600); */ /* maximum model time to run*/
-	} else if( !strncmp( "totalTime", line, 9) ){
-	  //printf("reading totalTime\n");
-	  sscanf( &line[idxComma+1],"%le\n", &(options -> totalTime)); printf("totalTime = %le\n",options->totalTime);
-	
-	  /*   options->maxNumPlasticity=1; */
-	} else if( !strncmp( "maxNumPlasticity", line, 16) ){
-	  //printf("reading maxNumPlasticity\n");
-	  sscanf( &line[idxComma+1],"%d\n", &(options -> maxNumPlasticity)); printf("maxNumPlasticity = %d\n",options->maxNumPlasticity);
-	
-/*   options->plasticDelay = 1; */
-	} else if( !strncmp( "plasticDelay", line,12) ){
-	  //printf("reading plasticDelay\n");
-	  sscanf( &line[idxComma+1],"%d\n", &(options -> plasticDelay)); printf("plasticDelay = %d\n",options->plasticDelay);
-	
-/*   options->etamin = 1.0e12; */ /* minimum viscosity allowed in plastic yielding*/
-	} else if( !strncmp( "etamin", line, 6) ){
-	  //printf("reading etamin\n");
-	  sscanf( &line[idxComma+1],"%le\n", &(options -> etamin)); printf("etamin = %le\n",options->etamin);
-
-	} else if(  !strncmp( "fractionalEtamin", line, 16) ){
-	  //printf("reading etamin\n");
-	  sscanf( &line[idxComma+1],"%le\n", &(options -> fractionalEtamin)); printf("fractionalEtamin = %le\n",options->fractionalEtamin);
-	
-/*   options->etamax = 1.0e36; */
-	} else if( !strncmp( "etamax", line, 6) ){
-	  //printf("reading etamax\n");
-	  sscanf( &line[idxComma+1],"%le\n", &(options -> etamax)); printf("etamax = %le\n",options->etamax);
-	
-	  /*texture - for ice viscoplasticity*/
-/* 	} else if(  !strncmp( "doTexture", line, 9) ){ */
-/* 	  //printf("reading doMonte\n"); */
-/* 	  sscanf( &line[idxComma+1],"%d\n", &(options -> doTexture)); printf("doTexture = %d\n",options->doTexture); */
-
-       
-
-	} else if(  !strncmp( "grainSize", line, 9) ){
-	  //printf("reading doMonte\n");
-	  sscanf( &line[idxComma+1],"%le\n", &(options -> grainSize)); printf("grainSize = %e\n",options->grainSize);
-	
-	  /* Monte-carlo search */
-	
-	
-  /* damage stuff */
-	
-	  
-	  /* model setup/ICs */
-	  /*   options->Tperturb = 1; */
- 	} else if( !strncmp( "Tperturb", line, 8) ){
-	  //printf("reading Tperturb\n");
-	  sscanf( &line[idxComma+1],"%le\n", &(options -> Tperturb)); printf("Tperturb = %le\n",options->Tperturb);
-	  
-	  
-	} else if( !strncmp( "shearHeating", line, 12) ){
-
-	  sscanf( &line[idxComma+1],"%d\n", &(options -> shearHeating)); printf("shearHeating = %d\n",options->shearHeating);
-
-	} else if( !strncmp( "adiabaticHeating", line, 16) ){
-
-	  sscanf( &line[idxComma+1],"%d\n", &(options -> adiabaticHeating)); printf("adiabaticHeating = %d\n",options->adiabaticHeating);
-
-	} else if( !strncmp( "mechBCLeft", line, 10) ){
-	  sscanf( &line[idxComma+1],"%d,%d,%d,%le,%le,%le\n", &(options->mechBCLeft.type[0]), &(options->mechBCLeft.type[1]), &(options->mechBCLeft.type[2]), &(options->mechBCLeft.value[0]), &(options->mechBCLeft.value[1]), &(options->mechBCLeft.value[2]));
-	} else if( !strncmp( "mechBCRight", line, 10) ){
-	  sscanf( &line[idxComma+1],"%d,%d,%d,%le,%le,%le\n", &(options->mechBCRight.type[0]), &(options->mechBCRight.type[1]), &(options->mechBCRight.type[2]), &(options->mechBCRight.value[0]), &(options->mechBCRight.value[1]), &(options->mechBCRight.value[2]));
-	} else if( !strncmp( "mechBCTop", line, 9) ){
-	  sscanf( &line[idxComma+1],"%d,%d,%d,%le,%le,%le\n", &(options->mechBCTop.type[0]), &(options->mechBCTop.type[1]), &(options->mechBCTop.type[2]), &(options->mechBCTop.value[0]), &(options->mechBCTop.value[1]), &(options->mechBCTop.value[2]));
-	} else if( !strncmp( "mechBCBottom", line, 12) ){
-	  sscanf( &line[idxComma+1],"%d,%d,%d,%le,%le,%le\n", &(options->mechBCBottom.type[0]), &(options->mechBCBottom.type[1]), &(options->mechBCBottom.type[2]), &(options->mechBCBottom.value[0]), &(options->mechBCBottom.value[1]), &(options->mechBCBottom.value[2]));
-
-	  /* Thermal BCs */
-	} else if( !strncmp( "thermalBCBottom", line, 15) ){
-	  sscanf( &line[idxComma+1],"%d,%le\n", &(options->thermalBCBottom.type[0]), &(options->thermalBCBottom.value[0]));
-	} else if( !strncmp( "thermalBCTop", line, 12) ){
-	  sscanf( &line[idxComma+1],"%d,%le\n", &(options->thermalBCTop.type[0]), &(options->thermalBCTop.value[0]));
-	} else if( !strncmp( "thermalBCLeft", line, 13) ){
-	  sscanf( &line[idxComma+1],"%d,%le\n", &(options->thermalBCLeft.type[0]), &(options->thermalBCLeft.value[0]));
-	} else if( !strncmp( "thermalBCRight", line, 14) ){
-	  sscanf( &line[idxComma+1],"%d,%le\n", &(options->thermalBCRight.type[0]), &(options->thermalBCRight.value[0]));
-	  
-	  
-	  /* body forces*/
-	  /*   options->gy = 1.3; */
-	} else if( !strncmp( "gy", line, 2) ){
-	  //printf("reading gy\n");
-	  sscanf( &line[idxComma+1],"%le\n", &(options -> gy)); printf("gy = %le\n",options->gy);
-	  /*   options->gx = 0; */
-	} else if( !strncmp( "gx", line, 2) ){
-	  //printf("reading gx\n");
-	  sscanf( &line[idxComma+1],"%le\n", &(options -> gx)); printf("gx = %le\n",options->gx);
-	  
-	  /* I/O etc*/
-	  /*   options->saveInterval = 25; */
-	} else if( !strncmp( "saveInterval", line, 12) ){
-	  //printf("reading saveInterval\n");
-	  sscanf( &line[idxComma+1],"%d\n", &(options -> saveInterval)); printf("saveInterval = %d\n",options->saveInterval);
-	  
-  /* subgrid diffusion constants*/
-/*   options-> subgridStressDiffusivity = 1.0; */
-	} else if( !strncmp( "subgridStressDiffusivity", line, 24) ){
-	  //printf("reading subgridStressDiffusivity\n");
-	  sscanf( &line[idxComma+1],"%le\n", &(options -> subgridStressDiffusivity)); printf("subgridStressDiffusivity = %le\n",options->subgridStressDiffusivity);
-/*   options-> subgridTemperatureDiffusivity = 1.0; */
-	} else if( !strncmp( "subgridTemperatureDiffusivity", line, 29) ){
-	  //printf("reading subgridTemperatureDiffusivity\n");
-	  sscanf( &line[idxComma+1],"%le\n", &(options -> subgridTemperatureDiffusivity)); printf("subgridTemperatureDiffusivity = %le\n",options->subgridTemperatureDiffusivity);
-	} else if( !strncmp( "grainSize", line, 9) ){
-
-	  sscanf( &line[idxComma+1],"%le\n", &(options -> grainSize)); printf("grainSize = %le\n",options->grainSize);
-
-	  /* Material Properties */
-	} else if( !strncmp( "nMaterials", line, 10) ){
-	  //printf("reading nMaterials\n");
-	  sscanf( &line[idxComma+1],"%d\n", &(materials -> nMaterials)); printf("nMaterials = %d\n",materials->nMaterials);
-	  
-	} else if( !strncmp( "materialEta", line,11 ) ){
-	  /* first read material number */
-	  //printf("reading materialEta\n");
-	  PetscInt thisMat;
-	  PetscScalar val1;
-	  sscanf( &line[idxComma+1],"%d,%le\n", &thisMat,&val1); /* read material number, value */
-	  materials->materialEta[thisMat] = val1;
-	  printf("materialEta[%d] = %le\n",thisMat,materials->materialEta[thisMat]);
-
-
-/*   materials-> materialRho[0]=1000.0; */
-	} else if( !strncmp( "materialRho", line,11 ) ){
-	  /* first read material number */
-	  //printf("reading materialRho\n");
-	  PetscInt thisMat;
-	  PetscScalar val1;
-	  sscanf( &line[idxComma+1],"%d,%le\n", &thisMat,&val1); /* read material number, value */
-	  materials->materialRho[thisMat] = val1;
-	  printf("materialRho[%d] = %le\n",thisMat,materials->materialRho[thisMat]);
-
-	  /*   materials-> materialkThermal[2]=100.0; */
-	} else if( !strncmp( "materialkThermal", line,16 ) ){
-	  /* first read material number */
-	  //printf("reading materialkThermal\n");
-	  PetscInt thisMat;
-	  PetscScalar val1;
-	  sscanf( &line[idxComma+1],"%d,%le\n", &thisMat,&val1); /* read material number, value */
-	  materials->materialkThermal[thisMat] = val1;
-	  printf("materialkThermal[%d] = %le\n",thisMat,materials->materialkThermal[thisMat]);
-  
-	  /*   materials->materialCp[2]=1100.0; */
-	} else if( !strncmp( "materialCp", line,10 ) ){
-	  /* first read material number */
-	  //printf("reading materialCp\n");
-	  PetscInt thisMat;
-	  PetscScalar val1;
-	  sscanf( &line[idxComma+1],"%d,%le\n", &thisMat,&val1); /* read material number, value */
-	  materials->materialCp[thisMat] = val1;
-	  printf("materialCp[%d] = %le\n",thisMat,materials->materialCp[thisMat]);
-
-
-	  /*   materials->materialAlpha[2] = 0.0; */
-	} else if( !strncmp( "materialAlpha", line,13 ) ){
-	  /* first read material number */
-	  //printf("reading materialAlpha\n");
-	  PetscInt thisMat;
-	  PetscScalar val1;
-	  sscanf( &line[idxComma+1],"%d,%le\n", &thisMat,&val1); /* read material number, value */
-	  materials->materialAlpha[thisMat] = val1;
-	  printf("materialAlpha[%d] = %le\n",thisMat,materials->materialAlpha[thisMat]);
-
-	  /*   materials->materialMu[2] = 1e99; */
-	} else if( !strncmp( "materialMu", line,10 ) ){
-	  /* first read material number */
-	  //printf("reading materialMu\n");
-	  PetscInt thisMat;
-	  PetscScalar val1;
-	  sscanf( &line[idxComma+1],"%d,%le\n", &thisMat,&val1); /* read material number, value */
-	  materials->materialMu[thisMat] = val1;
-	  printf("materialMu[%d] = %le\n",thisMat,materials->materialMu[thisMat]);
-	  
-	  /*   materials->materialCohesion[2] = 1e99; */
-	} else if( !strncmp( "materialCohesion", line,16 ) ){
-	  /* first read material number */
-	  //printf("reading materialCohesion\n");
-	  PetscInt thisMat;
-	  PetscScalar val1;
-	  sscanf( &line[idxComma+1],"%d,%le\n", &thisMat,&val1); /* read material number, value */
-	  materials->materialCohesion[thisMat] = val1;
-	  printf("materialCohesion[%d] = %le\n",thisMat,materials->materialCohesion[thisMat]);
-
-
-	  /*   materials->materialFriction[2] = 0.6; */
-	} else if( !strncmp( "materialFriction", line,16 ) ){
-	  /* first read material number */
-	  //printf("reading materialFriction\n");
-	  PetscInt thisMat;
-	  PetscScalar val1;
-	  sscanf( &line[idxComma+1],"%d,%le\n", &thisMat,&val1); /* read material number, value */
-	  materials->materialFriction[thisMat] = val1;
-	  printf("materialFriction[%d] = %le\n",thisMat,materials->materialFriction[thisMat]);
-
-	} else if( !strncmp( "hasPlasticity", line,13 ) ){
-	  PetscInt thisMat;
-	  PetscInt val1;
-	  sscanf( &line[idxComma+1],"%d,%d\n",&thisMat,&val1); /* read material number, idx, value */
-	  materials->hasPlasticity[thisMat] = val1;
-	  printf("hasPlasticity[%d] = %d\n",thisMat,materials->hasPlasticity[thisMat]);
-
-	} else if( !strncmp( "materialC", line,9 ) ){
-	  PetscInt thisMat;
-	  PetscInt idx;
-	  PetscScalar val1;
-	  sscanf( &line[idxComma+1],"%d,%d,%le\n", &thisMat,&idx,&val1); /* read material number, idx, value */
-	  materials->C[thisMat][idx] = val1;
-	  printf("materialC[%d][%d] = %le\n",thisMat,idx,materials->C[thisMat][idx]);
-
-	} else if( !strncmp( "materialF", line,9 ) ){
-	  PetscInt thisMat;
-	  PetscInt idx;
-	  PetscScalar val1;
-	  sscanf( &line[idxComma+1],"%d,%d,%le\n",&thisMat,&idx,&val1); /* read material number, idx, value */
-	  materials->F[thisMat][idx] = val1;
-	  printf("materialF[%d][%d] = %le\n",thisMat,idx,materials->F[thisMat][idx]);
-
-	} else if(  !strncmp( "binghamYieldStress", line,18 ) ){
-	  PetscInt thisMat;
-	  PetscScalar val1;
-	  sscanf( &line[idxComma+1],"%d,%le\n",&thisMat,&val1); /* read material number, value */
-	  materials->binghamYieldStress[thisMat] = val1;
-	  printf("binghamYieldStress[%d] = %le\n",thisMat,materials->binghamYieldStress[thisMat]);
-
-
-	} else if( !strncmp( "materialGamma", line,13 ) ){
-	  PetscInt thisMat;
-	  PetscInt idx;
-	  PetscScalar val1;
-	  sscanf( &line[idxComma+1],"%d,%d,%le\n",&thisMat,&idx,&val1); /* read material number, idx, value */
-	  materials->gamma[thisMat][idx] = val1;
-	  printf("materialGamma[%d][%d] = %le\n",thisMat,idx,materials->gamma[thisMat][idx]);
-
-
-	} else if( !strncmp( "hasDamage", line,9 ) ){
-	  /* first read material number */
-	  //printf("reading hasDamage\n");
-	  PetscInt thisMat;
-	  PetscInt val1;
-	  sscanf( &line[idxComma+1],"%d,%d\n", &thisMat,&val1); /* read material number, value */
-	  materials->hasDamage[thisMat] = val1;
-	  printf("hasDamage[%d] = %d\n",thisMat,materials->hasDamage[thisMat]);
-
-	 
-
-	} else if( !strncmp( "hasDilation", line,11 ) ){
-	  /* first read material number */
-	  //printf("reading hasDamage\n");
-	  PetscInt thisMat;
-	  PetscInt val1;
-	  sscanf( &line[idxComma+1],"%d,%d\n", &thisMat,&val1); /* read material number, value */
-	  materials->hasDilation[thisMat] = val1;
-	  printf("hasDilation[%d] = %d\n",thisMat,materials->hasDilation[thisMat]);
-
-/*   materials->hayhurstAlpha[0] = 0.3; */
-	} else if( !strncmp( "hayhurstAlpha", line,13 ) ){
-	  /* first read material number */
-	  //printf("reading hayhurstAlpha\n");
-	  PetscInt thisMat;
-	  PetscScalar val1;
-	  sscanf( &line[idxComma+1],"%d,%le\n", &thisMat,&val1); /* read material number, value */
-	  materials->hayhurstAlpha[thisMat] = val1;
-	  printf("hayhurstAlpha[%d] = %le\n",thisMat,materials->hayhurstAlpha[thisMat]);
-
-/*   materials->hayhurstBeta[0] = 0.6; */
-	} else if( !strncmp( "hayhurstBeta", line,12 ) ){
-	  /* first read material number */
-	  //printf("reading hayhurstBeta\n");
-	  PetscInt thisMat;
-	  PetscScalar val1;
-	  sscanf( &line[idxComma+1],"%d,%le\n", &thisMat,&val1); /* read material number, value */
-	  materials->hayhurstBeta[thisMat] = val1;
-	  printf("hayhurstBeta[%d] = %le\n",thisMat,materials->hayhurstBeta[thisMat]);
-
-/*   materials->damagek[0] = 0.0; */
-	} else if( !strncmp( "damagek", line,7 ) ){
-	  /* first read material number */
-	  //printf("reading damagek\n");
-	  PetscInt thisMat;
-	  PetscScalar val1;
-	  sscanf( &line[idxComma+1],"%d,%le\n", &thisMat,&val1); /* read material number, value */
-	  materials->damagek[thisMat] = val1;
-	  printf("damagek[%d] = %le\n",thisMat,materials->damagek[thisMat]);
-
-/*   materials->damageAlpha3[0] = 5.56806e+01; */
-	} else if( !strncmp( "damageAlpha3", line,12 ) ){
-	  /* first read material number */
-	  //printf("reading damageAlpha3\n");
-	  PetscInt thisMat;
-	  PetscScalar val1;
-	  sscanf( &line[idxComma+1],"%d,%le\n", &thisMat,&val1); /* read material number, value */
-	  materials->damageAlpha3[thisMat] = val1;
-	  printf("damageAlpha3[%d] = %le\n",thisMat,materials->damageAlpha3[thisMat]);
-
-/*   materials->damager[0] = 0.43; */
-	} else if( !strncmp( "damager", line,7 ) ){
-	  /* first read material number */
-	  //printf("reading damager\n");
-	  PetscInt thisMat;
-	  PetscScalar val1;
-	  sscanf( &line[idxComma+1],"%d,%le\n", &thisMat,&val1); /* read material number, value */
-	  materials->damager[thisMat] = val1;
-	  printf("damager[%d] = %le\n",thisMat,materials->damager[thisMat]);
-
-/*   materials->damageB[0] = 1.673757e-27; *//* 1e-30 produced damage at a reasonable rate*/
-	} else if( !strncmp( "damageB", line,7 ) ){
-	  /* first read material number */
-	  //printf("reading damageB\n");
-	  PetscInt thisMat;
-	  PetscScalar val1;
-	  sscanf( &line[idxComma+1],"%d,%le\n", &thisMat,&val1); /* read material number, value */
-	  materials->damageB[thisMat] = val1;
-	  printf("damageB[%d] = %le\n",thisMat,materials->damageB[thisMat]);
-
-/*   materials->damagem[0] = 2.595666e-01; */
-	} else if( !strncmp( "damagem", line,7 ) ){
-	  /* first read material number */
-	  //printf("reading damagem\n");
-	  PetscInt thisMat;
-	  PetscScalar val1;
-	  sscanf( &line[idxComma+1],"%d,%le\n", &thisMat,&val1); /* read material number, value */
-	  materials->damagem[thisMat] = val1;
-	  printf("damagem[%d] = %le\n",thisMat,materials->damagem[thisMat]);
-  
-  /* temperature dependent viscosity*/
-/*   materials -> hasEtaT[0] = 1; */
-	} else if( !strncmp( "hasEtaT", line,7 ) ){
-	  /* first read material number */
-	  //printf("reading hasEtaT\n");
-	  PetscInt thisMat;
-	  PetscInt val1;
-	  sscanf( &line[idxComma+1],"%d,%d\n", &thisMat,&val1); /* read material number, value */
-	  materials->hasEtaT[thisMat] = val1;
-	  printf("hasEtaT[%d] = %d\n",thisMat,materials->hasEtaT[thisMat]);
-
-/*   materials -> hasEtaT[1] = 0; */
-/*   materials -> hasEtaT[2] = 0; */
-
-/*   materials -> QonR[0] = 6000.0; */
-	} else if( !strncmp( "QonR", line,4 ) ){
-	  /* first read material number */
-	  //printf("reading QonR\n");
-	  PetscInt thisMat;
-	  PetscScalar val1;
-	  sscanf( &line[idxComma+1],"%d,%le\n", &thisMat,&val1); /* read material number, value */
-	  materials->QonR[thisMat] = val1;
-	  printf("QonR[%d] = %le\n",thisMat,materials->QonR[thisMat]);
-
-/*   materials -> Tref[0] = 273.15; */ /* kelvin*/
-	} else if( !strncmp( "Tref", line,4 ) ){
-	  /* first read material number */
-	  //printf("reading Tref\n");
-	  PetscInt thisMat;
-	  PetscScalar val1;
-	  sscanf( &line[idxComma+1],"%d,%le\n", &thisMat,&val1); /* read material number, value */
-	  materials->Tref[thisMat] = val1;
-	  printf("Tref[%d] = %le\n",thisMat,materials->Tref[thisMat]);	  
-
-	} else {
-	  
-	  printf("WARNING: Unknown input parameter %s !!!\n",line);
+	{
+	  char key[OPTSTR_LEN];
+	  char val[OPTSTR_LEN];
+	  strncpy( key, line, idxComma );
+	  //strcpy( value, line+idxComma+1, 
+	  key[ idxComma ] = '\0';/* put in termination character */
+	  int ii=0;
+	  while( line[idxComma+ii+1] != '\0' && line[idxComma+ii+1] != '\n' && line[idxComma+ii+1] != '#' ){
+	    val[ii] = line[idxComma+ii+1];
+	    ii++;
+	  }
+	  val[ii] = '\0';
+	  parse_option( key, val );
 	}	
       }
     }
       
     fclose( csvFile );
+    print_options( PETSC_NULL );
   }
   /* send parameters to all nodes */
   MPI_Bcast( options, sizeof( Options ), MPI_BYTE, 0, PETSC_COMM_WORLD);
   MPI_Bcast( materials, sizeof( Materials ), MPI_BYTE, 0, PETSC_COMM_WORLD);
-  /*   printf("[%d] has mu=%f , rho0 = %f after scatteinrg Parameters\n",rank,params->mu0,params->rho0) */;
-  
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(ierr);
 }
 
-void setOptions( Options *options){
-  /* set options to default (often meaningless) values */
-  options->NX = 0;
-  options->NY = 0;
-  options->NMX = 0;
-  options->NMY = 0;
-  options->gridRatio = 0.0;
-  options->nTime = 0;
-  options->restartStep = 0;
-  options->totalTime = 0.0;
-  options->maxNumPlasticity = 0;
-  options->plasticDelay = 0;
-  options->Tperturb = 0.0;
-  options->shearHeating = 0;
-  options->adiabaticHeating = 0;
-  options->gx = 0;
-  options->gy = 0;
-  options->gz = 0;
-  //BC stuff here
-  options->fractionalEtamin = 1.0;
-  options->etamin = 0.0;
-  options->etamax = DBL_MAX;
-  options->dtMax = DBL_MAX;
-  options->displacementStepLimit = 1.0;
-  options->maxTempChange = DBL_MAX;
-  options->saveInterval = 1;
-  options->subgridStressDiffusivity = 0.0;
-  options->subgridTemperatureDiffusivity = 0.0;
-  options->maxMarkFactor = 0.0;
-  options->minMarkers = 0;
-  options->maxMarkers = INT_MAX;
-  options->grainSize = 0.0;
-  options->slabAngle = 0.0;
-  options->slabVelocity = 0.0;
 
-
-
-
-
+void print_options( FILE *fp ){
+  /* loop over entries in the option database */
+  int i;
+  for(i=0;i<nopt;i++){
+    printf("%s,%s\n",option_name_db[i],option_value_db[i]);
+  }
 
 }

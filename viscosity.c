@@ -27,40 +27,10 @@ PetscErrorCode computeRheology( Marker *marker, Options *options, Materials *mat
     /* viscosity linear in temperature - useful for some analytic solution benchmarks */
     thiseta = materials->materialEta[mymat]*marker->T;
 
-  }else if(materials->hasEtaT[mymat] == 4){
-    /* Goldsby and Kohlstedt 2001 - temperature, stress, and grain-size dependent */
-    thiseta = goldsbyKohlstedt( s, marker->T, options->grainSize, marker->p);
-    if(isnan(thiseta)){
-      printf("found nan viscosity, s=%e, T=%e, grainsize=%e, p=%e\n",s,marker->T, options->grainSize,marker->p); fflush(stdout);
-    }
   }else if(materials->hasEtaT[mymat] == 5){
     /* Form for blankenback benchmarks */
     thiseta = materials->materialEta[mymat]*exp(-materials->QonR[mymat]*marker->T);
 
-  }else if(materials->hasEtaT[mymat] == 6){
-    /* this is an experimental yielding rheology. viscosity decreases from an artificial high value to a lower value over some range in applied stress centered about the yield strength*/
-    /* The rheology is based on Beverly and Tanner, J. Rheol. 1999 */
-    const PetscScalar viscosityContrast = 1e3; /* this is viscosity contrast between unyielded and yielded material */
-    
-    PetscScalar sy = materials->binghamYieldStress[ mymat ];
-    
-    const PetscScalar gammac = sy/((viscosityContrast-1.0)*materials->materialEta[mymat]); /* critical strain rate */
-    
-    /* compute strain rate second invariant */
-    /* marker strain rate tensor */
-    Tensor33s e = marker->e;
-    PetscScalar gamma = sqrt(2.0*(e.T11*e.T11 + e.T22*e.T22  + 2.0*(e.T12*e.T12 ) ));
-    if( gamma > gammac){
-      thiseta = sy/gamma + materials->materialEta[mymat];
-    }else{
-      thiseta = materials->materialEta[mymat]*viscosityContrast;
-    }
-#ifdef COMPBA
-  }else if(materials->hasEtaT[mymat] == 7){
-    /* use isobaric phase diagrams to calculate viscosity from melt composition, solid fraction, and temperature using routines in phaseBA.c */
-    thiseta = calculateCompositionViscosityBA( materials, marker );
-
-#endif
   }else if(materials->hasEtaT[mymat] == 0){
     /* no temperature dependence */
     thiseta = materials->materialEta[ mymat ];

@@ -6,8 +6,8 @@ NY,201
 NMX,12
 NMY,12
 gridRatio,1.0
-maxMarkFactor,2.0; /*memory to allocate for markers is this number*original number of markers*/
-minMarkers,2; /* munimum number of markers per quarter-cell */
+maxMarkFactor,2.0 #/*memory to allocate for markers is this number*original number of markers*/
+minMarkers,2 #/* munimum number of markers per quarter-cell */
 maxMarkers,1000
 #
 #Time step Stuff
@@ -31,6 +31,9 @@ etamax,1.0e99
 #
 slabAngle,45
 slabVelocity,1.58443823e-9
+rootThickness,2.0e4
+rootCenter,2.90e5
+rootWidth,1.0e5
 #
 #  /* model setup/ICs */
 Tperturb,50.0

@@ -31,6 +31,9 @@ etamax,1.0e99
 #
 slabAngle,45
 slabVelocity,1.58443823e-9
+rootThickness,2.0e4
+rootCenter,1.20e5
+rootWidth,4.0e4
 #
 #  /* model setup/ICs */
 Tperturb,50.0
