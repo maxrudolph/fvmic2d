@@ -253,6 +253,7 @@ PetscErrorCode csvOptions(char *csvFileName, Options *options, Materials *materi
     fclose( csvFile );
     print_options( PETSC_NULL );
   }
+  options->slabAngle = options->slabAngle/180.0*M_PI;
   /* send parameters to all nodes */
   MPI_Bcast( options, sizeof( Options ), MPI_BYTE, 0, PETSC_COMM_WORLD);
   MPI_Bcast( materials, sizeof( Materials ), MPI_BYTE, 0, PETSC_COMM_WORLD);

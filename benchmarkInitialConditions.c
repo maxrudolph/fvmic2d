@@ -9,9 +9,7 @@ PetscErrorCode initialConditionsVanKeken( MarkerSet *markerset, Options *options
   PetscErrorCode ierr=0;
   PetscInt m;
   Marker *markers = markerset->markers;
-  options->slabAngle = options->slabAngle/180.0*M_PI; /* convert slab angle to degrees */
   const PetscScalar slab_angle = options->slabAngle;
-
 
   for(m=0;m<markerset->nMark;m++){    
     if( grid->xperiodic){/* for periodic grid, enforce smoothness across lateral boundary */
