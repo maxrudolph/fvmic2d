@@ -24,7 +24,7 @@ PetscErrorCode initialConditionsVanKeken( MarkerSet *markerset, Options *options
       }else if(in_plate( markers[m].X, markers[m].Y, options )){
 	//in overriding plate
 	//	markers[m].T = markers[m].Y/50000.0 * (Tlith-273.0) + 273.0;
-	markers[m].T = plate_geotherm( markers[m].Y , options);
+	markers[m].T = plate_geotherm(markers[m].X, markers[m].Y , options);
       }else{
 	//wedge temperature
 	markers[m].T = mantle_temperature();
@@ -93,8 +93,8 @@ PetscScalar plate_depth(PetscScalar x, Options *options){
   }
 }
 
-PetscScalar plate_geotherm( PetscScalar y, Options *options){
-  PetscScalar T = y/plate_depth(0.0,options) * (mantle_temperature() - 273.0) + 273.0;
+PetscScalar plate_geotherm(PetscScalar x, PetscScalar y, Options *options){
+  PetscScalar T = y/plate_depth(x,options) * (mantle_temperature() - 273.0) + 273.0;
   return T;
 }
 
