@@ -5,7 +5,8 @@ close all
 fclose all
 [status pd] = unix('echo $PETSC_DIR');
 % pd = '/da/'
-PETSC_DIR='/opt/petsc';
+% PETSC_DIR='/opt/petsc';
+PETSC_DIR='/usr/local/petsc';
 setenv('PETSC_DIR',PETSC_DIR);
 
 addpath([PETSC_DIR '/share/petsc/matlab']);
@@ -19,7 +20,10 @@ vscale = 3.156e9;
 s_in_yr = 3.156e7;
 
 % loadgrid
-output_dir = '~/subduction_runs/case2_root/output';
+% output_dir = '~/subduction_runs/case2_root/output';
+% output_dir = '../case2';
+output_dir = '../output';
+
 filelist=dir([output_dir '/loadNodalFields_0_*.petscbin']);
 snums = zeros(size(filelist));
 for i=1:length(snums)
@@ -82,18 +86,21 @@ p = interp2(xc,yc,pintern,slabx,slaby);
 hold on;
 plot(slabx,slaby);
 figure, plot(slabx,p);
-l = sqrt( (slabx-slabx(1)).^2 + (slaby-slaby(1)).^2 );
-ptot = trapz(l,p)
+r = sqrt( (slabx-slabx(1)).^2 + (slaby-slaby(1)).^2 );
+ptot = trapz(r,p)
+
+Ttot = trapz(r,p.*r)
 %% Make figure showing temperature field and streamlines
 figure;
+set(gcf,'Position',[560   558   522   390]);
 pcolor(nf.gridx/1e3,nf.gridy/1e3,nf.T); shading flat
-set(gca,'FontSize',14','FontName','Helvetica');
+set(gca,'FontSize',16,'FontName','Helvetica');
 hold on;
 hcb=colorbar;
 colormap hot
 axis equal tight
 hcb.Label.String='Temperature (K)';
-hcb.Label.FontSize=14;
+hcb.Label.FontSize=16;
 set(gca,'YDir','reverse');
  nsl = 50;
  LX = max(nf.gridx(1,:))/1e3;
@@ -116,11 +123,57 @@ hold on
 hsl=streamline(xc/1e3,yc/1e3,vxc,vyc,slx,sly);
 set(hsl,'Color','k')
 
-set(gca,'XLim',[0 250]);
+set(gca,'XLim',[0 400]);
 set(gca,'YLim',[0 250]);
 xlabel('Distance from trench (km)');
 ylabel('Depth (km)');
- 
+
+% re-sample T onto a 6x6 km grid
+newx = 0:3000:660000;
+newy = 0:3000:600000;
+[X,Y] = meshgrid(newx,newy);
+newT = interp2(nf.gridx,nf.gridy,nf.T,X,Y,'linear')-273;
+
+newvx = interp2(nf.gridx,nf.gridyc,nf.vx,X,Y,'linear');
+newvy = interp2(nf.gridxc,nf.gridy,nf.vy,X,Y,'linear');
+newp = interp2(nf.gridxc,nf.gridyc,nf.p,X,Y,'linear');
+%
+newtotp = 3300*10*Y+newp;
+% calculate melt fraction
+meltf = interp2( melt_table.T, melt_table.P*1e9, melt_table.F, newT, newtotp ,'linear',0.0);
+dfdp = interp2( melt_table.T, melt_table.P*1e9, melt_table.dFdP, newT, newtotp,'linear',0.0);
+dfdT = interp2( melt_table.T, melt_table.P*1e9, melt_table.dFdT, newT, newtotp,'linear',0.0);
+%% calculate gradient of pressure and temperature
+dx = newx(2)-newx(1);
+dy = newy(2)-newy(1);
+[dpdx,dpdy] = gradient(newtotp,dx,dy);
+[dTdx,dTdy] = gradient(newT,dx,dy);
+dPdt = (dpdx.*newvx + dpdy.*newvy)*s_in_yr;
+dTdt = (dTdx.*newvx + dTdy.*newvy)*s_in_yr;
+
+melt_production = dPdt.*dfdp/1e9 + dTdt.*dfdT;
+melt_production(melt_production<0) = 0;
+melt_production(isnan(melt_production)) = 0;
+
+% figure;
+a1=gca;
+a2=axes();
+a2.Position = a1.Position;
+[cd,hc]=contour(X/1e3,Y/1e3,(melt_production/1e-11)); shading interp;
+colormap(a2,'Parula');
+hcb2=colorbar('South');
+hcb2.Label.String = 'Melt Production (year^{-1}) x10^{-11}';
+hcb2.Label.FontSize=13;
+hcb2.FontSize=13;
+a2.YTick=[];
+a2.XTick=[];
+set(gca,'Color','none');
+a2.PlotBoxAspectRatio = a1.PlotBoxAspectRatio;
+a2.PlotBoxAspectRatioMode = a1.PlotBoxAspectRatioMode;
+a2.XLim = a1.XLim;
+a2.YLim = a1.YLim;
+
+
 
 %%
 %     
