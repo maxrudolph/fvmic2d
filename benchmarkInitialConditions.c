@@ -9,6 +9,7 @@ PetscErrorCode initialConditionsVanKeken( MarkerSet *markerset, Options *options
   PetscErrorCode ierr=0;
   PetscInt m;
   Marker *markers = markerset->markers;
+  options->slabAngle = options->slabAngle/180,0*M_PI;
   const PetscScalar slab_angle = options->slabAngle;
 
 

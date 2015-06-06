@@ -27,7 +27,6 @@ PetscErrorCode declare_option( const char *pattern, option_type opt, void *optio
   /* This function should declare an option */
   PetscErrorCode ierr=0;
   const int pattern_len = strlen(pattern);
-  const int value_len = strlen(default_value);
   /* first, check list of options to see whether this option has yet been declared */
   int declared=0;
   int i;
@@ -51,7 +50,8 @@ PetscErrorCode declare_option( const char *pattern, option_type opt, void *optio
     printf("declared option `%s` to '%s'\n",option_name_db[nopt],option_value_db[nopt]);
     /* parse the default value */
     nopt++;
-    parse_option( option_name_db[nopt], option_value_db[nopt] );
+    parse_option( pattern, default_value );
+    option_default_db[i] = 1;/* indicate that default option was set */
   }
   return ierr;
 }
@@ -61,16 +61,15 @@ PetscErrorCode parse_option( const char *key, const char *value ){
   /* compare key with each entry in option database */
   int i;
   for(i=0;i<nopt;i++){
-    if( !strncmp( key, option_name_db[i], strlen(option_name_db[i]) ) ){
+    if( !strncmp( key, option_name_db[i], strlen( option_name_db[i]) ) ){
       /* We have a match */
       printf("found match for key %s\n",key);
-
+      option_default_db[i] = 0;
       if( option_type_db[i] == OPTION_SCALAR ){
 	sscanf( value, "%le", (double *) option_ptr_db[i] );
 	return 0;
       }else if( option_type_db[i] == OPTION_INTEGER ){
 	sscanf( value, "%d", (int *) option_ptr_db[i] );
-	printf("parsed option '%s' value %d\n",key, *((int *) option_ptr_db[i]));
 	return 0;
       }else if( option_type_db[i] == OPTION_III ){
 	sscanf( value, "%d,%d,%d", ((int *) option_ptr_db[i] ), ((int *) option_ptr_db[i])+1, ((int *) option_ptr_db[i])+2 );
@@ -90,7 +89,6 @@ PetscErrorCode parse_option( const char *key, const char *value ){
 	sscanf( value, "%d,%le",&tmp1,&tmp2 );
 	PetscScalar *val = (PetscScalar *) option_ptr_db[i];
 	val[tmp1]=tmp2;
-	printf("parsed option '%s' entry %d value %le\n",key,tmp1,*((double *) option_ptr_db[i]));
 	return 0;
       }else if( option_type_db[i] == OPTION_IIPAIR ){
 	int tmp1;
@@ -98,7 +96,6 @@ PetscErrorCode parse_option( const char *key, const char *value ){
 	sscanf( value, "%d,%d",&tmp1,&tmp2 );
 	int *val = (int *) option_ptr_db[i];
 	val[tmp1]=tmp2;
-	printf("parsed option '%s' entry %d value %d\n",key,tmp1,*((int *) option_ptr_db[i]));
 	return 0;
       }else if( option_type_db[i] == OPTION_SPECIAL1 ){
 	/* for strain-weakening plasticity, put two values into correct location in materials structure */
@@ -120,7 +117,8 @@ PetscErrorCode parse_option( const char *key, const char *value ){
 
 /* csvOptions initializes options from a csv (comma-separated values) file */
 PetscErrorCode csvOptions(char *csvFileName, Options *options, Materials *materials){
-  PetscErrorCode ierr;
+  PetscErrorCode ierr=0;
+  PetscFunctionBegin;
   FILE *csvFile;
   //  PetscErrorCode ierr;
   char line[LINEWIDTH];
@@ -227,10 +225,12 @@ PetscErrorCode csvOptions(char *csvFileName, Options *options, Materials *materi
       if( !strncmp( "#",line,1) ){
 	
       } else {
-	while( line[++idxComma] != ',');
+	while( line[++idxComma] != ','){
+	  /* do nothing - just increment the comma locator */
+	}
+	
 	{
 	  char key[OPTSTR_LEN];
-	  char value[OPTSTR_LEN];
 	  strncpy( key, line, idxComma );
 	  //strcpy( value, line+idxComma+1, 
 	  key[ idxComma ] = '\0';/* put in termination character */
@@ -244,6 +244,6 @@ PetscErrorCode csvOptions(char *csvFileName, Options *options, Materials *materi
   /* send parameters to all nodes */
   MPI_Bcast( options, sizeof( Options ), MPI_BYTE, 0, PETSC_COMM_WORLD);
   MPI_Bcast( materials, sizeof( Materials ), MPI_BYTE, 0, PETSC_COMM_WORLD);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(ierr);
 }
 
