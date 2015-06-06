@@ -86,25 +86,12 @@ typedef struct {
   PetscScalar gamma[MAXMAT][2];/* initial strain */
   PetscScalar C[MAXMAT][2];/* initial, final cohesion */
   PetscScalar F[MAXMAT][2];/* initial, final friction */
-  PetscScalar binghamYieldStress[MAXMAT]; /* yield stress for solid to fluid transition in bingham fluid */
   
-  PetscInt hasDamage[MAXMAT];
-  PetscInt hasDilation[MAXMAT];
-
-  PetscScalar hayhurstAlpha[MAXMAT];
-  PetscScalar hayhurstBeta[MAXMAT];
-  PetscScalar damagem[MAXMAT];
-  PetscScalar damagek[MAXMAT];
-  PetscScalar damager[MAXMAT];
-  PetscScalar damageB[MAXMAT];
-  PetscScalar damageAlpha3[MAXMAT];
 
   PetscInt hasEtaT[MAXMAT];
   PetscScalar QonR[MAXMAT];/* activation energy / R */
   PetscScalar Tref[MAXMAT];/* temperature to which flow law is referenced*/
-#ifdef COMPBA
-  CompositionLookupTableBA compositionLookupTable[MAXMAT];
-#endif
+
 } Materials;
 
 typedef struct {/* an individual marker */

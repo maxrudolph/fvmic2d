@@ -80,6 +80,7 @@ int main(int argc, char **args){
       ierr=csvOptions((char *)PETSC_NULL, &problem.options,&problem.materials);
     }
   }
+  if(!rank) ierr = saveRunInfo( &problem.options, &problem.materials, 0);
 
   /* initialize material properties*/
   //setMaterialProperties( &materials);
@@ -170,7 +171,6 @@ int main(int argc, char **args){
     printf("beginning MonteCarlo run %d\n",iMonte);
     /* randomize parameters*/
 
-    if(!rank) ierr = saveRunInfo( &problem.options, &problem.materials, iMonte);
     /* reset (zero out) all marker properties*/
     resetMarkers( &problem.markerset, &problem.options);
     resetNodalFields( &problem.nodal_fields, &problem.grid, &problem.options);

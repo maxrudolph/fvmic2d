@@ -1411,7 +1411,7 @@ PetscErrorCode checkPlasticYielding(GridData *grid,MarkerSet *markerset, Materia
       /* correct viscosity for damage */
 
 
-      if( materials->hasPlasticity[markers[m].Mat] || materials->hasDamage[markers[m].Mat] ){
+      if( materials->hasPlasticity[markers[m].Mat] ){
 	PetscInt thismat = (PetscInt) markers[m].Mat;
 	/* compute yield stress*/
 	//    siiyield = Cohesion + Friction*Pressure
