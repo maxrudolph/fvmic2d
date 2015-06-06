@@ -65,6 +65,7 @@ PetscErrorCode parse_option( const char *key, const char *value ){
       /* We have a match */
       printf("found match for key %s\n",key);
       option_default_db[i] = 0;
+      strcpy( option_value_db[i], value );
       if( option_type_db[i] == OPTION_SCALAR ){
 	sscanf( value, "%le", (double *) option_ptr_db[i] );
 	return 0;
@@ -214,6 +215,9 @@ PetscErrorCode csvOptions(char *csvFileName, Options *options, Materials *materi
     /* subduction - specific stuff */
     declare_option("slabAngle",OPTION_SCALAR, &options->slabAngle,"45");
     declare_option("slabVelocity",OPTION_SCALAR, &(options->slabVelocity),"1.0e-10");
+    declare_option("rootThickness",OPTION_SCALAR,&options->rootThickness,"0.0");
+    declare_option("rootCenter",OPTION_SCALAR,&options->rootCenter,"1.20e5");
+    declare_option("rootWidth",OPTION_SCALAR,&options->rootWidth,"4.0e4");
 
 
     /* Parse the options file line-by-line */
@@ -231,15 +235,23 @@ PetscErrorCode csvOptions(char *csvFileName, Options *options, Materials *materi
 	
 	{
 	  char key[OPTSTR_LEN];
+	  char val[OPTSTR_LEN];
 	  strncpy( key, line, idxComma );
 	  //strcpy( value, line+idxComma+1, 
 	  key[ idxComma ] = '\0';/* put in termination character */
-	  parse_option( key, line+idxComma+1 );
+	  int ii=0;
+	  while( line[idxComma+ii+1] != '\0' && line[idxComma+ii+1] != '\n' ){
+	    val[ii] = line[idxComma+ii+1];
+	    ii++;
+	  }
+	  val[ii] = '\0';
+	  parse_option( key, val );
 	}	
       }
     }
       
     fclose( csvFile );
+    print_options( PETSC_NULL );
   }
   /* send parameters to all nodes */
   MPI_Bcast( options, sizeof( Options ), MPI_BYTE, 0, PETSC_COMM_WORLD);
@@ -247,3 +259,12 @@ PetscErrorCode csvOptions(char *csvFileName, Options *options, Materials *materi
   PetscFunctionReturn(ierr);
 }
 
+
+void print_options( FILE *fp ){
+  /* loop over entries in the option database */
+  int i;
+  for(i=0;i<nopt;i++){
+    printf("%s,%s\n",option_name_db[i],option_value_db[i]);
+  }
+
+}

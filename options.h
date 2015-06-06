@@ -6,5 +6,5 @@ typedef enum { OPTION_SCALAR, OPTION_INTEGER, OPTION_III, OPTION_SSS,OPTION_SS,O
 PetscErrorCode csvOptions(char *, Options *, Materials *);
 PetscErrorCode declare_option( const char *pattern, option_type opt, void *option_ptr, const char *default_value );
 PetscErrorCode parse_option( const char *key, const char *value );
-
+void print_options( FILE *fp );
 #endif

@@ -192,8 +192,13 @@ typedef struct {
   PetscInt minMarkers, maxMarkers;
 
   PetscScalar grainSize;
+
+  /* Parameters for subduction model */
   PetscScalar slabAngle;
   PetscScalar slabVelocity;
+  PetscScalar rootThickness;
+  PetscScalar rootCenter;
+  PetscScalar rootWidth;
 } Options;
 
 typedef struct{/* a structure holding everything related to solving a linear system */

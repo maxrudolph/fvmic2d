@@ -734,7 +734,7 @@ PetscErrorCode checkMarkerDensity( Problem *problem, MarkerSet *markerset, GridD
       if( newX[i] < grid->x[1] ){/* slab inflow marker */
 	markers[idx] = new_slab_marker( newX[i], newY[i], options, &(problem->materials) );
 	findMarkerCell( &(markers[idx]), grid );
-      }else if( newX[i] >= grid->x[NX-2] && newY[i] >= plate_depth( grid->LX) ){
+      }else if( newX[i] >= grid->x[NX-2] && newY[i] >= plate_depth( grid->LX, options) ){
 	markers[idx] = new_inflow_marker(newX[i],newY[i], options, &(problem->materials) );
 	findMarkerCell( &(markers[idx]), grid );
       } else { /* default case - not inflow */

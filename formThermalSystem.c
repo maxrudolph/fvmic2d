@@ -87,7 +87,7 @@ PetscErrorCode formThermalSystem(Problem *problem, GridData *grid, NodalFields *
 	/* fixed temperature */
 	ierr = MatSetValue( thermalLHS, idxnode, idxnode, 1.0, INSERT_VALUES);CHKERRQ(ierr);
        
-      } else if(ix == NX-1 && (grid->y[jy] <= plate_depth(grid->LX) || (jy>0 && (vx[jy][ix]+vx[jy-1][ix])/2.0 < 0.0  )) ){/* RIGHT WALL */
+      } else if(ix == NX-1 && (grid->y[jy] <= plate_depth(grid->LX,options) || (jy>0 && (vx[jy][ix]+vx[jy-1][ix])/2.0 < 0.0  )) ){/* RIGHT WALL */
 	// enforce overriding plate geotherm
 	ierr = MatSetValue( thermalLHS, idxnode, idxnode, 1.0, INSERT_VALUES);CHKERRQ(ierr);
       }else if(ix == NX-1){
@@ -173,10 +173,10 @@ PetscErrorCode formThermalSystem(Problem *problem, GridData *grid, NodalFields *
 	ierr = VecSetValue( thermalRHS, idxnode, thisT , INSERT_VALUES); CHKERRQ(ierr);
 
 
-      } else if(ix == NX-1 && (grid->y[jy] <= plate_depth(grid->LX) || (jy>0 && (vx[jy][ix]+vx[jy-1][ix])/2.0 < 0.0  )) ){/* RIGHT WALL */
+      } else if(ix == NX-1 && (grid->y[jy] <= plate_depth(grid->LX,options) || (jy>0 && (vx[jy][ix]+vx[jy-1][ix])/2.0 < 0.0  )) ){/* RIGHT WALL */
 	PetscScalar thisT;
-	if( grid->y[jy] <= plate_depth( grid->x[ix] ) ){
-	  thisT = plate_geotherm( grid->y[jy] );
+	if( grid->y[jy] <= plate_depth( grid->x[ix],options ) ){
+	  thisT = plate_geotherm( grid->y[jy],options );
 	}else{
 	  thisT = 1573.0;
 	}

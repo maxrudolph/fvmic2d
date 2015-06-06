@@ -9,7 +9,7 @@ PetscErrorCode initialConditionsVanKeken( MarkerSet *markerset, Options *options
   PetscErrorCode ierr=0;
   PetscInt m;
   Marker *markers = markerset->markers;
-  options->slabAngle = options->slabAngle/180,0*M_PI;
+  options->slabAngle = options->slabAngle/180.0*M_PI; /* convert slab angle to degrees */
   const PetscScalar slab_angle = options->slabAngle;
 
 
@@ -18,13 +18,13 @@ PetscErrorCode initialConditionsVanKeken( MarkerSet *markerset, Options *options
       fprintf(stderr,"Do not use a periodic boundary condition for the subduction benchmark\n");
       abort();
     }else{
-      if( in_slab(markers[m].X, markers[m].Y, slab_angle) ){
+      if( in_slab(markers[m].X, markers[m].Y, options) ){
 	//slab IC	
 	markers[m].T = slab_inflow_temperature( markers[m].X, markers[m].Y, slab_angle);
-      }else if(in_plate( markers[m].X, markers[m].Y, slab_angle )){
+      }else if(in_plate( markers[m].X, markers[m].Y, options )){
 	//in overriding plate
 	//	markers[m].T = markers[m].Y/50000.0 * (Tlith-273.0) + 273.0;
-	markers[m].T = plate_geotherm( markers[m].Y );
+	markers[m].T = plate_geotherm( markers[m].Y , options);
       }else{
 	//wedge temperature
 	markers[m].T = mantle_temperature();
@@ -79,12 +79,12 @@ PetscScalar mantle_temperature(){
   return t;
 }
 
-PetscScalar plate_depth(PetscScalar x){
+PetscScalar plate_depth(PetscScalar x, Options *options){
   const double plate_thickness = 50000.0;
 
-  const double root_thickness         = 1.0e4;// 10 km
-  const double root_center_location   = 1.2e5;// 120 km
-  const double root_width             = 4.0e4;
+  const double root_thickness         = options->rootThickness;// 10 km
+  const double root_center_location   = options->rootCenter;// 120 km
+  const double root_width             = options->rootWidth;//40 km
   /* introduce root with functional form sin^2( (x-center)/width) ) */
   if( fabs( x-root_center_location ) < root_width ){   
     return plate_thickness + root_thickness * pow( cos( M_PI*(x-root_center_location)/root_width/2.0 ) , 2.0 );
@@ -93,15 +93,15 @@ PetscScalar plate_depth(PetscScalar x){
   }
 }
 
-PetscScalar plate_geotherm( PetscScalar y){
-  PetscScalar T = y/plate_depth(0.0) * (mantle_temperature() - 273.0) + 273.0;
+PetscScalar plate_geotherm( PetscScalar y, Options *options){
+  PetscScalar T = y/plate_depth(0.0,options) * (mantle_temperature() - 273.0) + 273.0;
   return T;
 }
 
 
-PetscInt in_plate(PetscScalar x, PetscScalar y, PetscScalar angle){
-  const PetscScalar lith_depth = plate_depth(x);
-  if( !in_slab(x,y,angle) && y <= lith_depth ){
+PetscInt in_plate(PetscScalar x, PetscScalar y, Options *options){
+  const PetscScalar lith_depth = plate_depth(x,options);
+  if( !in_slab(x,y,options) && y <= lith_depth ){
     return 1;
   }else{
     return 0;
@@ -118,7 +118,8 @@ PetscScalar slab_x(PetscScalar y, PetscScalar angle){
   return y/tan(angle);
 }
 
-PetscInt in_slab(PetscScalar x, PetscScalar y, PetscScalar angle ){
+PetscInt in_slab(PetscScalar x, PetscScalar y, Options *options ){
+  const PetscScalar angle = options ->slabAngle;
   if( y >= slab_depth(x,angle) ){
     return 1;
   }else{
@@ -136,8 +137,8 @@ PetscScalar slab_inflow_temperature(PetscScalar x, PetscScalar y, PetscScalar an
 
 }
 
-PetscInt in_either( PetscScalar x, PetscScalar y, PetscScalar angle){
-  if( in_slab( x, y, angle) || in_plate(x,y,angle) ){
+PetscInt in_either( PetscScalar x, PetscScalar y, Options *options){
+  if( in_slab( x, y, options) || in_plate(x,y,options) ){
     return 1;
   }else{
     return 0;
