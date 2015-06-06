@@ -1,0 +1,100 @@
+# Van Keken subduction benchmark
+LX,660000
+LY,600000
+NX,221
+NY,201			
+NMX,12
+NMY,12
+gridRatio,1.0
+maxMarkFactor,2.0; /*memory to allocate for markers is this number*original number of markers*/
+minMarkers,2; /* munimum number of markers per quarter-cell */
+maxMarkers,1000
+#
+#Time step Stuff
+#
+dtMax,1.5779e13
+displacementStepLimit,0.3
+maxTempChange,20.0
+nTime,5000
+restartStep,0
+#maximum model time to run:
+totalTime,4.4e30
+#
+#Plasticity
+#
+maxNumPlasticity,1
+fractionalEtamin,1.0
+plasticDelay,0
+# /* minimum viscosity allowed in plastic yielding*/
+etamin,0.0
+etamax,1.0e99
+#
+slabAngle,45
+slabVelocity,1.58443823e-9
+rootThickness,2.0e4
+rootCenter,1.20e5
+rootWidth,4.0e4
+#
+#  /* model setup/ICs */
+Tperturb,50.0
+#  /* Thermal B.C.s*/
+mechBCLeftType,0,0,0
+mechBCLeftValue,0.0,0.0,0.0
+mechBCRightType,0,0,0
+mechBCRightValue,0.0,0.0,0.0
+mechBCTopType,0,0,0
+mechBCTopValue,0.0,0.0,0.0
+mechBCBottomType,0,0,0
+mechBCBottomValue,0.0,0.0,0.0
+# 
+thermalBCLeftType,0
+thermalBCLeftValue,0.0
+thermalBCRightType,1
+thermalBCRightValue,0.0
+thermalBCTopType,0
+thermalBCTopValue,273.0
+thermalBCBottomType,1,0.0
+thermalBCBottomValue,0.0
+# 
+shearHeating,0
+adiabaticHeating,0
+#
+#  /* body forces*/
+#
+gy,10.0
+gx,0.0
+#
+#  /* I/O etc*/
+#
+saveInterval,200
+#
+subgridStressDiffusivity,0.0
+subgridTemperatureDiffusivity,1.0
+#
+# MATERIAL PROPERTIES
+#
+nMaterials,1
+hasPlasticity,0,0
+#
+materialEta,0,1.0e21	
+#
+materialRho,0,3300.0
+#
+materialkThermal,0,3.0
+#
+materialCp,0,1250.0
+#
+materialAlpha,0,0.0
+#
+materialMu,0,1e99
+#
+materialCohesion,0,1e99
+#
+materialFriction,0,0.6
+#
+# Temperature dependent viscosity
+hasEtaT,0,0
+#
+QonR,0,6.907755e-3
+Tref,0,0.0
+#/*kelvin*/
