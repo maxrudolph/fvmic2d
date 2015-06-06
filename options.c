@@ -240,7 +240,7 @@ PetscErrorCode csvOptions(char *csvFileName, Options *options, Materials *materi
 	  //strcpy( value, line+idxComma+1, 
 	  key[ idxComma ] = '\0';/* put in termination character */
 	  int ii=0;
-	  while( line[idxComma+ii+1] != '\0' && line[idxComma+ii+1] != '\n' ){
+	  while( line[idxComma+ii+1] != '\0' && line[idxComma+ii+1] != '\n' && line[idxComma+ii+1] != '#' ){
 	    val[ii] = line[idxComma+ii+1];
 	    ii++;
 	  }
