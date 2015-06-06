@@ -27,7 +27,7 @@ PetscErrorCode enforceThermalBCs1( GridData *grid, Options *options, NodalFields
 
       }else if(ix == grid->NX-1){/* RIGHT */
 	if( grid->y[jy] <= plate_depth(grid->LX,options) ){
-	  lastT[jy][ix] = plate_geotherm( grid->y[jy],options );	  
+	  lastT[jy][ix] = plate_geotherm( grid->LX, grid->y[jy],options );	  
 	} 
       }
     }/* end loop over y*/

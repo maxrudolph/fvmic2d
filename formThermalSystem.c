@@ -176,7 +176,7 @@ PetscErrorCode formThermalSystem(Problem *problem, GridData *grid, NodalFields *
       } else if(ix == NX-1 && (grid->y[jy] <= plate_depth(grid->LX,options) || (jy>0 && (vx[jy][ix]+vx[jy-1][ix])/2.0 < 0.0  )) ){/* RIGHT WALL */
 	PetscScalar thisT;
 	if( grid->y[jy] <= plate_depth( grid->x[ix],options ) ){
-	  thisT = plate_geotherm( grid->y[jy],options );
+	  thisT = plate_geotherm( grid->x[ix], grid->y[jy],options );
 	}else{
 	  thisT = 1573.0;
 	}
