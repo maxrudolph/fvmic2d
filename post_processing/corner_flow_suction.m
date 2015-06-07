@@ -18,11 +18,13 @@ load('melt_table_0.1.mat');
 
 vscale = 3.156e9;
 s_in_yr = 3.156e7;
+slab_angle=40;
 
 % loadgrid
 % output_dir = '~/subduction_runs/case2_root/output';
 % output_dir = '../case2';
-output_dir = '../output';
+% output_dir = '../output';
+output_dir = '../hood_runs/case2_root/output';
 
 filelist=dir([output_dir '/loadNodalFields_0_*.petscbin']);
 snums = zeros(size(filelist));
@@ -40,7 +42,7 @@ snums = snums(i);
 nskip=1;
 iFile=1;
 nfiles = length(filelist);
-for iFile = nfiles:nfiles
+for iFile = nfiles
     nf=loadNodalFieldsPetscBin2([output_dir '/' filelist(iFile).name]);
     
     % nf1=loadNodalFieldsPetscBin2(['../output/' filelist(end-1).name]);
@@ -67,127 +69,127 @@ for iFile = nfiles:nfiles
         end
     end
     
+    
+    
+    %%
+    npres=300;
+    
+    plate_thickness=50000;
+    LY = max(nf.gridy(:,1));
+    slabx=linspace(plate_thickness/tand(slab_angle),LY/tand(slab_angle),npres);
+    slaby=tand(slab_angle)*slabx;
+    slabx = slabx+1860;
+    pintern = nf.p(2:end,2:end);    % throw out ghost cells
+    xc = nf.gridxc(2:end,2:end);
+    yc = nf.gridyc(2:end,2:end);
+    
+    figure, pcolor(xc(1,:),yc(:,1),pintern);
+    p = interp2(xc,yc,pintern,slabx,slaby);
+    hold on;
+    plot(slabx,slaby);
+    figure, plot(slabx,p);
+    r = sqrt( (slabx-slabx(1)).^2 + (slaby-slaby(1)).^2 );
+    ptot = trapz(r,p)
+    
+    Ttot = trapz(r,p.*r)
+    %% Make figure showing temperature field and streamlines
+    figure;
+    set(gcf,'Position',[560   558   522   390]);
+    pcolor(nf.gridx/1e3,nf.gridy/1e3,nf.T); shading flat
+    set(gca,'FontSize',16,'FontName','Helvetica');
+    hold on;
+    hcb=colorbar;
+    colormap hot
+    axis equal tight
+    hcb.Label.String='Temperature (K)';
+    hcb.Label.FontSize=16;
+    set(gca,'YDir','reverse');
+    nsl = 50;
+    LX = max(nf.gridx(1,:))/1e3;
+    LY = max(nf.gridy(:,1))/1e3;
+    slx = 0.99*LX*ones(nsl,1);
+    sly = linspace(0,LY,nsl)';
+    vxc = (nf.vx(1:end-1,1:end-1) + nf.vx(1:end-1,2:end))/2;
+    vyc = (nf.vy(1:end-1,1:end-1) + nf.vy(2:end,1:end-1))/2;
+    plate_mask = sqrt(vxc.^2+vyc.^2)<1e-14;
+    % plot overriding plate polygon
+    bwb=bwboundaries(plate_mask);
+    bwb=bwb{1}; %assume bwb structure only contains one polygon
+    hold on;
+    hp = plot( xc(1,bwb(:,2))/1e3, yc(bwb(:,1),1)/1e3);
+    hp.LineWidth=3;
+    hp.Color=0.7*[1 1 1];
+    % alpha(double(plate_mask));
+    
+    hold on
+    hsl=streamline(xc/1e3,yc/1e3,vxc,vyc,slx,sly);
+    set(hsl,'Color','k')
+    
+    set(gca,'XLim',[0 400]);
+    set(gca,'YLim',[0 250]);
+    xlabel('Distance from trench (km)');
+    ylabel('Depth (km)');
+    
+    % re-sample T onto a 6x6 km grid
+    newx = 0:3000:660000;
+    newy = 0:3000:600000;
+    [X,Y] = meshgrid(newx,newy);
+    newT = interp2(nf.gridx,nf.gridy,nf.T,X,Y,'linear')-273;
+    
+    newvx = interp2(nf.gridx,nf.gridyc,nf.vx,X,Y,'linear');
+    newvy = interp2(nf.gridxc,nf.gridy,nf.vy,X,Y,'linear');
+    newp = interp2(nf.gridxc,nf.gridyc,nf.p,X,Y,'linear');
+    %
+    newtotp = 3300*10*Y+newp;
+    % calculate melt fraction
+    meltf = interp2( melt_table.T, melt_table.P*1e9, melt_table.F, newT, newtotp ,'linear',0.0);
+    dfdp = interp2( melt_table.T, melt_table.P*1e9, melt_table.dFdP, newT, newtotp,'linear',0.0);
+    dfdT = interp2( melt_table.T, melt_table.P*1e9, melt_table.dFdT, newT, newtotp,'linear',0.0);
+    %% calculate gradient of pressure and temperature
+    dx = newx(2)-newx(1);
+    dy = newy(2)-newy(1);
+    [dpdx,dpdy] = gradient(newtotp,dx,dy);
+    [dTdx,dTdy] = gradient(newT,dx,dy);
+    dPdt = (dpdx.*newvx + dpdy.*newvy)*s_in_yr;
+    dTdt = (dTdx.*newvx + dTdy.*newvy)*s_in_yr;
+    
+    melt_production = dPdt.*dfdp/1e9 + dTdt.*dfdT;
+    melt_production(melt_production<0) = 0;
+    melt_production(isnan(melt_production)) = 0;
+    
+    % figure;
+    a1=gca;
+    a2=axes();
+    a2.Position = a1.Position;
+    [cd,hc]=contour(X/1e3,Y/1e3,(melt_production/1e-11)); shading interp;
+    colormap(a2,'Jet');
+    hcb2=colorbar('South');
+    hcb2.Label.String = 'Melt Production (year^{-1}) x10^{-11}';
+    hcb2.Label.FontSize=13;
+    hcb2.FontSize=13;
+    a2.YTick=[];
+    a2.XTick=[];
+    set(gca,'Color','none');
+    a2.PlotBoxAspectRatio = a1.PlotBoxAspectRatio;
+    a2.PlotBoxAspectRatioMode = a1.PlotBoxAspectRatioMode;
+    a2.XLim = a1.XLim;
+    a2.YLim = a1.YLim;
 end
 
+
 %%
-npres=300;
-slab_angle=40;
-plate_thickness=50000;
-LY = max(nf.gridy(:,1));
-slabx=linspace(plate_thickness/tand(slab_angle),LY/tand(slab_angle),npres);
-slaby=tand(slab_angle)*slabx;
-slabx = slabx+1860;
-pintern = nf.p(2:end,2:end);    % throw out ghost cells
-xc = nf.gridxc(2:end,2:end);      
-yc = nf.gridyc(2:end,2:end);
-
-figure, pcolor(xc(1,:),yc(:,1),pintern);
-p = interp2(xc,yc,pintern,slabx,slaby);
-hold on;
-plot(slabx,slaby);
-figure, plot(slabx,p);
-r = sqrt( (slabx-slabx(1)).^2 + (slaby-slaby(1)).^2 );
-ptot = trapz(r,p)
-
-Ttot = trapz(r,p.*r)
-%% Make figure showing temperature field and streamlines
-figure;
-set(gcf,'Position',[560   558   522   390]);
-pcolor(nf.gridx/1e3,nf.gridy/1e3,nf.T); shading flat
-set(gca,'FontSize',16,'FontName','Helvetica');
-hold on;
-hcb=colorbar;
-colormap hot
-axis equal tight
-hcb.Label.String='Temperature (K)';
-hcb.Label.FontSize=16;
-set(gca,'YDir','reverse');
- nsl = 50;
- LX = max(nf.gridx(1,:))/1e3;
- LY = max(nf.gridy(:,1))/1e3;
-slx = 0.99*LX*ones(nsl,1);
-sly = linspace(0,LY,nsl)';
-vxc = (nf.vx(1:end-1,1:end-1) + nf.vx(1:end-1,2:end))/2;
-vyc = (nf.vy(1:end-1,1:end-1) + nf.vy(2:end,1:end-1))/2;
-plate_mask = sqrt(vxc.^2+vyc.^2)<1e-14;
-% plot overriding plate polygon
-bwb=bwboundaries(plate_mask);
-bwb=bwb{1}; %assume bwb structure only contains one polygon
-hold on;
-hp = plot( xc(1,bwb(:,2))/1e3, yc(bwb(:,1),1)/1e3)
-hp.LineWidth=3;
-hp.Color=0.7*[1 1 1];
-% alpha(double(plate_mask));
-
-hold on
-hsl=streamline(xc/1e3,yc/1e3,vxc,vyc,slx,sly);
-set(hsl,'Color','k')
-
-set(gca,'XLim',[0 400]);
-set(gca,'YLim',[0 250]);
-xlabel('Distance from trench (km)');
-ylabel('Depth (km)');
-
-% re-sample T onto a 6x6 km grid
-newx = 0:3000:660000;
-newy = 0:3000:600000;
-[X,Y] = meshgrid(newx,newy);
-newT = interp2(nf.gridx,nf.gridy,nf.T,X,Y,'linear')-273;
-
-newvx = interp2(nf.gridx,nf.gridyc,nf.vx,X,Y,'linear');
-newvy = interp2(nf.gridxc,nf.gridy,nf.vy,X,Y,'linear');
-newp = interp2(nf.gridxc,nf.gridyc,nf.p,X,Y,'linear');
 %
-newtotp = 3300*10*Y+newp;
-% calculate melt fraction
-meltf = interp2( melt_table.T, melt_table.P*1e9, melt_table.F, newT, newtotp ,'linear',0.0);
-dfdp = interp2( melt_table.T, melt_table.P*1e9, melt_table.dFdP, newT, newtotp,'linear',0.0);
-dfdT = interp2( melt_table.T, melt_table.P*1e9, melt_table.dFdT, newT, newtotp,'linear',0.0);
-%% calculate gradient of pressure and temperature
-dx = newx(2)-newx(1);
-dy = newy(2)-newy(1);
-[dpdx,dpdy] = gradient(newtotp,dx,dy);
-[dTdx,dTdy] = gradient(newT,dx,dy);
-dPdt = (dpdx.*newvx + dpdy.*newvy)*s_in_yr;
-dTdt = (dTdx.*newvx + dTdy.*newvy)*s_in_yr;
-
-melt_production = dPdt.*dfdp/1e9 + dTdt.*dfdT;
-melt_production(melt_production<0) = 0;
-melt_production(isnan(melt_production)) = 0;
-
-% figure;
-a1=gca;
-a2=axes();
-a2.Position = a1.Position;
-[cd,hc]=contour(X/1e3,Y/1e3,(melt_production/1e-11)); shading interp;
-colormap(a2,'Parula');
-hcb2=colorbar('South');
-hcb2.Label.String = 'Melt Production (year^{-1}) x10^{-11}';
-hcb2.Label.FontSize=13;
-hcb2.FontSize=13;
-a2.YTick=[];
-a2.XTick=[];
-set(gca,'Color','none');
-a2.PlotBoxAspectRatio = a1.PlotBoxAspectRatio;
-a2.PlotBoxAspectRatioMode = a1.PlotBoxAspectRatioMode;
-a2.XLim = a1.XLim;
-a2.YLim = a1.YLim;
-
-
-
-%%
-%     
 % %     [grid.xc grid.yc] = meshgrid(grid.xc,grid.yc);
 %     % get cell-centered vx, vy
 %     slabv = 1.58e-9 ;
-%     
+%
 %     % vxc = (nf2.vx(1:end-1,1:end-1) + nf2.vx(1:end-1,2:end))/2;
 %     % vyc = (nf2.vy(1:end-1,1:end-1) + nf2.vy(2:end,1:end-1))/2;
-%     
+%
 %     % figure, imagesc(nf2.vx); title('vx'); colorbar; caxis([-slabv slabv]);
 %     % figure, imagesc(nf2.vy); title('vy'); colorbar; caxis([-slabv slabv]);
 %     % figure, imagesc(nf2.p); title('p'); colorbar;
-%     
+%
 %     LX=max(grid.x);
 %     LY=max(grid.y);
 %     % xc = nf1.gridx(1,1:end-1) + diff(nf1.gridx(1,:))/2;
@@ -196,13 +198,13 @@ a2.YLim = a1.YLim;
 %     % figure, pcolor(xc,yc,sqrt(vxc.^2+vyc.^2)); shading flat;colorbar; caxis([-slabv slabv]);
 %     % set(gca,'YDir','reverse');
 %     nsl = 50;
-%     
+%
 %     slx = rand(nsl,1)*LX;
 %     sly = rand(nsl,1)*LY;
-%     
+%
 %     % hold on
 %     % streamline(xc,yc,vxc,vyc,slx,sly);
-%     
+%
 %     % figure, pcolor(nf2.gridx/1e3,nf2.gridy/1e3,nf2.T); title('T'); hold on;
 %     % set(gca,'YDir','reverse');
 %     % colorbar;
@@ -212,7 +214,7 @@ a2.YLim = a1.YLim;
 %     % xlabel('Distance km)')
 %     % ylabel('Depth (km)');
 %     % axis equal tight
-%     
+%
 %     % figure, pcolor(nf2.gridx/1e3,nf2.gridy/1e3,nf2.T-nf1.T); title('T'); hold on; caxis([-25 25]);
 %     % set(gca,'YDir','reverse');
 %     % colorbar;
@@ -222,30 +224,30 @@ a2.YLim = a1.YLim;
 %     % xlabel('Distance km)')
 %     % ylabel('Depth (km)');
 %     % axis equal tight
-%     
+%
 %     % re-sample T onto a 6x6 km grid
 %     newx = 0:3000:660000;
 %     newy = 0:3000:600000;
 %     [X,Y] = meshgrid(newx,newy);
 %     newT = interp2(nf.gridx,nf.gridy,nf.T,X,Y,'linear')-273;
-%    
+%
 %     newvx = interp2(nf.gridx,nf.gridyc,nf.vx,X,Y,'linear');
 %     newvy = interp2(nf.gridxc,nf.gridy,nf.vy,X,Y,'linear');
 %     newp = interp2(nf.gridxc,nf.gridyc,nf.p,X,Y,'linear');
-%     
+%
 %     newtotp = 3300*10*Y+newp;
 %     % calculate melt fraction
 %     meltf = interp2( melt_table.T, melt_table.P*1e9, melt_table.F, newT, newtotp ,'linear',0.0);
 %     dfdp = interp2( melt_table.T, melt_table.P*1e9, melt_table.dFdP, newT, newtotp,'linear',0.0);
 %     dfdT = interp2( melt_table.T, melt_table.P*1e9, melt_table.dFdT, newT, newtotp,'linear',0.0);
-%     
-%     
+%
+%
 %     Tslab = 0;
 %     for i=1:36
 %         Tslab = Tslab + newT(i,i)^2;
 %     end
 %     Tslab = sqrt(Tslab / 36);
-%     
+%
 %     Twedge = 0;
 % %     mask = zeros(size(newT));
 %     for i=10:21
@@ -256,7 +258,7 @@ a2.YLim = a1.YLim;
 %     end
 %     Twedge = sqrt(Twedge/78);
 % %     figure, imagesc(mask);
-%     
+%
 %     Tslabs(iFile) = Tslab;
 %     Twedges(iFile) = Twedge;
 %     T1111(iFile) = newT(11,11);
@@ -268,9 +270,9 @@ a2.YLim = a1.YLim;
 % dy = newy(2)-newy(1);
 % [dpdx,dpdy] = gradient(newtotp,dx,dy);
 % [dpdyndx,dpdyndy] = gradient(bp*1e6,dx,dy);
-% 
+%
 % pratio = sqrt( dpdyndx.^2 + dpdyndy.^2 )./(4000*10);
-% 
+%
 % %% calculate gradient of pressure and temperature
 % dx = newx(2)-newx(1);
 % dy = newy(2)-newy(1);
@@ -278,7 +280,7 @@ a2.YLim = a1.YLim;
 % [dTdx,dTdy] = gradient(newT,dx,dy);
 % dPdt = (dpdx.*newvx + dpdy.*newvy)*s_in_yr;
 % dTdt = (dTdx.*newvx + dTdy.*newvy)*s_in_yr;
-% 
+%
 % melt_production = dPdt.*dfdp/1e9 + dTdt.*dfdT;
 % melt_production(melt_production<0) = 0;
 % melt_production(isnan(melt_production)) = 0;
@@ -307,7 +309,7 @@ a2.YLim = a1.YLim;
 % set(gca,'FontSize',fs,'FontName',fn);
 % set(gcf,'Renderer','Painters')
 % saveas(gcf,'temperature.eps','psc2');
-% 
+%
 % figure;
 % % subplot(1,2,2);
 % % pcolor(X/1e3,Y/1e3,log10(meltf));
@@ -329,17 +331,17 @@ a2.YLim = a1.YLim;
 % colormap(hot);
 % set(gcf,'Renderer','Painters')
 % saveas(gcf,'melt_production.eps','psc2');
-% 
-% 
+%
+%
 % %%
 % figure;
 % pcolor(X/1e3,Y/1e3,bT); shading interp;
 % hold on;
 % h=streamline(X/1e3,Y/1e3,bvx,-bvy,sx,sy);
 % set(gca,'YDir','reverse');
-% 
+%
 % %%
-% 
+%
 % figure;
 % vscale = 3.156e9;
 % subplot(2,2,1);
@@ -351,20 +353,20 @@ a2.YLim = a1.YLim;
 % subplot(2,2,4);
 % imagesc(newT*vscale);
 % title('Max temperature')
-% 
+%
 % figure, subplot(1,2,1);
 % imagesc(bT); colorbar;
 % subplot(1,2,2);
 % imagesc(newT); colorbar;
-% 
+%
 % mask = times>10;
 % [fit1,gof1] = extrapolate_values(times(mask),T1111(mask));
 % [fit2,gof2] = extrapolate_values(times(mask),Tslabs(mask));
 % [fit3,gof3] = extrapolate_values(times(mask),Twedges(mask));
-% 
-% 
-% 
-% 
+%
+%
+%
+%
 % figure, subplot(3,1,1);
 % plot(times,T1111);
 % hold on
@@ -381,9 +383,9 @@ a2.YLim = a1.YLim;
 % plot([times(1) times(end)],[1 1]*fit3.c,'r');
 % ylabel('||Twedge||');
 % xlabel('Time (Myr)');
-% 
-% 
-% 
+%
+%
+%
 % %% check divergence field
 % divv = zeros(NY-1,NX-1);
 % vx = nf.vx;
@@ -394,34 +396,34 @@ a2.YLim = a1.YLim;
 %     end
 % end
 % figure, imagesc(divv)
-% 
-% 
-% 
+%
+%
+%
 % %%
 % NX=length(grid.x);
 % NY=length(grid.y);
 % LX=max(grid.x);
 % LY=max(grid.y);
-% 
+%
 % %sort filelist
 % for i=1:length(filelist)
 %     stepnum(i) = str2double( filelist(i).name(find(filelist(i).name == '_',1,'last')+1:end-9));
 % end
 % [num idx] = sort(stepnum);
 % filelist = filelist(idx);
-% 
+%
 % clear stepnum
-% 
+%
 % files=1:nskip:length(filelist);
-% 
+%
 % if(files(end) ~= length(filelist))
 %     files=[files length(filelist)];
 % end
-% 
+%
 % for iFile=1:length(files)
 %     %strip off .m at end of filename, load results
 %     disp(filelist(files(iFile)).name)
-%     
+%
 %     nf=loadNodalFieldsPetscBin2(filelist(files(iFile)).name);
 %     if( isfield(nf,'gridx') )
 %         clear grid;
@@ -438,7 +440,7 @@ a2.YLim = a1.YLim;
 %     vx=nf.vx;
 %     vy=nf.vy;
 %     elapsedTime = nf.elapsedTime;
-%     
+%
 %     %compute Nu
 %     for i=1:nf.NX-1
 %         %compute cell-centered dT/dz
@@ -450,7 +452,7 @@ a2.YLim = a1.YLim;
 %     end
 %     %gerya's definition, table 16.1
 %     Nu(iFile) = LY/(LX*(T(end,10)-T(1,10)))*sum(dtdz.*dx)
-%     
+%
 %     %blankenbach 1989 definition
 %     num=0;
 %     denom=0;
@@ -458,26 +460,26 @@ a2.YLim = a1.YLim;
 %         num=num+ 1/2*(T(2,i)-T(1,i) + T(2,i+1)-T(1,i+1))/(grid.y(2)-grid.y(1))*(grid.x(i+1)-grid.x(i));
 %         denom=denom+ 1/2*(T(end,i)+T(end,i+1))*(grid.x(i+1)-grid.x(i));
 %     end
-%     
+%
 %     Nu1(iFile) = LY*num/denom;
-%     
-%     
-%     
-%     
+%
+%
+%
+%
 %     %calculate temperature profile through center of model
 %     T1 = nf.T(:,floor((NX+1)/2));
 %     %nondimensionalize this
 %     Ttop = nf.T(1,floor((NX+1)/2));
 %     Tbtm= nf.T(end,floor((NX+1)/2));
 %     T1 = (T1-Ttop)/(Tbtm-Ttop);
-%     
-%     
+%
+%
 %     %calculate non-dimensional temperature gradients in upper left and
 %     %right corners
 %     q1(iFile) = LY/(Tbtm-Ttop)*(nf.T(2,1)-nf.T(1,1))/(grid.y(2)-grid.y(1))
 %     q2(iFile) = LY/(Tbtm-Ttop)*(nf.T(2,end)-nf.T(1,end))/(grid.y(2)-grid.y(1))
-%     
-%     
+%
+%
 %     %calculate normalized rms velocity
 %     vx=reshape(vx,[NX NY])';
 %     vy=reshape(vy,[NX NY])';
@@ -487,7 +489,7 @@ a2.YLim = a1.YLim;
 %             %compute cell-center vx and vy
 %             vx1 = (vx(j,i)^2+vx(j,i+1)^2)/2;
 %             vy1 = (vy(j,i)^2+vy(j+1,i)^2)/2;
-%             
+%
 %             integrand=integrand + (vx1+vy1)*(grid.x(i+1)-grid.x(i))*(grid.y(j+1)-grid.y(j));
 %         end
 %     end
@@ -499,33 +501,33 @@ a2.YLim = a1.YLim;
 %     stepnum(iFile) = str2double( filelist(files(iFile)).name(find(filelist(files(iFile)).name == '_',1,'last')+1:end-9));
 %     %      figure, pcolor(grid.x,grid.y,nf.T), axis ij
 % end
-% 
+%
 % %% set benchmark values
 % %case 1a
 % % nu_bench = 4.8844;
 % % vrms_bench = 42.865;
 % % q1_bench = 8.0593;
 % % q2_bench = 0.5888;
-% 
-% 
+%
+%
 % %case 1c
 % % nu_bench = 21.972;
 % % vrms_bench = 833.99;
 % % q1_bench = 45.964;
 % % q2_bench = 0.8772;
-% 
+%
 % %case 2a
 % nu_bench =  10.066;
 % vrms_bench = 480.43;
 % q1_bench = 17.531;
 % q2_bench = 1.0085;
-% 
-% 
-% 
+%
+%
+%
 % %%
 % siny = 60*60*24*7*365.25;
 % timey=time/siny;
-% 
+%
 % figure, subplot(1,4,1);
 % hold all
 % plot(timey,Nu,'kx');
@@ -543,7 +545,7 @@ a2.YLim = a1.YLim;
 % plot([0 max(timey)],[1 1]*q1_bench,'k');
 % plot([0 max(timey)],[1 1]*q2_bench,'k');
 % title(sprintf('q1=%fm q2=%f',mean(q1(end-3:end)),mean(q2(end-3:end))))
-% 
+%
 % %% Plot dimensionless temperature profile and benchmark values
 % H=max(grid.y);
 % figure, plot(T1,(H-grid.y)/H);
@@ -560,4 +562,4 @@ a2.YLim = a1.YLim;
 % %case 2a:
 % %       scatter(.7405,.0623);
 % %       scatter(.8323,.8243);
-% 
+%
