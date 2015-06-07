@@ -218,7 +218,7 @@ PetscErrorCode csvOptions(char *csvFileName, Options *options, Materials *materi
     declare_option("rootThickness",OPTION_SCALAR,&options->rootThickness,"0.0");
     declare_option("rootCenter",OPTION_SCALAR,&options->rootCenter,"1.20e5");
     declare_option("rootWidth",OPTION_SCALAR,&options->rootWidth,"4.0e4");
-
+    declare_option("staticVelocity",OPTION_INTEGER,&options->staticVelocity,"0");
 
     /* Parse the options file line-by-line */
     csvFile = fopen( ifn, "r");
