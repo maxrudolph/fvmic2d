@@ -15,7 +15,6 @@ addpath([PETSC_DIR '/share/petsc/matlab']);
 
 load('melt_table_0.1.mat');
 
-
 vscale = 3.156e9;
 s_in_yr = 3.156e7;
 slab_angle=40;
@@ -24,7 +23,7 @@ slab_angle=40;
 % output_dir = '~/subduction_runs/case2_root/output';
 % output_dir = '../case2';
 % output_dir = '../output';
-output_dir = '../hood_runs/case2_root/output';
+% output_dir = '../hood_runs/case2_root/output';
 
 filelist=dir([output_dir '/loadNodalFields_0_*.petscbin']);
 snums = zeros(size(filelist));
@@ -42,7 +41,7 @@ snums = snums(i);
 nskip=1;
 iFile=1;
 nfiles = length(filelist);
-for iFile = nfiles
+for iFile = 1:6
     nf=loadNodalFieldsPetscBin2([output_dir '/' filelist(iFile).name]);
     
     % nf1=loadNodalFieldsPetscBin2(['../output/' filelist(end-1).name]);
