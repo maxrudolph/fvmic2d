@@ -1,12 +1,13 @@
+
 %calculate nusselt number
 
 clear
-close all
+%close all
 fclose all
 [status pd] = unix('echo $PETSC_DIR');
 % pd = '/da/'
-% PETSC_DIR='/opt/petsc';
-PETSC_DIR='/usr/local/petsc';
+ PETSC_DIR='/opt/petsc';
+%PETSC_DIR='/usr/local/petsc';
 setenv('PETSC_DIR',PETSC_DIR);
 
 addpath([PETSC_DIR '/share/petsc/matlab']);
@@ -20,9 +21,9 @@ vscale = 3.156e9;
 s_in_yr = 3.156e7;
 
 % loadgrid
-% output_dir = '~/subduction_runs/case2_root/output';
+output_dir = '~/subduction_runs/case3_root/output';
 % output_dir = '../case2';
-output_dir = '../output';
+%output_dir = '../output';
 
 filelist=dir([output_dir '/loadNodalFields_0_*.petscbin']);
 snums = zeros(size(filelist));
