@@ -199,6 +199,7 @@ typedef struct {
   PetscScalar rootThickness;
   PetscScalar rootCenter;
   PetscScalar rootWidth;
+  PetscInt staticVelocity;
 } Options;
 
 typedef struct{/* a structure holding everything related to solving a linear system */

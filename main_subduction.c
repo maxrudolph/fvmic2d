@@ -299,15 +299,13 @@ int main(int argc, char **args){
 
 	/* form mechanical problem LHS*/
 	/* zero out LHS, RHS*/
-	ierr = VecZeroEntries( problem.mech_system.rhs);CHKERRQ(ierr);	
-
-	ierr=formVEPSystem( &problem.nodal_fields, &problem.grid, problem.mech_system.lhs, problem.mech_system.pc, problem.mech_system.rhs, &Kbond, &Kcont, problem.options.gy, displacementdt, &problem.options, &boundaryValues);
-
-	/* scale the pressure guess */
-	ierr = VecStrideScale( problem.mech_system.solution, DOF_P, 1.0/Kcont );CHKERRQ(ierr);
-	if( iTime == iTime0 ){
-	  ierr = kspLinearSolve(problem.mech_system.lhs, problem.mech_system.pc,problem.mech_system.rhs, problem.mech_system.solution,"stokes_",problem.mech_system.ns);
+	if( !problem.options.staticVelocity || iTime == iTime0 ){	
+	  ierr = VecZeroEntries( problem.mech_system.rhs);CHKERRQ(ierr);	
+	  ierr=formVEPSystem( &problem.nodal_fields, &problem.grid, problem.mech_system.lhs, problem.mech_system.pc, problem.mech_system.rhs, &Kbond, &Kcont, problem.options.gy, displacementdt, &problem.options, &boundaryValues);
 	  
+	  /* scale the pressure guess */
+	  ierr = VecStrideScale( problem.mech_system.solution, DOF_P, 1.0/Kcont );CHKERRQ(ierr);	  
+	  ierr = kspLinearSolve(problem.mech_system.lhs, problem.mech_system.pc,problem.mech_system.rhs, problem.mech_system.solution,"stokes_",problem.mech_system.ns);	  
 	  ierr = VecCopy( problem.mech_system.solution, steadySolution ); CHKERRQ(ierr);
 	}else{
 	  ierr = VecCopy( steadySolution, problem.mech_system.solution ); CHKERRQ(ierr);

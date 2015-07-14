@@ -15,7 +15,7 @@ maxMarkers,1000
 dtMax,1.5779e13
 displacementStepLimit,0.3
 maxTempChange,20.0
-nTime,5000
+nTime,5
 restartStep,0
 #maximum model time to run:
 totalTime,4.4e30
@@ -34,6 +34,7 @@ slabVelocity,1.58443823e-9
 rootThickness,2.0e4
 rootCenter,2.90e5
 rootWidth,1.0e5
+staticVelocity,1
 #
 #  /* model setup/ICs */
 Tperturb,50.0
@@ -66,7 +67,7 @@ gx,0.0
 #
 #  /* I/O etc*/
 #
-saveInterval,200
+saveInterval,1
 #
 subgridStressDiffusivity,0.0
 subgridTemperatureDiffusivity,1.0
