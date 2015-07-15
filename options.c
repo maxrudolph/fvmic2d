@@ -106,6 +106,18 @@ PetscErrorCode parse_option( const char *key, const char *value ){
 	double *plastarray = (double *) option_ptr_db[i];
 	*(plastarray + 2*tmp1 + tmp2)= tmp3;/* option_prt_db[i] is a pointer to a statically-allocated MAXMAT x 2 array */
 	return 0;
+      }else if( option_type_db[i] == OPTION_PSO ){
+	/* read a string and match with typedef'd enum */
+	PsoType *pso = (PsoType *) option_ptr_db[i];
+	if( !strncmp(value,"none",4) ){
+	  *pso = PSO_NONE;
+	}else if( !strncmp(value,"KinematicSubduction",19 ) ){
+	  *pso = PSO_KINEMATIC_WEDGE;
+	}else if( !strncmp(value,"Sandbox",7) ){
+	  *pso = PSO_SANDBOX;
+	}else{
+	  SETERRQ(PETSC_COMM_SELF,102,"Invalid Problem Specific Option Type");
+	}
       }else{
 	SETERRQ(PETSC_COMM_SELF,101,"Unknown Option type");
       }
@@ -212,6 +224,9 @@ PetscErrorCode csvOptions(char *csvFileName, Options *options, Materials *materi
     declare_option("materialF",OPTION_SPECIAL1,materials->F,"0,1,1.0e99");
     declare_option("materialGamma",OPTION_SPECIAL1,materials->gamma,"0,0,1e99"); /* Note - this is not working right now because it will require double-declaration of this parameter*/
     declare_option("materialGamma",OPTION_SPECIAL1,materials->gamma,"0,1,1e98"); 
+    /* enable problem-specific choices */
+    declare_option("problemSpecificOptions",OPTION_PSO,&options->pso,"none");
+
     /* subduction - specific stuff */
     declare_option("slabAngle",OPTION_SCALAR, &options->slabAngle,"45");
     declare_option("slabVelocity",OPTION_SCALAR, &(options->slabVelocity),"1.0e-10");

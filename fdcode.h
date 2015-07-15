@@ -9,6 +9,9 @@
 //#define DMCreateMatrix DMGetMatrix /* uncomment for backwards compatibility for petsc-3.2 */
 
 #define MAXMAT 8 /* maximum number of materials allowed*/
+
+typedef enum { PSO_NONE, PSO_KINEMATIC_WEDGE, PSO_SANDBOX } PsoType;
+
 /* all structure definitions go here*/
 typedef struct {
   DM da, vda; /*da is for temperature and z-velocity, vda is for vx,vy,p, tda is for texture information (3x3 symmetric matrices)*/
@@ -86,12 +89,9 @@ typedef struct {
   PetscScalar gamma[MAXMAT][2];/* initial strain */
   PetscScalar C[MAXMAT][2];/* initial, final cohesion */
   PetscScalar F[MAXMAT][2];/* initial, final friction */
-  
-
   PetscInt hasEtaT[MAXMAT];
   PetscScalar QonR[MAXMAT];/* activation energy / R */
   PetscScalar Tref[MAXMAT];/* temperature to which flow law is referenced*/
-
 } Materials;
 
 typedef struct {/* an individual marker */
@@ -134,7 +134,6 @@ typedef struct{ /* data structure containing information about all markers on a 
   /*  PetscInt nMarkLocal; */ /*not used yet */
   PetscInt nOut; /* number of out-of-domain markers*/
   Marker *markers;
-
 } MarkerSet;
 
 
@@ -199,7 +198,10 @@ typedef struct {
   PetscScalar rootThickness;
   PetscScalar rootCenter;
   PetscScalar rootWidth;
-  PetscInt staticVelocity;
+  PetscInt    staticVelocity;
+  /* problem-specific setup and constraints */
+  PsoType pso;
+
 } Options;
 
 typedef struct{/* a structure holding everything related to solving a linear system */

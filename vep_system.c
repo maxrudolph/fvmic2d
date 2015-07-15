@@ -42,19 +42,11 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
   PetscFunctionBegin;
   ierr=VecDuplicate( nodalFields->soxx, &soxxZg);CHKERRQ(ierr);
   ierr=VecDuplicate( nodalFields->soxx, &soyyZg);CHKERRQ(ierr);
-  //  ierr=VecDuplicate( nodalFields->soxx, &sozzZg);CHKERRQ(ierr);
   ierr=VecDuplicate( nodalFields->soxx, &soxyZg);CHKERRQ(ierr);
-  //ierr=VecDuplicate( nodalFields->soxx, &soxzZg);CHKERRQ(ierr);
-  //ierr=VecDuplicate( nodalFields->soxx, &soyzZg);CHKERRQ(ierr);
-
   ierr=VecDuplicate( nodalFields->soxx, &etaSZg);CHKERRQ(ierr);
   ierr=VecDuplicate( nodalFields->soxx, &etaNZg);CHKERRQ(ierr);
-  //ierr=VecDuplicate( nodalFields->soxx, &etavxZg);CHKERRQ(ierr);
-  //ierr=VecDuplicate( nodalFields->soxx, &etavyZg);CHKERRQ(ierr);
-
   ierr=VecDuplicate( nodalFields->soxx, &X);CHKERRQ(ierr);/*viscoelasticity factor*/
 
-/*   PetscScalar *soxxZ, *soxyZ, *soxzZ, *soyzZ, *soyyZ; */   /*last stresses modified by viscoelasticity factor*/
   /* the visco-elasto-plastic implementation looks just like a viscous implementation but with additional terms on the RHS and a modified effective viscosity on the LHS*/
   /* I group together the viscosity (eta_vp) with Z, the 'viscoelasticity factor'*/
   /* Z = mu*dt/(mu*dt+etavp) */
@@ -77,40 +69,14 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
   ierr=VecCopy(nodalFields->etaS,X);CHKERRQ(ierr);
   ierr=VecAXPY(X,dt,nodalFields->muS);CHKERRQ(ierr);
   ierr=VecPointwiseDivide(X,nodalFields->etaS,X);CHKERRQ(ierr);
-/*   ierr=VecView(X,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr); */
   ierr=VecCopy(nodalFields->soxy,soxyZg);CHKERRQ(ierr);
   ierr=VecPointwiseMult(soxyZg,X,soxyZg);CHKERRQ(ierr);
-  /*   ierr=VecCopy(nodalFields->soxz,soxzZg);CHKERRQ(ierr); */
-  /*   ierr=VecPointwiseMult(soxzZg,X,soxzZg);CHKERRQ(ierr); */
-
-  /*   ierr=VecCopy(nodalFields->soyz,soyzZg);CHKERRQ(ierr); */
-  /*   ierr=VecPointwiseMult(soyzZg,X,soyzZg);CHKERRQ(ierr); */
   /* now negate X and add 1.0*/
   ierr=VecScale(X,-1.0);CHKERRQ(ierr);
   ierr=VecShift(X,1.0);CHKERRQ(ierr);
 
   ierr=VecCopy(nodalFields->etaS,etaSZg); CHKERRQ(ierr);
   ierr=VecPointwiseMult(etaSZg,X,etaSZg); CHKERRQ(ierr);
-
-  /* out-of-plane flow uses etavx for viscosity when computing sxz */
-  //ierr=VecCopy(nodalFields->etavx,X);
-  //ierr=VecAXPY(X,dt,nodalFields->muvx);/* X now holds etaN+dt*muN */
-  //ierr=VecPointwiseDivide(X,nodalFields->etavx,X);/* X now holds etaN/(etaN+dt*muN)*/
-  /* soxz adjustment would go here if soxz was evaluated at vx nodes */
-  //ierr=VecScale(X,-1.0);CHKERRQ(ierr);
-  //ierr=VecShift(X,1.0);CHKERRQ(ierr);
-  //ierr=VecCopy(nodalFields->etavx,etavxZg);CHKERRQ(ierr);
-  //ierr=VecPointwiseMult(etavxZg,X,etavxZg);CHKERRQ(ierr);
-  
-  //ierr=VecCopy(nodalFields->etavy,X);
-  //ierr=VecAXPY(X,dt,nodalFields->muvy);/* X now holds etaN+dt*muN */
-  //  ierr=VecPointwiseDivide(X,nodalFields->etavy,X);/* X now holds etaN/(etaN+dt*muN)*/
-
-  //ierr=VecScale(X,-1.0);CHKERRQ(ierr);
-  //ierr=VecShift(X,1.0);CHKERRQ(ierr);
-  //ierr=VecCopy(nodalFields->etavy,etavyZg);CHKERRQ(ierr);
-  //ierr=VecPointwiseMult(etavyZg,X,etavyZg);CHKERRQ(ierr);
-
 
   /* compute Kbond and Kcont*/
   PetscScalar etamin;
@@ -133,13 +99,9 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
   ierr=VecDuplicate(rhol,&rhodotl);CHKERRQ(ierr);
   ierr=VecDuplicate(rhol,&etaNZl);CHKERRQ(ierr);
   ierr=VecDuplicate(rhol,&etaSZl);CHKERRQ(ierr);
-/*   ierr=VecDuplicate(rhol,&etavxZl);CHKERRQ(ierr); */
-/*   ierr=VecDuplicate(rhol,&etavyZl);CHKERRQ(ierr); */
   ierr=VecDuplicate(rhol,&soxxZl);CHKERRQ(ierr);
   ierr=VecDuplicate(rhol,&soxyZl);CHKERRQ(ierr);
   ierr=VecDuplicate(rhol,&soyyZl);CHKERRQ(ierr);
-/*   ierr=VecDuplicate(rhol,&soxzZl);CHKERRQ(ierr); */
-/*   ierr=VecDuplicate(rhol,&soyzZl);CHKERRQ(ierr); */
 
   ierr=DMGlobalToLocalBegin(grid->da,nodalFields->rho,INSERT_VALUES,rhol);CHKERRQ(ierr);
   ierr=DMGlobalToLocalEnd(grid->da,nodalFields->rho,INSERT_VALUES,rhol);CHKERRQ(ierr);
@@ -147,47 +109,24 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
   ierr=DMGlobalToLocalEnd(grid->da,nodalFields->rhodot,INSERT_VALUES,rhodotl);CHKERRQ(ierr);
   ierr=DMGlobalToLocalBegin(grid->da,etaNZg,INSERT_VALUES,etaNZl);CHKERRQ(ierr);
   ierr=DMGlobalToLocalEnd(grid->da,etaNZg,INSERT_VALUES,etaNZl);CHKERRQ(ierr);
-
   ierr=DMGlobalToLocalBegin(grid->da,etaSZg,INSERT_VALUES,etaSZl);CHKERRQ(ierr);
   ierr=DMGlobalToLocalEnd(grid->da,etaSZg,INSERT_VALUES,etaSZl);CHKERRQ(ierr);
-
-/*   ierr=DMGlobalToLocalBegin(grid->da,etavxZg,INSERT_VALUES,etavxZl);CHKERRQ(ierr); */
-/*   ierr=DMGlobalToLocalEnd(grid->da,etavxZg,INSERT_VALUES,etavxZl);CHKERRQ(ierr); */
-/*   ierr=DMGlobalToLocalBegin(grid->da,etavyZg,INSERT_VALUES,etavyZl);CHKERRQ(ierr); */
-/*   ierr=DMGlobalToLocalEnd(grid->da,etavyZg,INSERT_VALUES,etavyZl);CHKERRQ(ierr); */
-
   ierr=DMGlobalToLocalBegin(grid->da,soxxZg,INSERT_VALUES,soxxZl);CHKERRQ(ierr);
   ierr=DMGlobalToLocalEnd(grid->da,soxxZg,INSERT_VALUES,soxxZl);CHKERRQ(ierr);
-
-/*   ierr=DMGlobalToLocalBegin(grid->da,soxyZg,INSERT_VALUES,soxyZl);CHKERRQ(ierr); */
-/*   ierr=DMGlobalToLocalEnd(grid->da,soxyZg,INSERT_VALUES,soxyZl);CHKERRQ(ierr); */
-
-/*   ierr=DMGlobalToLocalBegin(grid->da,soxzZg,INSERT_VALUES,soxzZl);CHKERRQ(ierr); */
-/*   ierr=DMGlobalToLocalEnd(grid->da,soxzZg,INSERT_VALUES,soxzZl);CHKERRQ(ierr); */
-/*   ierr=DMGlobalToLocalBegin(grid->da,soyzZg,INSERT_VALUES,soyzZl);CHKERRQ(ierr); */
-/*   ierr=DMGlobalToLocalEnd(grid->da,soyzZg,INSERT_VALUES,soyzZl);CHKERRQ(ierr); */
-
 
   /* get arrays of values*/
   ierr=DMDAVecGetArray(grid->da,rhol,&rho);CHKERRQ(ierr);
   ierr=DMDAVecGetArray(grid->da,rhodotl,&rhodot);CHKERRQ(ierr);
   ierr=DMDAVecGetArray(grid->da,etaSZl,&etaSZ);CHKERRQ(ierr);
   ierr=DMDAVecGetArray(grid->da,etaNZl,&etaNZ);CHKERRQ(ierr);
-/*   ierr=DMDAVecGetArray(grid->da,etavxZl,&etavxZ);CHKERRQ(ierr); */
-/*   ierr=DMDAVecGetArray(grid->da,etavyZl,&etavyZ);CHKERRQ(ierr); */
-
   ierr=DMDAVecGetArray(grid->da,soxxZl,&soxxZ);CHKERRQ(ierr);
   ierr=DMDAVecGetArray(grid->da,soxyZl,&soxyZ);CHKERRQ(ierr);
-  /*   ierr=DMDAVecGetArray(grid->da,soxzZl,&soxzZ);CHKERRQ(ierr); */
-  /*   ierr=DMDAVecGetArray(grid->da,soyzZl,&soyzZ);CHKERRQ(ierr); */
   ierr=DMDAVecGetArray(grid->da,soyyZl,&soyyZ);CHKERRQ(ierr);
-
 
   PetscInt y1=y;
   PetscInt x1=x;
   if(y==0) y1=1;
   if(x==0) x1=1;/* do not loop over ghost cells*/
-
 
   /* now we want to assemble the global LHS, which requires knowing the mapping from local to global indices*/
   ISLocalToGlobalMapping ltogm;
@@ -196,7 +135,6 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
   ierr=ISLocalToGlobalMappingGetIndices(ltogm,&globalIdx);CHKERRQ(ierr);
 
   ierr=DMDAGetGhostCorners(grid->da,&x,&y,PETSC_NULL,&m,&n,PETSC_NULL);CHKERRQ(ierr);
-
   ierr=DMDAGetCorners(grid->da,&x,&y,PETSC_NULL,&m,&n,PETSC_NULL);CHKERRQ(ierr);
   PetscInt xg,yg,mg,ng;
   ierr=DMDAGetGhostCorners(grid->da,&xg,&yg,PETSC_NULL,&mg,&ng,PETSC_NULL);CHKERRQ(ierr);
@@ -220,7 +158,6 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
     ierr=PetscMalloc( (mg+1)*sizeof(PetscInt), &vxdof[jy]);CHKERRQ(ierr); vxdof[jy]++;
     ierr=PetscMalloc( (mg+1)*sizeof(PetscInt), &vydof[jy]);CHKERRQ(ierr); vydof[jy]++;
     ierr=PetscMalloc( mg*sizeof(PetscInt), &pdof[jy]);CHKERRQ(ierr);
-    //ierr=PetscMalloc( mg*sizeof(PetscInt), &vzdof[jy]);CHKERRQ(ierr);
   }
 
   for(jy=-1;jy<ng;jy++){
@@ -232,13 +169,10 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 	pdof[jy][ix] = 3*globalIdx[ix+mg*jy]+DOF_P;
 	vxdof[jy][ix] = 3*globalIdx[ix+mg*jy]+DOF_U;
 	vydof[jy][ix] = 3*globalIdx[ix+mg*jy]+DOF_V;
-	//vzdof[jy][ix] = globalIdx[ix+mg*jy];/* vz goes into a separate matrix*/
       }
     }
   }
   ierr = ISLocalToGlobalMappingRestoreIndices(ltogm,&globalIdx); CHKERRQ(ierr);
-
-  /* print out the local vxdofs*/
 
   for(jy=y;jy<y+n;jy++){
     PetscInt jyl=jy-yg;
@@ -280,7 +214,6 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 	ierr = MatSetValue(LHS,pdof[jyl][ixl],vydof[jyl][ixl-1],Kcont[0]/dy,INSERT_VALUES);CHKERRQ(ierr);
 	ierr = MatSetValue(LHS,pdof[jyl][ixl],vydof[jyl-1][ixl-1],-Kcont[0]/dy,INSERT_VALUES);CHKERRQ(ierr);
 
-
 	/* this term adds volumetric changes due to the equation of state (phase changes)*/
 	/* this is not the same thing as compressibility - that would require additional terms in the momentum equations too */
 	PetscScalar rhobar = (rho[jy-1][ix-1] + rho[jy-1][ix] + rho[jy][ix-1] + rho[jy][ix])*0.25;
@@ -290,8 +223,7 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 
 	ierr = VecSetValue(RHS,pdof[jyl][ixl],Rval,INSERT_VALUES);CHKERRQ(ierr);
       }/* end continuity equation*/
-      
-      
+            
       /*         %x-momentum */
       if( in_slab( grid->x[ix], grid->yc[jy+1], options ) ){   //slab
 	ierr = MatSetValue(LHS, vxdof[jyl][ixl],vxdof[jyl][ixl],1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);	
