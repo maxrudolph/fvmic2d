@@ -38,7 +38,7 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 
 
   /* soxxZ etc should be global vectors complete with ghost information*/
-  Vec soxxZg,soyyZg,sozzZg,soxyZg,etaSZg,etaNZg,X;
+  Vec soxxZg,soyyZg,soxyZg,etaSZg,etaNZg,X;
   PetscFunctionBegin;
   ierr=VecDuplicate( nodalFields->soxx, &soxxZg);CHKERRQ(ierr);
   ierr=VecDuplicate( nodalFields->soxx, &soyyZg);CHKERRQ(ierr);
@@ -655,4 +655,16 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
   PetscLogStagePop();
   PetscFunctionReturn(ierr);
 
+}
+
+
+
+
+/* subroutine to impose problem-specific constraints on governing equations */
+PetscErrorCode impose_kinematic_constraints(){
+  PetscErrorCode ierr=0;
+  PetscFunctionBegin;
+  
+
+  PetscFunctionReturn(ierr);
 }
