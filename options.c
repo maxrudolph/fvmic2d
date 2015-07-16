@@ -111,12 +111,13 @@ PetscErrorCode parse_option( const char *key, const char *value ){
 	PsoType *pso = (PsoType *) option_ptr_db[i];
 	if( !strncmp(value,"none",4) ){
 	  *pso = PSO_NONE;
+	  return 0;
 	}else if( !strncmp(value,"KinematicSubduction",19 ) ){
 	  *pso = PSO_KINEMATIC_WEDGE;
+	  return 0;
 	}else if( !strncmp(value,"Sandbox",7) ){
 	  *pso = PSO_SANDBOX;
-	}else{
-	  SETERRQ(PETSC_COMM_SELF,102,"Invalid Problem Specific Option Type");
+	  return 0;
 	}
       }else{
 	SETERRQ(PETSC_COMM_SELF,101,"Unknown Option type");

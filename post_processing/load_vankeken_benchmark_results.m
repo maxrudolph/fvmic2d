@@ -32,7 +32,7 @@ T = reshape(data,[nx ny])';
 figure;
 subplot(2,2,1);
 imagesc(vx);
-title('vx');
+title('vankeken - vx');
 subplot(2,2,2);
 imagesc(vy);
 title('vy');

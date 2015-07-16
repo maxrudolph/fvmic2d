@@ -1,4 +1,5 @@
 # Van Keken subduction benchmark
+problemSpecificOptions,KinematicSubduction
 LX,660000
 LY,600000
 NX,221
@@ -6,8 +7,8 @@ NY,201
 NMX,12
 NMY,12
 gridRatio,1.0
-maxMarkFactor,2.0; /*memory to allocate for markers is this number*original number of markers*/
-minMarkers,2; /* munimum number of markers per quarter-cell */
+maxMarkFactor,2.0
+minMarkers,2 
 maxMarkers,1000
 #
 #Time step Stuff
@@ -37,11 +38,11 @@ Tperturb,50.0
 #  /* Thermal B.C.s*/
 mechBCLeftType,0,0,0
 mechBCLeftValue,0.0,0.0,0.0
-mechBCRightType,0,0,0
+mechBCRightType,3,3,0
 mechBCRightValue,0.0,0.0,0.0
 mechBCTopType,0,0,0
 mechBCTopValue,0.0,0.0,0.0
-mechBCBottomType,0,0,0
+mechBCBottomType,3,3,0
 mechBCBottomValue,0.0,0.0,0.0
 # 
 thermalBCLeftType,0

@@ -18,7 +18,7 @@ load('melt_table_0.1.mat');
 
 vscale = 3.156e9;
 s_in_yr = 3.156e7;
-slab_angle=40;
+slab_angle=45;
 
 % loadgrid
 % output_dir = '~/subduction_runs/case3_root/output';

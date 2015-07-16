@@ -123,6 +123,7 @@ figure;
 vscale = 3.156e9;
 subplot(2,2,1);
 imagesc(newvx*vscale);
+title('vx - my calc');
 subplot(2,2,2);
 imagesc(-newvy*vscale);
 subplot(2,2,3);
