@@ -233,31 +233,59 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 	ierr = VecSetValue(RHS,pdof[jyl][ixl],Rval,INSERT_VALUES);CHKERRQ(ierr);
       }/* end continuity equation*/            
       /*         %x-momentum */   
-      if( !grid->xperiodic && ( (ix==0 ) && jy < NY-1)){
-	/*             %left boundary. vx=0; */
+      if( jy == NY-1){ /* BOTTOM BOUNDARY */
+	/* Last row of nodes are used explicitly for boundary conditions. 
+	   Note that the boundary conditions are treated implicitly for the top and left but explicitly for the right and bottom*/
+	if( bv->mechBCBottom.type[0] == 0){
+	  /* prescribed velocity vx[j,i] + vx[j-1,i] = 2.0*vb */
+	  ierr =  MatSetValue(LHS,vxdof[jyl][ixl],vxdof[jyl][ixl],1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
+	  ierr =  MatSetValue(LHS,vxdof[jyl][ixl],vxdof[jyl-1][ixl],1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
+	  ierr = VecSetValue(RHS, vxdof[jyl][ixl],2.0*Kbond[0]*bv->mechBCBottom.value[0],INSERT_VALUES);CHKERRQ(ierr);
+	}else if( bv->mechBCBottom.type[0] == 1){
+	  /* prescribed velocity gradient */
+	  /* (vx[j,i] - vx[j-1,i])/dy = bcv   */
+	  PetscScalar dy1 = 2.0*(grid->LY - grid->yc[NY-1]);
+	  ierr =  MatSetValue(LHS,vxdof[jyl][ixl],vxdof[jyl][ixl],1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
+	  ierr =  MatSetValue(LHS,vxdof[jyl][ixl],vxdof[jyl-1][ixl],-1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
+	  ierr =  VecSetValue(RHS, vxdof[jyl][ixl], Kbond[0]*bv->mechBCBottom.value[0]*dy1,INSERT_VALUES);CHKERRQ(ierr);
+	}else if(bv->mechBCBottom.type[0] == 3){
+	  if( ix < NX-1 ){/* BOTTOM BOUNDARY - stress free */
+	    PetscScalar dxc = grid->xc[ix+1] - grid->xc[ix];
+	    PetscScalar dyc = grid->yc[jy] - grid->yc[jy-1];
+	    ierr=MatSetValue(LHS,vxdof[jyl][ixl], vxdof[jyl][ixl], 1.0/dyc*Kcont[0],INSERT_VALUES);CHKERRQ(ierr);
+	    ierr=MatSetValue(LHS,vxdof[jyl][ixl], vxdof[jyl-1][ixl],  -1.0/dyc*Kcont[0],INSERT_VALUES);CHKERRQ(ierr);
+	    ierr=MatSetValue(LHS,vxdof[jyl][ixl], vydof[jyl  ][ixl], 1.0/dxc*Kcont[0],INSERT_VALUES);CHKERRQ(ierr);
+	    ierr=MatSetValue(LHS,vxdof[jyl][ixl], vydof[jyl  ][ixl-1],  -1.0/dxc*Kcont[0],INSERT_VALUES);CHKERRQ(ierr);
+	    ierr=VecSetValue(RHS,vxdof[jyl][ixl], 0.0, INSERT_VALUES);CHKERRQ(ierr);	
+	  }else{/* special case for lower-right corner, stress-free case */
+	    PetscScalar dyc = grid->yc[NY]-grid->yc[NY-1];	
+	    printf("dyc = %le\n",dyc);
+	    ierr=MatSetValue(LHS,vxdof[jyl][ixl], vxdof[jyl][ixl],    1.0/dyc*Kcont[0],INSERT_VALUES);CHKERRQ(ierr);
+	    ierr=MatSetValue(LHS,vxdof[jyl][ixl], vxdof[jyl-1][ixl], -1.0/dyc*Kcont[0],INSERT_VALUES);CHKERRQ(ierr);
+	    ierr=VecSetValue(RHS,vxdof[jyl][ixl], 0.0, INSERT_VALUES);CHKERRQ(ierr);	    
+	  }
+	}
+      } else if( !grid->xperiodic && ( (ix==0 ) && jy < NY-1)){
+	/* %left boundary. kinematic boundary condition */
 	ierr = MatSetValue(LHS,vxdof[jyl][ixl],vxdof[jyl][ixl],1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
-	ierr = VecSetValue(RHS, vxdof[jyl][ixl], Kbond[0]*bv->mechBCLeft.value[0],INSERT_VALUES);CHKERRQ(ierr);	 
+	ierr = VecSetValue(RHS, vxdof[jyl][ixl], Kbond[0]*bv->mechBCLeft.value[0],INSERT_VALUES);CHKERRQ(ierr);
+      } else if( grid->xperiodic && bv->mechBCTop.type[0] == 1 && bv->mechBCBottom.type[0] == 1 &&  ix == 0 && jy == 0){
+	/* left top boundary - fix x-velocity at one point */
+	/* this is only needed when the domain is periodic and free slip boundary conditions */
+	ierr = MatSetValue(LHS, vxdof[jyl][ixl], vxdof[jyl][ixl], 1.0*Kbond[0],INSERT_VALUES); CHKERRQ(ierr);
+	ierr = VecSetValue(RHS, vxdof[jyl][ixl], 0.0 ,INSERT_VALUES); CHKERRQ(ierr);		
+      } else if( !grid->xperiodic && bv->mechBCRight.type[0]<3 && (ix == NX-1 && jy < NY-1)){
+	/* right boundary - prescribed x-velocity for no slip or free slip */
+	ierr = MatSetValue(LHS, vxdof[jyl][ixl], vxdof[jyl][ixl],1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
+	ierr = VecSetValue(RHS, vxdof[jyl][ixl], Kbond[0]*bv->mechBCRight.value[0],INSERT_VALUES);CHKERRQ(ierr);
+
       }else if(bv->mechBCRight.type[0]==3 && ix == NX-1 && jy < NY-1 ){/* RIGHT Boundary - stress free */
 	PetscScalar eta = etaNZ[jy+1][ix];
 	PetscScalar dx = grid->x[ix] - grid->x[ix-1];
 	ierr = MatSetValue(LHS,vxdof[jyl][ixl], vxdof[jyl][ixl], 2.0*eta/dx, INSERT_VALUES);CHKERRQ(ierr);
 	ierr = MatSetValue(LHS,vxdof[jyl][ixl], vxdof[jyl][ixl-1], -2.0*eta/dx, INSERT_VALUES);CHKERRQ(ierr);
 	ierr = MatSetValue(LHS,vxdof[jyl][ixl], pdof[jyl+1][ixl], -Kcont[0], INSERT_VALUES);CHKERRQ(ierr);
-	ierr = VecSetValue(RHS,vxdof[jyl][ixl], 0.0, INSERT_VALUES);CHKERRQ(ierr);
-      }else if(bv->mechBCRight.type[0]==3 && jy == NY-1 && ix < NX-1){ /* BOTTOM BOUNDARY - stress free */
-	  PetscScalar dxc = grid->xc[ix+1] - grid->xc[ix];
-	  PetscScalar dyc = grid->yc[jy] - grid->yc[jy-1];
-	  ierr=MatSetValue(LHS,vxdof[jyl][ixl], vxdof[jyl][ixl], 1.0/dyc*Kcont[0],INSERT_VALUES);CHKERRQ(ierr);
-	  ierr=MatSetValue(LHS,vxdof[jyl][ixl], vxdof[jyl-1][ixl],  -1.0/dyc*Kcont[0],INSERT_VALUES);CHKERRQ(ierr);
-	  ierr=MatSetValue(LHS,vxdof[jyl][ixl], vydof[jyl  ][ixl], 1.0/dxc*Kcont[0],INSERT_VALUES);CHKERRQ(ierr);
-	  ierr=MatSetValue(LHS,vxdof[jyl][ixl], vydof[jyl  ][ixl-1],  -1.0/dxc*Kcont[0],INSERT_VALUES);CHKERRQ(ierr);
-	  ierr=VecSetValue(RHS,vxdof[jyl][ixl], 0.0, INSERT_VALUES);CHKERRQ(ierr);	
-      }else if(jy == NY-1 && ix == NX-1){ /* Bottom right corner - dvx/dy=0 */
-	PetscScalar dyc = grid->yc[NY]-grid->yc[NY-1];	
-	printf("dyc = %le\n",dyc);
-	ierr=MatSetValue(LHS,vxdof[jyl][ixl], vxdof[jyl][ixl],    1.0/dyc*Kcont[0],INSERT_VALUES);CHKERRQ(ierr);
-	ierr=MatSetValue(LHS,vxdof[jyl][ixl], vxdof[jyl-1][ixl], -1.0/dyc*Kcont[0],INSERT_VALUES);CHKERRQ(ierr);
-	ierr=VecSetValue(RHS,vxdof[jyl][ixl], 0.0, INSERT_VALUES);CHKERRQ(ierr);	
+	ierr = VecSetValue(RHS,vxdof[jyl][ixl], 0.0, INSERT_VALUES);CHKERRQ(ierr);	
       }else{
 	if( jy == NY-1 ){ fprintf(stderr,"jy==NY-1 !!!\n"); }
 	/* normal x-stokes stencil */
@@ -357,14 +385,34 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
       if( jy == 0 && (grid->xperiodic || ix < NX-1)) {	/* TOP - prescribed velocity */
 	ierr = MatSetValue(LHS, vydof[jyl][ixl],vydof[jyl][ixl], Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
 	ierr = VecSetValue(RHS, vydof[jyl][ixl], Kbond[0] * inflow,INSERT_VALUES);CHKERRQ(ierr);	
-      }else if(bv->mechBCBottom.type[1]==3 && jy == NY-1 && ix < NX-1){ /* BOTTOM - stress-free */
-	PetscScalar eta = etaNZ[jy][ixl+1];
-	PetscScalar dy = grid->y[jy]-grid->y[jy-1];
-	ierr = MatSetValue(LHS, vydof[jyl][ixl], vydof[jyl][ixl], 2.0*eta/dy, INSERT_VALUES);CHKERRQ(ierr);
-	ierr = MatSetValue(LHS, vydof[jyl][ixl], vydof[jyl-1][ixl],-2.0*eta/dy, INSERT_VALUES);CHKERRQ(ierr);
-	ierr = MatSetValue(LHS, vydof[jyl][ixl], pdof[jyl][ixl+1],-Kcont[0], INSERT_VALUES);CHKERRQ(ierr);
-	ierr = VecSetValue(RHS,vydof[jyl][ixl], 0.0, INSERT_VALUES);CHKERRQ(ierr);	
-      }else if(bv->mechBCRight.type[1]==3 && ix == NX-1 ){ /* RIGHT - stress-free */
+      }else if(bv->mechBCBottom.type[1]==3 && jy==NY-1){/* bottom, stress-free case */
+	if(ix < NX-1){ /* BOTTOM - stress-free */
+	  PetscScalar eta = etaNZ[jy][ixl+1];
+	  PetscScalar dy = grid->y[jy]-grid->y[jy-1];
+	  ierr = MatSetValue(LHS, vydof[jyl][ixl], vydof[jyl][ixl], 2.0*eta/dy, INSERT_VALUES);CHKERRQ(ierr);
+	  ierr = MatSetValue(LHS, vydof[jyl][ixl], vydof[jyl-1][ixl],-2.0*eta/dy, INSERT_VALUES);CHKERRQ(ierr);
+	  ierr = MatSetValue(LHS, vydof[jyl][ixl], pdof[jyl][ixl+1],-Kcont[0], INSERT_VALUES);CHKERRQ(ierr);
+	  ierr = VecSetValue(RHS,vydof[jyl][ixl], 0.0, INSERT_VALUES);CHKERRQ(ierr);	
+	}else if(ix == NX-1){
+	  PetscScalar dxc = grid->xc[NX]-grid->xc[NX-1];
+	  printf("dxc=%le\n",dxc);
+	  ierr = MatSetValue(LHS, vydof[jyl][ixl],vydof[jyl][ixl],    1.0/dxc*Kcont[0],INSERT_VALUES);CHKERRQ(ierr);
+	  ierr = MatSetValue(LHS, vydof[jyl][ixl],vydof[jyl][ixl-1], -1.0/dxc*Kcont[0],INSERT_VALUES);CHKERRQ(ierr);
+	  ierr = VecSetValue(RHS, vydof[jyl][ixl], 0.0,INSERT_VALUES);CHKERRQ(ierr);
+	}
+      }else if(bv->mechBCBottom.type[1]==0 && jy == NY-1 && (grid->xperiodic ||  ix < NX-1) ) { /* %bottom boundary. vy=0 */	
+	ierr=MatSetValue(LHS,vydof[jyl][ixl],vydof[jyl][ixl],Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
+	ierr = VecSetValue(RHS, vydof[jyl][ixl], Kbond[0]*bv->mechBCBottom.value[1] ,INSERT_VALUES);CHKERRQ(ierr);
+      }else if( !grid->xperiodic && (ix == NX-1 )) {/* RIGHT WALL */
+	if( bv->mechBCRight.type[1] == 0){/* prescribed velocity case */
+	  ierr=MatSetValue(LHS,vydof[jyl][ixl], vydof[jyl][ixl],  1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
+	  ierr=MatSetValue(LHS,vydof[jyl][ixl], vydof[jyl][ixl-1],1.0*Kbond[0],INSERT_VALUES);CHKERRQ(ierr);
+	  ierr=VecSetValue(RHS,vydof[jyl][ixl], 2.0*Kbond[0]*bv->mechBCRight.value[1], INSERT_VALUES); CHKERRQ(ierr);	  
+	}else if(bv->mechBCRight.type[1] ==1){ /* free slip case */
+	  ierr=MatSetValue(LHS,vydof[jyl][ixl],vydof[jyl][ixl],   1.0*Kbond[0],INSERT_VALUES); CHKERRQ(ierr);
+	  ierr=MatSetValue(LHS,vydof[jyl][ixl],vydof[jyl][ixl-1],-1.0*Kbond[0],INSERT_VALUES); CHKERRQ(ierr);
+	  ierr=VecSetValue(RHS,vydof[jyl][ixl], 0.0, INSERT_VALUES); CHKERRQ(ierr);	  
+	}else if(bv->mechBCRight.type[1]==3 && ix == NX-1 ){ /* RIGHT - stress-free */
 	  PetscScalar dxc = grid->xc[ix+1] - grid->xc[ix];
 	  PetscScalar dyc = grid->yc[jy+1] - grid->yc[jy];
 	  ierr=MatSetValue(LHS,vydof[jyl][ixl], vxdof[jyl][ixl],   1.0/dyc*Kcont[0],INSERT_VALUES);CHKERRQ(ierr);
@@ -372,13 +420,7 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 	  ierr=MatSetValue(LHS,vydof[jyl][ixl], vydof[jyl][ixl],   1.0/dxc*Kcont[0],INSERT_VALUES);CHKERRQ(ierr);
 	  ierr=MatSetValue(LHS,vydof[jyl][ixl], vydof[jyl][ixl-1],-1.0/dxc*Kcont[0],INSERT_VALUES);CHKERRQ(ierr);
 	  ierr=VecSetValue(RHS,vydof[jyl][ixl], 0.0, INSERT_VALUES);CHKERRQ(ierr);
-      }else if( ix == NX-1 && jy == NY-1 ){ /* Bottom-right corner - dvy/dx=0 */
-	PetscScalar dxc = grid->xc[NX]-grid->xc[NX-1];
-	printf("dxc=%le\n",dxc);
-	ierr = MatSetValue(LHS, vydof[jyl][ixl],vydof[jyl][ixl],    1.0/dxc*Kcont[0],INSERT_VALUES);CHKERRQ(ierr);
-	ierr = MatSetValue(LHS, vydof[jyl][ixl],vydof[jyl][ixl-1], -1.0/dxc*Kcont[0],INSERT_VALUES);CHKERRQ(ierr);
-	ierr = VecSetValue(RHS, vydof[jyl][ixl], 0.0,INSERT_VALUES);CHKERRQ(ierr);     	
-
+	}
       }else {
 	rowidx = vydof[jyl][ixl];
 	/* normal y-stokes stencil*/
