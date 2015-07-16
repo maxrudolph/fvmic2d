@@ -105,7 +105,7 @@ PetscErrorCode saveRunInfo( Options *options, Materials *materials, PetscInt iMo
       fprintf(of,"Tref,%d,%e\n",i,  materials -> Tref[i]);
     }
   }
-
+  fprintf(of,"ProblemSpecificOptions,%d\n",options->pso);
   fclose(of);
   PetscLogStagePop();
   PetscFunctionReturn(ierr);

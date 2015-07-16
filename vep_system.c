@@ -184,15 +184,7 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
       PetscInt colidx[NADD];
 
       /* Continuity equation */
-      if( ix>0 && jy > 0 && 
-	  in_either( grid->xc[ix], grid->y[jy-1], options) && 
-	  in_either( grid->xc[ix], grid->y[jy], options) && 
-	  in_either( grid->x[ix] , grid->yc[jy], options) && 
-	  in_either( grid->x[ix-1], grid->yc[jy], options) ){
-	
-	ierr = MatSetValue(LHS,pdof[jyl][ixl], pdof[jyl][ixl],1.0*Kbond[0],INSERT_VALUES); CHKERRQ(ierr);
-	ierr = VecSetValue(RHS,pdof[jyl][ixl], 0.0,INSERT_VALUES); CHKERRQ(ierr);
-      }else if( jy == 0 ){/* make ghost nodes have same pressure as first row so that null space will be constant */
+      if( jy == 0 ){/* make ghost nodes have same pressure as first row so that null space will be constant */
 	ierr = MatSetValue(LHS,pdof[jyl][ixl],pdof[jyl][ixl],   1.0*Kbond[0],INSERT_VALUES); CHKERRQ(ierr);
 	ierr = MatSetValue(LHS,pdof[jyl][ixl],pdof[jyl+1][ixl],-1.0*Kbond[0],INSERT_VALUES); CHKERRQ(ierr);
 	ierr = VecSetValue(RHS,pdof[jyl][ixl],0.0,INSERT_VALUES); CHKERRQ(ierr);
@@ -535,15 +527,49 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
   }/* end y-loop */
 
   ierr = VecAssemblyBegin(RHS);
-
   ierr = MatAssemblyBegin( LHS, MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-
   ierr = MatAssemblyEnd( LHS, MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-
   ierr = VecAssemblyEnd(RHS);CHKERRQ(ierr);
+  /* go back through matrix and apply any dirichlet-type constraints */
 
+  
+  PetscInt nrows=0;
+  PetscInt *rows;
+  ierr = PetscMalloc( sizeof(PetscInt)*m*n, &rows); CHKERRQ(ierr);
+  PetscScalar diagval = Kbond[0];
+  Vec constraints;
+  ierr = VecDuplicate( RHS, &constraints ); CHKERRQ(ierr);
+  ierr = VecZeroEntries(constraints); CHKERRQ(ierr);
 
-
+  for(jy=y;jy<y+n;jy++){
+    PetscInt jyl=jy-yg;
+    for(ix=x;ix<x+m;ix++){
+      PetscInt ixl=ix-xg;
+      if( options->pso == PSO_KINEMATIC_WEDGE ){
+	/* continuity equation constraints */
+	if( ix>0 && jy > 0 && 
+	    in_either( grid->xc[ix], grid->y[jy-1], options) && 
+	    in_either( grid->xc[ix], grid->y[jy], options) && 
+	    in_either( grid->x[ix] , grid->yc[jy], options) && 
+	    in_either( grid->x[ix-1], grid->yc[jy], options) ){	
+	  /* fix pressure */
+	  rows[nrows]= pdof[jyl][ixl];
+	  ierr = VecSetValue(constraints, pdof[jyl][ixl], 0.0, INSERT_VALUES); CHKERRQ(ierr);
+	  nrows++;
+	}
+	/* x-stokes equation constraints */
+	
+	/* y-stokes equation constraints */
+      }/* end problem-specific constraints for kinematic wedge */
+      
+    }
+  }
+  ierr = VecAssemblyBegin(constraints);CHKERRQ(ierr);
+  ierr = VecAssemblyEnd(constraints);CHKERRQ(ierr);
+  ierr = MatZeroRowsColumns(LHS,nrows,rows,diagval,constraints,RHS); CHKERRQ(ierr);
+  ierr = PetscFree(rows);CHKERRQ(ierr);
+  ierr = VecDestroy(&constraints); CHKERRQ(ierr);
+  /* end apply dirichlet-type constraints */
 
 
   /* assemble preconditioner */
@@ -586,51 +612,33 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
   ierr=DMDAVecRestoreArray(grid->da,rhodotl,&rhodot);CHKERRQ(ierr);
   ierr=DMDAVecRestoreArray(grid->da,etaSZl,&etaSZ);CHKERRQ(ierr);
   ierr=DMDAVecRestoreArray(grid->da,etaNZl,&etaNZ);CHKERRQ(ierr);
-  //  ierr=DMDAVecRestoreArray(grid->da,etavxZl,&etavxZ);CHKERRQ(ierr);
-  //ierr=DMDAVecRestoreArray(grid->da,etavyZl,&etavyZ);CHKERRQ(ierr);
   ierr=DMDAVecRestoreArray(grid->da,soxxZl,&soxxZ);CHKERRQ(ierr);
   ierr=DMDAVecRestoreArray(grid->da,soyyZl,&soyyZ);CHKERRQ(ierr);
-
   ierr=DMDAVecRestoreArray(grid->da,soxyZl,&soxyZ);CHKERRQ(ierr);
-  //ierr=DMDAVecRestoreArray(grid->da,soxzZl,&soxzZ);CHKERRQ(ierr);
-  //ierr=DMDAVecRestoreArray(grid->da,soyzZl,&soyzZ);CHKERRQ(ierr);
 
   ierr=VecDestroy(& rhol);CHKERRQ(ierr);
   ierr=VecDestroy(&  rhodotl);CHKERRQ(ierr);
   ierr=VecDestroy(&  etaNZl);CHKERRQ(ierr);
   ierr=VecDestroy(&  etaSZl);CHKERRQ(ierr);
-  //ierr=VecDestroy(&  etavxZl);CHKERRQ(ierr);
-  //ierr=VecDestroy(&  etavyZl);CHKERRQ(ierr);
   ierr=VecDestroy(&  soxxZl);CHKERRQ(ierr);
   ierr=VecDestroy(&  soxyZl);CHKERRQ(ierr);
-  //ierr=VecDestroy(&  soxzZl);CHKERRQ(ierr);
-  //ierr=VecDestroy(&  soyzZl);CHKERRQ(ierr);
   ierr=VecDestroy(&  soyyZl);CHKERRQ(ierr);
   ierr=VecDestroy(&  soxxZg);CHKERRQ(ierr);
   ierr=VecDestroy(&  soyyZg);CHKERRQ(ierr);
-  //ierr=VecDestroy(&  sozzZg);CHKERRQ(ierr);
   ierr=VecDestroy(&  soxyZg);CHKERRQ(ierr);
-  //ierr=VecDestroy(&  soxzZg);CHKERRQ(ierr);
-  //ierr=VecDestroy(&  soyzZg);CHKERRQ(ierr);
-
   ierr=VecDestroy(&  etaSZg);CHKERRQ(ierr);
   ierr=VecDestroy(&  etaNZg);CHKERRQ(ierr);
-  //ierr=VecDestroy(&  etavxZg);CHKERRQ(ierr);
-  //ierr=VecDestroy(&  etavyZg);CHKERRQ(ierr);
 
   ierr=VecDestroy(&  X);CHKERRQ(ierr);
 
 
   /* free dof maps*/
-  //ierr=PetscFree(vxdof[-1]);CHKERRQ(ierr);
-  //ierr=PetscFree(vydof[-1]);CHKERRQ(ierr);
   for(jy=0;jy<ng;jy++){
     vxdof[jy] --;
     vydof[jy] --;
     ierr=PetscFree(vxdof[jy]);CHKERRQ(ierr);
     ierr=PetscFree(vydof[jy]);CHKERRQ(ierr);
     ierr=PetscFree(pdof[jy]); CHKERRQ(ierr);
-    //ierr=PetscFree(vzdof[jy]);CHKERRQ(ierr);
   }
   vxdof[-1] --;
   vydof[-1] --;
@@ -641,16 +649,6 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
   ierr=PetscFree(vxdof);CHKERRQ(ierr);
   ierr=PetscFree(vydof);CHKERRQ(ierr);
   ierr=PetscFree(pdof);CHKERRQ(ierr);
-  //  ierr=PetscFree(vzdof);CHKERRQ(ierr);
-
-/*   PetscScalar rhsnorm; */
-/*   ierr = VecNorm( RHS, NORM_2, &rhsnorm); CHKERRQ(ierr); */
-/*   rhsnorm = 1.0/rhsnorm; */
-/*   ierr = VecScale( RHS, rhsnorm ); */
-/*   ierr = MatScale( LHS, rhsnorm ); */
-/*   ierr = MatScale( P, rhsnorm); */
-
-
 
   PetscLogStagePop();
   PetscFunctionReturn(ierr);
@@ -664,7 +662,10 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 PetscErrorCode impose_kinematic_constraints(){
   PetscErrorCode ierr=0;
   PetscFunctionBegin;
-  
+  /* loop over locally-owned indices */
+
+
+
 
   PetscFunctionReturn(ierr);
 }
