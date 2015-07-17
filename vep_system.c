@@ -373,7 +373,7 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 	  int l=0;
 	  for(l=0;l<27;l++) if(colidx[l]<0) vals[l] = 0.0;
 	}
-	PetscScalar Rval = -gx*(rho[jy][ix]+rho[jy+1][ix])/2.0-(soxxZ[jy+1][ix+1]-soxxZ[jy+1][ix])/(grid->xc[ix+1]-grid->xc[ix])-(soxyZ[jy+1][ix]-soxyZ[jy][ix])/(grid->y[jy+1]-grid->y[jy]);
+	PetscScalar Rval = -gx*(rho[jy][ix]+rho[jy+1][ix])/2.0;//-(soxxZ[jy+1][ix+1]-soxxZ[jy+1][ix])/(grid->xc[ix+1]-grid->xc[ix])-(soxyZ[jy+1][ix]-soxyZ[jy][ix])/(grid->y[jy+1]-grid->y[jy]);
 	
 	ierr = VecSetValue( RHS, vxdof[jyl][ixl],Rval,INSERT_VALUES);CHKERRQ(ierr);
 	ierr = MatSetValues( LHS, 1,&rowidx,27,&colidx[0],&vals[0],INSERT_VALUES);CHKERRQ(ierr);	
@@ -527,10 +527,7 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
   PetscInt nrows=0;
   PetscInt *rows;
   ierr = PetscMalloc( 3*sizeof(PetscInt)*m*n, &rows); CHKERRQ(ierr);
-  PetscScalar diagval = Kbond[0];
-  Vec constraints;
-  ierr = VecDuplicate( RHS, &constraints ); CHKERRQ(ierr);
-  ierr = VecZeroEntries(constraints); CHKERRQ(ierr);
+  const PetscScalar diagval = Kbond[0];
 
   for(jy=y;jy<y+n;jy++){
     PetscInt jyl=jy-yg;
@@ -547,43 +544,46 @@ PetscErrorCode formVEPSystem(NodalFields *nodalFields, GridData *grid, Mat LHS,M
 	    in_either( grid->x[ix-1], grid->yc[jy], options) ){	
 	  /* fix pressure */
 	  rows[nrows]= pdof[jyl][ixl];
-	  ierr = VecSetValue(constraints, pdof[jyl][ixl], 0.0, INSERT_VALUES); CHKERRQ(ierr);
+	  ierr = VecSetValue(RHS, pdof[jyl][ixl], 0.0, INSERT_VALUES); CHKERRQ(ierr);
 	  nrows++;
 	} else if( FIX_PRESSURE && ix==NX-1 && jy > 0 && grid->yc[jy] > plate_depth(grid->LX,options) && grid->yc[jy-1] <= plate_depth(grid->LX,options) ){/* pressure specified in one cell */	
 	  printf("Fixing pressure\n");
 	  rows[nrows]=pdof[jyl][ixl];
-	  ierr = VecSetValue(constraints, pdof[jyl][ixl], 0.0, INSERT_VALUES); CHKERRQ(ierr);
+	  ierr = VecSetValue(RHS, pdof[jyl][ixl], 0.0, INSERT_VALUES); CHKERRQ(ierr);
 	  nrows++;
 	}
 	/* x-stokes equation constraints */
 	if( in_slab( grid->x[ix], grid->yc[jy+1], options ) ){   //slab
 	  rows[nrows] = vxdof[jyl][ixl];	 
-	  ierr = VecSetValue(constraints, vxdof[jyl][ixl],Kbond[0]*svx,INSERT_VALUES);CHKERRQ(ierr);       
-	  nrows++;	
+	  ierr = VecSetValue(RHS, vxdof[jyl][ixl],Kbond[0]*svx,INSERT_VALUES);CHKERRQ(ierr);       
+	  nrows++;
 	}else if( in_plate( grid->x[ix], grid->yc[jy+1], options) ){ //rigid over-riding plate
 	  rows[nrows] = vxdof[jyl][ixl];
-	  ierr = VecSetValue(constraints, vxdof[jyl][ixl], 0.0 ,INSERT_VALUES);CHKERRQ(ierr);	
+	  ierr = VecSetValue(RHS, vxdof[jyl][ixl], 0.0 ,INSERT_VALUES);CHKERRQ(ierr);	
 	  nrows++;
 	}
 	/* y-stokes equation constraints */
 	if( in_slab( grid->xc[ix+1], grid->y[jy], options ) ){/* slab internal BC */
 	  rows[nrows] = vydof[jyl][ixl];	 
-	  ierr = VecSetValue(constraints, vydof[jyl][ixl], Kbond[0] * svy,INSERT_VALUES);CHKERRQ(ierr);		  
+	  ierr = VecSetValue(RHS, vydof[jyl][ixl], Kbond[0] * svy,INSERT_VALUES);CHKERRQ(ierr);		  
 	  nrows++;
 	}else if( in_plate( grid->xc[ix+1], grid->y[jy], options ) ){/* plate internal BC */
 	  rows[nrows] = vydof[jyl][ixl];
-	  ierr = VecSetValue(constraints, vydof[jyl][ixl], 0.0,INSERT_VALUES);CHKERRQ(ierr);
+	  ierr = VecSetValue(RHS, vydof[jyl][ixl], 0.0,INSERT_VALUES);CHKERRQ(ierr);
 	  nrows++;
 	}
       }/* end problem-specific constraints for kinematic wedge */
       
     }
   }
-  ierr = VecAssemblyBegin(constraints); CHKERRQ(ierr);
-  ierr = VecAssemblyEnd(constraints);   CHKERRQ(ierr);
-  ierr = MatZeroRowsColumns(LHS,nrows,rows,diagval,constraints,RHS); CHKERRQ(ierr);
+  MatSetOption(LHS,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE); CHKERRQ(ierr);
+  ierr = MatZeroRows(LHS,nrows,rows,diagval,PETSC_NULL,PETSC_NULL); CHKERRQ(ierr);
   ierr = PetscFree(rows);CHKERRQ(ierr);
-  ierr = VecDestroy(&constraints); CHKERRQ(ierr);
+  ierr = VecAssemblyBegin(RHS);
+  ierr = VecAssemblyEnd(RHS);
+
+  ierr = MatAssemblyBegin( LHS, MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  ierr = MatAssemblyEnd( LHS, MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   /* end apply dirichlet-type constraints */
 
 
