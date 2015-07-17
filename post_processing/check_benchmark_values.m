@@ -127,7 +127,7 @@ title('vx - my calc');
 subplot(2,2,2);
 imagesc(-newvy*vscale);
 subplot(2,2,3);
-imagesc(newp*vscale);
+imagesc(newp);
 subplot(2,2,4);
 imagesc(newT*vscale);
 title('Max temperature')
