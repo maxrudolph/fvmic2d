@@ -116,6 +116,7 @@ for iFile = 1:nfiles
     Twedges(iFile) = Twedge;
     T1111(iFile) = newT(11,11);
     times(iFile) = nf.elapsedTime/3.15e7/1e6;
+    
 end
 % disp(sprintf('T_11,11 = %e\n||Tslab || = %e\n||Twedge|| = %e\n',newT(11,11),Tslab,Twedge));
 

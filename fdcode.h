@@ -14,6 +14,18 @@ typedef enum { PSO_NONE, PSO_KINEMATIC_WEDGE, PSO_SANDBOX } PsoType;
 typedef enum { GRID_SUBDUCTION, GRID_REGULAR, GRID_CONSTANTINNEROUTER } GridType;
 typedef enum { IC_VANKEKEN1 } ICType;
 
+#define NMSMAX 10
+
+typedef struct MultiSelect MultiSelect;
+struct MultiSelect{
+  int npossible;
+  char possible_values[NMSMAX][80];
+  char value[80];/* string value of this mutliple selection */
+  int (*is)(MultiSelect *, char *);
+  MultiSelect *this;
+};
+
+
 /* all structure definitions go here*/
 typedef struct {
   DM da, vda; /*da is for temperature and z-velocity, vda is for vx,vy,p, tda is for texture information (3x3 symmetric matrices)*/
@@ -190,7 +202,7 @@ typedef struct {
   PetscInt    staticVelocity;
   /* problem-specific setup and constraints */
   PsoType pso;
-  ICType icType;
+  MultiSelect icType;
 } Options;
 
 typedef struct{/* a structure holding everything related to solving a linear system */

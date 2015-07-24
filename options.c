@@ -14,7 +14,7 @@
 /* maximum number of options */
 #define MAX_OPTIONS 200
 /* maximum length of string describing option */
-#define OPTSTR_LEN  30
+#define OPTSTR_LEN  200
 
 /* statically-allocated option database */
 static char option_name_db[MAX_OPTIONS][OPTSTR_LEN];
@@ -51,13 +51,13 @@ PetscErrorCode declare_option( const char *pattern, option_type opt, void *optio
     printf("declared option `%s` to '%s'\n",option_name_db[nopt],option_value_db[nopt]);
     /* parse the default value */
     nopt++;
-    parse_option( pattern, default_value );
+    parse_option( pattern, default_value , 1);
     option_default_db[i] = 1;/* indicate that default option was set */
   }
   return ierr;
 }
 
-PetscErrorCode parse_option( const char *key, const char *value ){
+PetscErrorCode parse_option( const char *key, const char *value, const int default_value ){
   /* assume input is in form of key/value pair */
   /* compare key with each entry in option database */
   int i;
@@ -132,6 +132,12 @@ PetscErrorCode parse_option( const char *key, const char *value ){
 	  *g = GRID_CONSTANTINNEROUTER;
 	  return 0; 
 	}
+      }else if( option_type_db[i] == OPTION_MULTISELECT ){
+	MultiSelect *ms = (MultiSelect *) option_ptr_db[i];
+	int initialize = default_value;/* assume multiselect is uninitialized */
+	parse_multiselect(ms,value, initialize);
+	return 0;
+
       }else{
 	SETERRQ(PETSC_COMM_SELF,101,"Unknown Option type");
       }
@@ -197,6 +203,8 @@ PetscErrorCode csvOptions(Options *options, Materials *materials){
     declare_option("fractionalEtamin",OPTION_SCALAR,&(options->fractionalEtamin),"1e-4");
     declare_option("etamax",OPTION_SCALAR,&(options->etamax),"1.0e25");
     declare_option("grainSize",OPTION_SCALAR,&(options->grainSize),"NaN");
+    declare_option("icType",OPTION_MULTISELECT,&(options->icType),"VanKeken|ConvectionGerya|ConvectionBarr");
+
     declare_option("Tperturb",OPTION_SCALAR,&(options->Tperturb),"0.0");
     declare_option("shearHeating",OPTION_INTEGER,&(options->shearHeating),"0");
     declare_option("adiabaticHeating",OPTION_INTEGER,&(options->adiabaticHeating),"0");
@@ -245,7 +253,7 @@ PetscErrorCode csvOptions(Options *options, Materials *materials){
     declare_option("materialGamma",OPTION_SPECIAL1,materials->gamma,"0,1,1e98"); 
     /* enable problem-specific choices */
     declare_option("problemSpecificOptions",OPTION_PSO,&options->pso,"none");
-
+    
     /* subduction - specific stuff */
     declare_option("slabAngle",OPTION_SCALAR, &options->slabAngle,"45");
     declare_option("slabVelocity",OPTION_SCALAR, &(options->slabVelocity),"1.0e-10");
@@ -279,7 +287,7 @@ PetscErrorCode csvOptions(Options *options, Materials *materials){
 	    ii++;
 	  }
 	  val[ii] = '\0';
-	  parse_option( key, val );
+	  parse_option( key, val, 0 );/* third argument indicates that this is not the default value */
 	}	
       }
     }
@@ -296,7 +304,6 @@ PetscErrorCode csvOptions(Options *options, Materials *materials){
   PetscFunctionReturn(ierr);
 }
 
-
 void print_options( FILE *fp ){
   /* loop over entries in the option database */
   int i;
@@ -304,4 +311,75 @@ void print_options( FILE *fp ){
     printf("%s,%s\n",option_name_db[i],option_value_db[i]);
   }
 
+}
+
+/* declare an multiple-selection option */
+/* these things need to happen:
+   1. All possible choices must be given
+   2. Some functionality needs to exist to compare options with string
+      for instance if( options->ic_type == "simple" )
+      This would be easy in c++ but 
+
+      define multiple selection option structure
+      contains a char[] with the option name
+      contains a function pointer to a comparison function
+      used like options->icType.is("simple")
+
+*/
+void parse_multiselect(MultiSelect *ms, const char *values, int initialize){
+  printf("in parse_multiselect\n");
+  if( initialize ){
+    /* input is a list of const char * containing all of the possible values */
+    ms->this=ms; /* initialize pointer to self */
+    ms->is = &multiselect_compare;
+    /* set ms->possible values */
+    /* expect possible values to be separated by | symbol */
+    int i=0;
+    int nvalues=1;
+    while( values[i] != '\0' ){
+      if( values[i] == '|') nvalues++;
+      i++;
+    }
+    printf("nvalues = %d\n",nvalues);
+    if(nvalues > NMSMAX){
+      fprintf(stderr,"Error: Too many multiselect options.\n");
+      abort();
+    }
+    int ivalue;
+    int startpos=0;
+    /* loop over keys */
+    for( ivalue=0;ivalue<nvalues;ivalue++){
+      int len=1;
+      while( values[startpos+len] != '|' && values[startpos+len] != '\0') len++;
+      strncpy( ms->possible_values[ivalue], values + startpos, len );
+      ms->possible_values[ivalue][len] = '\0';
+      startpos += len+1;
+      printf("Option %d: \"%s\"\n",ivalue,ms->possible_values[ivalue]);
+    }
+    ms->npossible=nvalues;
+    /* set ms->value */
+    strcpy(ms->value,ms->possible_values[0]);
+  }else{
+    /* setting non-default value */
+    int len = strlen(values);
+    int i=0;
+    int found=0;
+    while(i<ms->npossible){
+      if( !strcmp(values,ms->possible_values[i]) ){
+	found=1;
+	break;
+      }
+      i++;
+    }
+    if( !found ){
+      fprintf(stderr,"No matching key for \"%s\" found in option db\n",values);
+      abort();
+    }
+    strcpy(ms->value,values);
+  }
+}
+
+int multiselect_compare(MultiSelect *ms, char *value2 ){
+  char *value1 = ms->value;
+  return (strcmp(value1,value2) == 0); 
 }

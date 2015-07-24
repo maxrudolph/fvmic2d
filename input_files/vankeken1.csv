@@ -8,6 +8,7 @@ NMX,12
 NMY,12
 gridType,Subduction
 gridRatio,1.0
+icType,VanKeken
 maxMarkFactor,2.0
 minMarkers,2 
 maxMarkers,1000

@@ -11,9 +11,12 @@ PetscErrorCode initialConditions( Problem *problem ){
   Options *options = &(problem->options);
   Materials *materials = &(problem->materials);
   GridData *grid = &(problem->grid);
-
-  initialConditionsVanKeken( markerset, options, materials, grid );
-
+  if( options->icType.is( &options->icType, "VanKeken" ) ){
+    initialConditionsVanKeken( markerset, options, materials, grid );
+  }else{
+    fprintf(stderr,"No implementation for this initial condition!\n");
+    abort();
+  }
   PetscFunctionReturn(ierr);
 }
 
