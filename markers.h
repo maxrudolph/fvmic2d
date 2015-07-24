@@ -1,6 +1,7 @@
-/* header file for marker subroutines */
+#ifndef __markers_h
+#define __markers_h
 
-PetscErrorCode allocateMarkers(PetscInt, MarkerSet *,Options *);
+PetscErrorCode allocateMarkers(Problem *);
 PetscErrorCode destroyMarkers(MarkerSet *,Options *);
 void resetMarkers( MarkerSet *,Options *);
 //PetscErrorCode distributeMarkers( Markers *, PetscInt, PetscInt, PetscInt , PetscInt, PetscScalar, PetscScalar);
@@ -17,6 +18,8 @@ void printMarkersAllASCIIMatlab( MarkerSet*, PetscInt);
 PetscErrorCode exchangeMarkers( MarkerSet* , GridData *,Options *);
 PetscErrorCode checkMarkerDensity( Problem *, MarkerSet *, GridData *, Options *,PetscRandom );
 PetscErrorCode advectMarkers(MarkerSet *, GridData *, PetscScalar );
-PetscErrorCode advectMarkersRK(MarkerSet *, NodalFields *, GridData *, Options *, BoundaryValues *, PetscScalar );
+PetscErrorCode advectMarkersRK(MarkerSet *, NodalFields *, GridData *, Options *, PetscScalar );
 PetscErrorCode projectNodalFieldToMarkersS(NodalFields *, Vec, MarkerSet *, PetscScalar *, GridData *);
 void resetMarker( Marker * );
+
+#endif

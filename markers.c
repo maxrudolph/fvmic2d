@@ -12,17 +12,24 @@
 #include "benchmarkInitialConditions.h"
 //#define DEBUG
 
-PetscErrorCode allocateMarkers( PetscInt nMark, MarkerSet *markerset, Options *options){
-  PetscErrorCode ierr;
+PetscErrorCode allocateMarkers( Problem *problem ){
+  PetscErrorCode ierr=0;
   PetscFunctionBegin;
+  Options *options = &(problem->options);
+  MarkerSet *markerset = &(problem->markerset);
+  /*allocate the markers. First, calculate the right number of markers for each processor.*/
+  int x,y,z,m,n,p;
+  ierr=DMDAGetCorners(problem->grid.da,&x,&y,&z,&m,&n,&p); CHKERRQ(ierr); 
+
+  PetscInt nMark = options->maxMarkFactor*m*options->NMX*n*options->NMY;
+
   ierr = PetscMalloc( nMark*sizeof(Marker), &(markerset->markers));CHKERRQ(ierr);
   
-#ifdef DEBUG
-  printf("Allocated %d markers\n",nMark);
-#endif
-  /*initialization of fabric would go here*/
-  markerset -> maxMark = nMark;
+  markerset->maxMark = nMark;
   resetMarkers( markerset, options);
+
+  markerset->nMark = n*m*problem->options.NMX*problem->options.NMY;
+
   PetscFunctionReturn(ierr);
 }
 
@@ -1862,7 +1869,7 @@ PetscErrorCode advectMarkers(MarkerSet *markerset, GridData *grid, PetscScalar d
   PetscFunctionReturn(ierr);
 }
 
-PetscErrorCode advectMarkersRK(MarkerSet *markerset, NodalFields *nodalFields, GridData *grid, Options *options, BoundaryValues *bv, PetscScalar dt){
+PetscErrorCode advectMarkersRK(MarkerSet *markerset, NodalFields *nodalFields, GridData *grid, Options *options, PetscScalar dt){
   /* advect markers using 4th order runge-kutta method */
   PetscInt NX=grid->NX;
   PetscInt NY=grid->NY;
@@ -1987,10 +1994,10 @@ PetscErrorCode advectMarkersRK(MarkerSet *markerset, NodalFields *nodalFields, G
 	PetscScalar vxul;
 	PetscScalar vxur;
 	
-	if( vxY == -1 && bv->mechBCTop.type[0] == 0){/* kinematic bc*/
-	  vxul = 2.0*bv->mechBCTop.value[0] - vx[vxY+1][vxX];
-	  vxur = 2.0*bv->mechBCTop.value[0] - vx[vxY+1][vxX+1];
-	}else if( vxY == -1 && bv->mechBCTop.type[0] == 1){/* free slip */
+	if( vxY == -1 && options->mechBCTop.type[0] == 0){/* kinematic bc*/
+	  vxul = 2.0*options->mechBCTop.value[0] - vx[vxY+1][vxX];
+	  vxur = 2.0*options->mechBCTop.value[0] - vx[vxY+1][vxX+1];
+	}else if( vxY == -1 && options->mechBCTop.type[0] == 1){/* free slip */
 	  vxul = vx[vxY+1][vxX];
 	  vxur = vx[vxY+1][vxX+1];
 	}else{
@@ -2011,10 +2018,10 @@ PetscErrorCode advectMarkersRK(MarkerSet *markerset, NodalFields *nodalFields, G
 	PetscScalar vyur = vy[vyY][vyX+1];
 	PetscScalar vyll;// = vy[vyY+1][vyX];
 	PetscScalar vylr = vy[vyY+1][vyX+1];
-	if( !grid->xperiodic && vyX == -1 && bv->mechBCLeft.type[1] == 0){/* kinematic */
-	  vyul = 2.0*bv->mechBCLeft.value[1] - vy[vyY][vyX+1];
-	  vyll = 2.0*bv->mechBCLeft.value[1] - vy[vyY+1][vyX+1];
-	}else if( !grid->xperiodic && vyX == -1 && bv->mechBCLeft.type[1] == 1 ){/* free slip */
+	if( !grid->xperiodic && vyX == -1 && options->mechBCLeft.type[1] == 0){/* kinematic */
+	  vyul = 2.0*options->mechBCLeft.value[1] - vy[vyY][vyX+1];
+	  vyll = 2.0*options->mechBCLeft.value[1] - vy[vyY+1][vyX+1];
+	}else if( !grid->xperiodic && vyX == -1 && options->mechBCLeft.type[1] == 1 ){/* free slip */
 	  vyul = vy[vyY][vyX+1];
 	  vyll = vy[vyY+1][vyX+1];
 	} else {
@@ -2065,7 +2072,7 @@ PetscErrorCode advectMarkersRK(MarkerSet *markerset, NodalFields *nodalFields, G
 	//  if( bv->mechBCBottom.type[2] == 0 ){
 	//    vzlr = 2.0*bv->mechBCBottom.value[2] - vzur;
 	//    vzll = 2.0*bv->mechBCBottom.value[2] - vzul;
-	//  }else if(bv->mechBCBottom.type[2] == 1){
+	//  }else if(bv->nnmechBCBottom.type[2] == 1){
 	//    vzlr = vzur;
 	//    vzll = vzul;
 	//  }

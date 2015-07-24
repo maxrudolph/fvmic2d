@@ -12,6 +12,8 @@
 
 typedef enum { PSO_NONE, PSO_KINEMATIC_WEDGE, PSO_SANDBOX } PsoType;
 
+typedef enum { GRID_SUBDUCTION, GRID_REGULAR, GRID_CONSTANTINNEROUTER } GridType;
+
 /* all structure definitions go here*/
 typedef struct {
   DM da, vda; /*da is for temperature and z-velocity, vda is for vx,vy,p, tda is for texture information (3x3 symmetric matrices)*/
@@ -139,30 +141,22 @@ typedef struct{ /* data structure containing information about all markers on a 
 
 typedef struct {
   PetscInt    type[3];   /* x,y,z BC type */
-  /* 0 = prescribed velocity, 1 = free slip, 2 = periodic */
+  /* 0 = prescribed velocity, 1 = free slip, 2 = periodic, 3 = stress-free */
   PetscScalar value[3];  /* x,y,z BC Value */
 } BCInfo;
 
-typedef struct{
-  BCInfo mechBCLeft;
-  BCInfo mechBCRight;
-  BCInfo mechBCTop;
-  BCInfo mechBCBottom;
-} BoundaryValues;
-
-
 typedef struct {
-  PetscInt NX,NY;/* number of nodes in x,y,directions*/
-  PetscScalar LX,LY;/* model dimensions (x,y)*/
-  PetscInt NMX;/* number of markers per cell, x*/
-  PetscInt NMY;/* markers per cell y*/
-  PetscScalar gridRatio; /* contrast between largest and smallest cell size */
+  PetscInt NX,NY;         /* number of nodes in x,y,directions*/
+  PetscScalar LX,LY;      /* model dimensions (x,y)*/
+  PetscInt NMX;           /* number of markers per cell, x*/
+  PetscInt NMY;           /* markers per cell y*/
+  GridType gridType;
+  PetscScalar gridRatio;  /* contrast between largest and smallest cell size */
   PetscInt nTime;
   PetscInt restartStep;
   PetscScalar totalTime;
   PetscInt maxNumPlasticity;
   PetscInt plasticDelay;
-
 
   PetscScalar Tperturb; /* magnitude of initial temperature perturbation */
   PetscInt shearHeating, adiabaticHeating;/* toggle these quantities on/off */
@@ -170,11 +164,8 @@ typedef struct {
   PetscScalar gy;
   PetscScalar gx;
   PetscScalar gz;
-  /* PetscScalar vbx,vby,vbz; */
   BCInfo mechBCLeft, mechBCRight, mechBCTop, mechBCBottom;
   BCInfo thermalBCLeft, thermalBCRight, thermalBCTop, thermalBCBottom;
-
-  /* Variables related to oscillatory boundary conditions*/
 
   /* options related to solution and time step limits */
   PetscScalar fractionalEtamin; /* fractional minimum viscosity */
@@ -186,10 +177,8 @@ typedef struct {
   PetscInt saveInterval;
   PetscScalar subgridStressDiffusivity;
   PetscScalar subgridTemperatureDiffusivity;
-
   PetscScalar maxMarkFactor;
   PetscInt minMarkers, maxMarkers;
-
   PetscScalar grainSize;
 
   /* Parameters for subduction model */
@@ -201,7 +190,6 @@ typedef struct {
   PetscInt    staticVelocity;
   /* problem-specific setup and constraints */
   PsoType pso;
-
 } Options;
 
 typedef struct{/* a structure holding everything related to solving a linear system */
@@ -213,22 +201,27 @@ typedef struct{/* a structure holding everything related to solving a linear sys
   char label[80];
 } LinearSystem;
 
+typedef struct{
+  PetscInt x,y,m,n;
+  PetscInt xg,yg,mg,ng;
+  PetscMPIInt rank, size;
+} Parallel;
+
+
 typedef struct{/* a structure that holds all of the global variables */
   Options     options;
   Materials   materials;
   GridData    grid;
   NodalFields nodal_fields;
   MarkerSet   markerset;
-  /* mechanical system */
+  PetscRandom random;
   LinearSystem mech_system;
-
-  /* out-of-plane system */
-  //LinearSystem z_system;
-  /* thermal system */
   LinearSystem thermal_system;
-
   /* thermo-mechanical coupling */
   Vec          nodal_heating;
+  Parallel     parallel;
+  /* scaling factors */
+  PetscScalar Kbond,Kcont;
 } Problem;
 
 

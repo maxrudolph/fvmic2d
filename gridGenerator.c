@@ -2,6 +2,25 @@
 #include "gridSpacing.h"
 #include "gridGenerator.h"
 #include "benchmarkInitialConditions.h"
+#include "options.h"
+
+PetscErrorCode initializeGrid(GridData *grid, Options *options){
+  PetscErrorCode ierr=0;
+  PetscFunctionBegin;
+  /* choose which grid to use for this problem */
+  if( options->gridType == GRID_SUBDUCTION ){
+    ierr=initializeSubductionGrid( grid, options ); CHKERRQ(ierr);
+  }else if( options->gridType == GRID_CONSTANTINNEROUTER ){
+    initializeIrregularGridConstantInnerOuter( grid, options );CHKERRQ(ierr);
+  }else if( options->gridType == GRID_REGULAR ){
+    ierr = initializeRegularGrid( grid,  options);CHKERRQ(ierr);
+  }else{
+    fprintf(stderr,"Grid Not Implemented\n");
+  }
+  ierr = saveGrid( grid );
+  
+  PetscFunctionReturn(ierr);
+}
 
 PetscErrorCode allocateGrid(GridData *, Options *);
 

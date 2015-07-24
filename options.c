@@ -2,6 +2,7 @@
 #include "options.h"
 #include <float.h>
 #include <string.h>
+#include "io.h"
 
 #ifndef LINEWIDTH
 #define LINEWIDTH 128
@@ -119,6 +120,18 @@ PetscErrorCode parse_option( const char *key, const char *value ){
 	  *pso = PSO_SANDBOX;
 	  return 0;
 	}
+      }else if( option_type_db[i] == OPTION_GRIDTYPE ){
+	GridType *g = (GridType *) option_ptr_db[i];
+	if( !strncmp(value,"regular",7) ){
+	  *g = GRID_REGULAR;
+	  return 0;
+	}else if( !strncmp(value,"Subduction",10) ){
+	  *g = GRID_SUBDUCTION;
+	  return 0;
+	}else if( !strncmp(value,"ConstantInnerOuter",18) ){
+	  *g = GRID_CONSTANTINNEROUTER;
+	  return 0; 
+	}
       }else{
 	SETERRQ(PETSC_COMM_SELF,101,"Unknown Option type");
       }
@@ -130,22 +143,26 @@ PetscErrorCode parse_option( const char *key, const char *value ){
 }
 
 /* csvOptions initializes options from a csv (comma-separated values) file */
-PetscErrorCode csvOptions(char *csvFileName, Options *options, Materials *materials){
+PetscErrorCode csvOptions(Options *options, Materials *materials){
   PetscErrorCode ierr=0;
   PetscFunctionBegin;
   FILE *csvFile;
   //  PetscErrorCode ierr;
   char line[LINEWIDTH];
   PetscMPIInt rank,size;
-  char fn[12] = "options.csv";
+  const char default_file_name[12] = "options.csv";
   char *ifn;
-
+  char csv_file_name[80];
   PetscFunctionBegin;
-  /* for testing: */
-  if( csvFileName == NULL ){
-    ifn = &fn[0];
+
+  /* Get input filename using petsc options interface */
+  PetscBool set = PETSC_FALSE;
+  ierr=PetscOptionsGetString(PETSC_NULL,"-input_file",csv_file_name,sizeof(csv_file_name),&set);CHKERRQ(ierr);
+
+  if( set ){
+    ifn = csv_file_name;
   } else {
-    ifn = csvFileName;
+    ifn = default_file_name;
   }
 
   PetscFunctionBegin;
@@ -161,6 +178,7 @@ PetscErrorCode csvOptions(char *csvFileName, Options *options, Materials *materi
     declare_option("NX",OPTION_INTEGER, &(options->NX), "21");
     declare_option("NY",OPTION_INTEGER, &(options->NY), "20");
     declare_option("gridRatio",OPTION_SCALAR, &(options->gridRatio), "1.0");
+    declare_option("gridType",OPTION_GRIDTYPE, &(options->gridType), "regular");
     declare_option("NMX",OPTION_INTEGER, &(options->NMX), "4");
     declare_option("NMY",OPTION_INTEGER, &(options->NMY), "4");
     declare_option("saveInterval",OPTION_INTEGER,&(options->saveInterval),"100");
@@ -273,6 +291,8 @@ PetscErrorCode csvOptions(char *csvFileName, Options *options, Materials *materi
   /* send parameters to all nodes */
   MPI_Bcast( options, sizeof( Options ), MPI_BYTE, 0, PETSC_COMM_WORLD);
   MPI_Bcast( materials, sizeof( Materials ), MPI_BYTE, 0, PETSC_COMM_WORLD);
+  /* save the run info to file */
+  if( !rank )  ierr = saveRunInfo( options, materials, 0);
   PetscFunctionReturn(ierr);
 }
 

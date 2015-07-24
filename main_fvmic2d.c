@@ -1,8 +1,7 @@
-static const char help[] = "Help statement goes here\n";
+static const char help[] = "fvmic2d. For options run fvmic2d --help\nTypical usage:\npetscmpiexec -n 1 fvmic2d -input_file inputfile -options_file optionsfile\n";
 
 #include<stdio.h>
 #include<stdlib.h>
-//#include<malloc.h>
 #include "petscksp.h"
 #include "petsctime.h"
 #include "mpi.h"
@@ -13,10 +12,8 @@ static const char help[] = "Help statement goes here\n";
 #include "nodalFields.h"
 #include "markers.h"
 #include "thermalSystem.h"
-//#include "stokes_varvisc.h"
 #include "vep_system.h"
-#include "nodalStressStrain.h"/* includes shear heating too*/
-//#include "shearHeating.h"
+#include "nodalStressStrain.h"
 #include "updateMarkerStrainPressure.h"
 #include "subgridStressChanges.h"
 #include "subgridTemperatureChanges.h"
@@ -38,154 +35,46 @@ static const char help[] = "Help statement goes here\n";
 #include "initialPressureGuess.h"
 #include "pressureNullSpace.h"
 #include "post.h"
-
-#define TBREAK 9999 /* stop if temperature exceeds this number */
+#include "initialize_problem.h"
 
 #undef __FUNCT__
 #define __FUNCT__ "main"
 
 int main(int argc, char **args){
-  PetscMPIInt rank,size;
-  PetscErrorCode ierr;
+  PetscErrorCode ierr=0;
 
-  /* Problem context */
-  Problem problem;
-  problem.mech_system.pc = PETSC_NULL;/* nullify preconditioner */
+  Problem problem; /* Problem is a data structure that holds all of the other variables */
 
-  /* material properties, boundary values and options */
+  PetscInitialize(&argc,&args,NULL,help);
+  initialize_problem(&problem);
 
-  PetscRandom r;
-
-  /* BEGIN PROGRAM */
-
-  PetscInitialize(&argc,&args,NULL,help);  //INITIALIZE PETSC
-  MPI_Comm_size(PETSC_COMM_WORLD,&size);  //Get MPI rank
-  MPI_Comm_rank(PETSC_COMM_WORLD,&rank);
-  /* Print welcome message */
-  if(!rank) printf("Version Information : %s\n",MARKERCODE_HG_VERSION);
   initializeLogging();
-  /* read options from input file and distribute to all nodes */
-  printf("argc = %d\n",argc);
-  printf("%s\n",args[1]);
-  /* Get input filename */
-  {
-    PetscBool set = PETSC_FALSE;
-    char filename[80];
-    ierr = PetscOptionsGetString(PETSC_NULL,"-input_file",filename,sizeof(filename),&set);CHKERRQ(ierr);
-    if(set){
-      ierr=csvOptions(filename , &problem.options,&problem.materials);
-    }else{
-      printf("reading from default input file\n");
-      ierr=csvOptions((char *)PETSC_NULL, &problem.options,&problem.materials);
-    }
-  }
-  if(!rank) ierr = saveRunInfo( &problem.options, &problem.materials, 0);
 
-  /* initialize material properties*/
-  //setMaterialProperties( &materials);
-
-  ierr=  PetscRandomCreate(PETSC_COMM_WORLD, &r);CHKERRQ(ierr);
-  ierr = PetscRandomSetType(r,PETSCRAND48);CHKERRQ(ierr);
-  {
-    /* seed random number generator with cpu time */
-    PetscLogDouble time;
-    unsigned long seed;
-    if(!rank) ierr = PetscTime(&time); CHKERRQ(ierr);
-    ierr = MPI_Bcast( &time, sizeof(PetscLogDouble),MPI_BYTE , 0, PETSC_COMM_WORLD);
-    seed = (unsigned long) time;
-    seed = 1;
-    printf("seeding random number generator with %ld\n",seed);fflush(stdout);
-    ierr = PetscRandomSetSeed(r,seed);CHKERRQ(ierr);
-    ierr = PetscRandomSeed(r);CHKERRQ(ierr);/* seed the generator*/
-  }
-  /* note that all processes know the locations of all gridlines and all cell centers */
-  if( problem.options.gridRatio == 1.0 ){
-    //ierr = initializeRegularGrid( &problem.grid,  &problem.options);CHKERRQ(ierr);
-    ierr=initializeSubductionGrid( &problem.grid, &problem.options ); CHKERRQ(ierr);
-  }else{
-    //    ierr = initializeIrregularGridConstantInnerOuter( &problem.grid, problem.options.LX, problem.options.LY, problem.options.NX, problem.options.NY, &problem.options);CHKERRQ(ierr);
-    initializeIrregularGridConstantInnerOuter( &problem.grid, &problem.options );CHKERRQ(ierr);
-  }
-  ierr = saveGrid( &problem.grid );
-  
-  /* initialize scaling parameters*/
-  PetscInt ndof = problem.grid.NX*problem.grid.NY*3;  
-  PetscScalar Kbond = 0.0;
-  PetscScalar Kcont = 0.0;
-  /* allocate the nodal fields. The nodal fields are all global PETSc Vecs and nodalFields->da is the associated DA*/
+  ierr = csvOptions( &problem.options, &problem.materials ); CHKERRQ(ierr);
+  ierr = initializeGrid( &problem.grid, &problem.options ); CHKERRQ(ierr);
   ierr = initializeNodalFields( &problem.nodal_fields, &problem.grid, &problem.options);CHKERRQ(ierr);
-  {
-    /*allocate the markers. First, calculate the right number of markers for each processor.*/
-    int x,y,z,m,n,p;
-    ierr=DMDAGetCorners(problem.grid.da,&x,&y,&z,&m,&n,&p); CHKERRQ(ierr);
-    //printf("[%d], %d %d %d %d %d %d\n",rank,x,y,z,m,n,p);CHKERRQ(ierr);
-    ierr=allocateMarkers( (PetscInt)(problem.options.maxMarkFactor*m*problem.options.NMX*n*problem.options.NMY), &problem.markerset, &problem.options);CHKERRQ(ierr); 
-    problem.markerset.nMark = n*m*problem.options.NMX*problem.options.NMY;
-  }
-  /* set up local to global mapping*/
-  ISLocalToGlobalMapping ltogm;
-  ierr=DMGetLocalToGlobalMapping(problem.grid.da,&ltogm);CHKERRQ(ierr);
-  
-  /* initialize LHS,LHSz matrix and RHS,RHSz matrix for mechanical problem */
-  ierr=DMCreateMatrix(problem.grid.vda,&problem.mech_system.lhs);CHKERRQ(ierr);
-  ierr = PetscObjectSetName( (PetscObject) problem.mech_system.lhs,"CmechLHS");
-  ierr = createPressureNullSpace( &problem.grid, &problem.mech_system.ns );CHKERRQ(ierr); 
+  ierr = allocateMarkers( &problem ); CHKERRQ(ierr);
+  ierr = initialize_matrices( &problem ); CHKERRQ(ierr);
+    
+  PetscScalar displacementdt;
+  PetscScalar elapsedTime=0.0;
 
-  {
-    PetscInt m,n; 
-    ierr=MatGetSize(problem.mech_system.lhs,&m,&n);CHKERRQ(ierr); 
-    if(!rank) printf("LHS is %d by %d, ndof=%d\n",m,n,ndof); 
-    ierr=MatGetOwnershipRange(problem.mech_system.lhs,&m,&n);CHKERRQ(ierr);
-    printf("[%d] has rows %d-%d\n",rank,m,n);CHKERRQ(ierr);
-  }
+  /* reset (zero out) all marker properties*/
+  resetNodalFields( &problem.nodal_fields, &problem.grid, &problem.options);
 
-  ierr=DMGetGlobalVector(problem.grid.vda,&problem.mech_system.rhs);CHKERRQ(ierr);
-  ierr = PetscObjectSetName( (PetscObject) problem.mech_system.rhs,"CmechRHS"); 
+  ierr=distributeMarkersUniformInDomain( &problem.markerset, &problem.options, &problem.grid); CHKERRQ(ierr);
 
-  /* initialize LHS matrix, RHS Vec and nodalHeating Vec for thermal problem*/
-  ierr=DMGetGlobalVector(problem.grid.da,&problem.thermal_system.rhs);CHKERRQ(ierr);
-  ierr=PetscObjectSetName( (PetscObject) problem.thermal_system.rhs,"CthermalRHS");
-  ierr=DMCreateMatrix(problem.grid.da,&problem.thermal_system.lhs);CHKERRQ(ierr);
-  ierr=PetscObjectSetName( (PetscObject) problem.thermal_system.lhs,"CthermalLHS");
-  ierr=VecDuplicate(problem.thermal_system.rhs,&problem.nodal_heating);CHKERRQ(ierr);
-  ierr=PetscObjectSetName( (PetscObject) problem.nodal_heating,"nodalHeating");
-  {
-    PetscBool dop = PETSC_FALSE;
-    ierr = PetscOptionsGetBool(PETSC_NULL,"-stokes_ksp_build_pc_diag",&dop,0);
-    if( dop ){
-      printf("[%d] Allocating Preconditioner\n",rank);
-      /*       ierr=MatDuplicate( LHS, MAT_DO_NOT_COPY_VALUES ,&P ); CHKERRQ(ierr); */
-      ierr = DMCreateMatrix(problem.grid.vda, &problem.mech_system.pc); CHKERRQ(ierr);
-      ierr = PetscObjectSetName( (PetscObject) problem.mech_system.pc, "MechanicalPreconditioner");
-    }
-  }
-
-  ierr = VecDuplicate(problem.mech_system.rhs, &problem.mech_system.solution);  
-  ierr = VecZeroEntries(problem.mech_system.solution);CHKERRQ(ierr);
-
-  PetscInt iMonte=0;
-  
-    PetscScalar displacementdt;/* this is the displacement timestep*/
-    PetscScalar elapsedTime=0.0;
-    printf("beginning MonteCarlo run %d\n",iMonte);
-    /* randomize parameters*/
-
-    /* reset (zero out) all marker properties*/
-    resetMarkers( &problem.markerset, &problem.options);
-    resetNodalFields( &problem.nodal_fields, &problem.grid, &problem.options);
-
-    ierr=distributeMarkersUniformInDomain( &problem.markerset, &problem.options, &problem.grid); CHKERRQ(ierr);
-
-    PetscInt m;
-    /* INITIAL CONDITIONS */
-    ierr = initialConditionsVanKeken( &problem.markerset, &problem.options, &problem.materials, &problem.grid);CHKERRQ(ierr);
+  PetscInt m;
+  /* INITIAL CONDITIONS */
+  ierr = initialConditions( &problem ); CHKERRQ(ierr);
+  //  ierr = initialConditionsVanKeken( &problem.markerset, &problem.options, &problem.materials, &problem.grid);CHKERRQ(ierr);
    
     /* check to see if we are restarting from a saved state */
     PetscInt iTime0=0;/* initial timestep */
     if( problem.options.restartStep ){
       /* destroy current markers */
       destroyMarkers( &problem.markerset ,&problem.options);
-      restartFromMarkers( &problem.markerset, &problem.grid, &problem.materials, &problem.options, iMonte, problem.options.restartStep, &elapsedTime);
+      restartFromMarkers( &problem, iMonte, problem.options.restartStep, &elapsedTime);
       //      markers = &(problem.markerset.markers[0]);
       iTime0 = problem.options.restartStep + 1;
     }
@@ -229,11 +118,11 @@ int main(int argc, char **args){
 	PetscScalar memuses;
 	PetscScalar memuset;
 	PetscMemoryGetCurrentUsage( &memuse );
-	//PetscSynchronizedPrintf(PETSC_COMM_WORLD,"[%d] memory use %e \n",rank,memuse);
+	//PetscSynchronizedPrintf(PETSC_COMM_WORLD,"[%d] memory use %e \n",problem.parallel.rank,memuse);
 	PetscSynchronizedFlush(PETSC_COMM_WORLD,stdout);
 	memuses = (PetscScalar) memuse;
 	MPI_Allreduce( &memuses, &memuset, 1, MPI_DOUBLE, MPI_SUM, PETSC_COMM_WORLD);
-	//if(!rank) PetscPrintf(PETSC_COMM_SELF,"Global memory use %e\n",memuset); 
+	//if(!problem.parallel.rank) PetscPrintf(PETSC_COMM_SELF,"Global memory use %e\n",memuset); 
 	
       }
       isYielding = 1;
@@ -246,7 +135,7 @@ int main(int argc, char **args){
       findMarkerCells( &problem.markerset, &problem.grid);
       /* check marker density, add markers if necessary.*/
 
-      ierr = checkMarkerDensity(&problem, &problem.markerset, &problem.grid, &problem.options, r);
+      ierr = checkMarkerDensity(&problem, &problem.markerset, &problem.grid, &problem.options, problem.random);
 
       findMarkerCells( &problem.markerset, &problem.grid);
       /* calculate rhodot for markers*/
@@ -266,23 +155,6 @@ int main(int argc, char **args){
       /* project all marker fields onto nodes */
       ierr = projectMarkersNodesAll2(&problem.markerset, &problem.grid, &problem.nodal_fields, &problem.materials,&problem.options);
 
-      /* check for overheating (melting). abort if Tmelt exceeded*/
-      { /* check for exceedence of maximum temperature */
-	PetscScalar maxT = 0.0;
-	Marker *markers = problem.markerset.markers;
-	for(m=0;m<problem.markerset.nMark;m++){
-	  if(markers[m].T > maxT) maxT = markers[m].T;
-	}
-	PetscScalar maxTg;
-	MPI_Allreduce( &maxT, &maxTg, 1, MPI_DOUBLE, MPI_MAX,PETSC_COMM_WORLD);
-	if( maxTg > TBREAK){
-	  printf("Maximum temperature exceeded. Ending Montecarlo step\n");
-	  //saveGriddedMarkersBinary( &markers, &problem.grid, 5*problem.grid.NX, 5*problem.grid.NY,iMonte,iTime);
-	  goto nextMonte;
-	}
-      }
-      /* update boundary conditions, which can vary in time */
-
       displacementdt = dt;
       PetscInt converged=0;
       while( (iTime==0 && iPlastic < 1) || ((isYielding || !converged) && iPlastic < problem.options.maxNumPlasticity)){/*begin plastic iteration loop*/
@@ -300,10 +172,10 @@ int main(int argc, char **args){
 	/* zero out LHS, RHS*/
 	if( !problem.options.staticVelocity || iTime == iTime0 ){	
 	  ierr = VecZeroEntries( problem.mech_system.rhs);CHKERRQ(ierr);	
-	  ierr=formVEPSystem( &problem.nodal_fields, &problem.grid, problem.mech_system.lhs, problem.mech_system.pc, problem.mech_system.rhs, &Kbond, &Kcont, problem.options.gy, displacementdt, &problem.options);
+	  ierr=formVEPSystem( &problem.nodal_fields, &problem.grid, problem.mech_system.lhs, problem.mech_system.pc, problem.mech_system.rhs, &problem.Kbond, &problem.Kcont, problem.options.gy, displacementdt, &problem.options);
 	  
 	  /* scale the pressure guess */
-	  ierr = VecStrideScale( problem.mech_system.solution, DOF_P, 1.0/Kcont );CHKERRQ(ierr);	  
+	  ierr = VecStrideScale( problem.mech_system.solution, DOF_P, 1.0/problem.Kcont );CHKERRQ(ierr);	  
 	  ierr = kspLinearSolve(problem.mech_system.lhs, problem.mech_system.pc,problem.mech_system.rhs, problem.mech_system.solution,"stokes_",problem.mech_system.ns);	  
 	  ierr = VecCopy( problem.mech_system.solution, steadySolution ); CHKERRQ(ierr);
 	}else{
@@ -311,7 +183,7 @@ int main(int argc, char **args){
 	}
 
 	PetscInt fn=0;/* flag for nan in solution*/
-	ierr= retrieveSolutions( &problem.grid, &problem.nodal_fields, problem.mech_system.solution, Kcont, &fn);
+	ierr= retrieveSolutions( &problem.grid, &problem.nodal_fields, problem.mech_system.solution, problem.Kcont, &fn);
 
 
 	if(fn) {
@@ -345,12 +217,12 @@ int main(int argc, char **args){
 	    converged = 0;
 	  }
 	}	
-	if(!rank) printf("Timestep %d iteration %d, displacementdt = %e, yielding %d, residual %e, converged = %d\n",iTime,iPlastic,displacementdt,isYielding,getGlobalStrainRateResidual( iPlastic ),converged);
+	if(!problem.parallel.rank) printf("Timestep %d iteration %d, displacementdt = %e, yielding %d, residual %e, converged = %d\n",iTime,iPlastic,displacementdt,isYielding,getGlobalStrainRateResidual( iPlastic ),converged);
 	
 	/* update marker effective viscosity to match marker strain reate*/
 	iPlastic++;
       }/* end plasticity loop*/
-      if(!rank) printf("Done with plasticity loops.\n");
+      if(!problem.parallel.rank) printf("Done with plasticity loops.\n");
       /* set thermal problem timestep to displacement dt*/
       dt = displacementdt;
 
@@ -390,9 +262,9 @@ int main(int argc, char **args){
       ierr = VecAXPY(dT,-1.0,problem.nodal_fields.lastT);CHKERRQ(ierr);
       PetscScalar dTmax;/* max abs change in temperature*/
       ierr = VecNorm(dT,NORM_INFINITY,&dTmax);CHKERRQ(ierr);
-      if(!rank) printf("Maximum temperature change %le\n",dTmax);
+      if(!problem.parallel.rank) printf("Maximum temperature change %le\n",dTmax);
       if(dTmax > problem.options.maxTempChange){
-	printf("[%d] temperature change too large, limiting timestep from %e to %e\n",rank,dt,dt*problem.options.maxTempChange/dTmax);
+	printf("[%d] temperature change too large, limiting timestep from %e to %e\n",problem.parallel.rank,dt,dt*problem.options.maxTempChange/dTmax);
 	dt = dt*problem.options.maxTempChange/dTmax;
 	/* repeat temperature solution */
 
@@ -413,7 +285,7 @@ int main(int argc, char **args){
       PetscScalar vrms;
       ierr = nusseltNumber( &(problem.grid), &(problem.options), thermalS, &Nu );CHKERRQ(ierr);
       ierr = rmsVelocity( &problem.grid, &problem.nodal_fields, &vrms );CHKERRQ(ierr);
-      if(!rank) printf("Nusselt Number %e, vrms=%e\n",Nu,vrms);
+      if(!problem.parallel.rank) printf("Nusselt Number %e, vrms=%e\n",Nu,vrms);
       
       ierr = VecDestroy(&thermalS); /* free the thermal solution vector */
                
@@ -437,7 +309,7 @@ int main(int argc, char **args){
 	    if( fabs(markers[mm].s.T11) > sxxmax) sxxmax = fabs(markers[mm].s.T11);
 	  }
 	}
-	printf("[%d] sxx max = %e\n",rank,sxxmax);
+	printf("[%d] sxx max = %e\n",problem.parallel.rank,sxxmax);
 
       }
 
@@ -479,7 +351,7 @@ int main(int argc, char **args){
   ierr = destroyNodalFields(&problem.nodal_fields, &problem.grid);CHKERRQ(ierr);
   ierr=  destroyMarkers( &problem.markerset,&problem.options );CHKERRQ(ierr);
 
-  ierr = PetscRandomDestroy(& r );CHKERRQ(ierr);
+  ierr = PetscRandomDestroy(& problem.random );CHKERRQ(ierr);
   finalizeLogging();
   ierr = PetscFinalize();
 }

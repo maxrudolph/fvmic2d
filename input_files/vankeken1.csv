@@ -6,6 +6,7 @@ NX,221
 NY,201			
 NMX,12
 NMY,12
+gridType,Subduction
 gridRatio,1.0
 maxMarkFactor,2.0
 minMarkers,2 

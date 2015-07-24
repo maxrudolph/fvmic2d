@@ -3,7 +3,7 @@
 #include "profile.h"
 /* calculate stress and strain at nodes*/
 
-PetscErrorCode nodalStressStrain( GridData *grid, NodalFields *nodalFields, Options *options, BoundaryValues *bv, PetscScalar dt, Vec nodalHeating, PetscScalar gy){
+PetscErrorCode nodalStressStrain( GridData *grid, NodalFields *nodalFields, Options *options, PetscScalar dt, Vec nodalHeating, PetscScalar gy){
   PetscInt NX = grid->NX;
   PetscInt NY = grid->NY;
   //PetscScalar dx = grid->dx;
@@ -161,9 +161,9 @@ PetscErrorCode nodalStressStrain( GridData *grid, NodalFields *nodalFields, Opti
       //      PetscScalar vzul, vzur, vzll, vzlr; /* z values depend on whether we are at a boundary */
 
       if(!grid->xperiodic && ix == 0){/* if grid is periodic in x-direction, do not worry about left boundary */
-	if( bv->mechBCLeft.type[1] == 0 ){/* prescribed velocity */
-	  vym = 2.0*bv->mechBCLeft.value[1] - vy[jy][ix];
-	}else if(bv->mechBCLeft.type[1] == 1){/* free slip */
+	if( options->mechBCLeft.type[1] == 0 ){/* prescribed velocity */
+	  vym = 2.0*options->mechBCLeft.value[1] - vy[jy][ix];
+	}else if(options->mechBCLeft.type[1] == 1){/* free slip */
 	  vym = vy[jy][ix];
 	}	
       } else {
@@ -172,9 +172,9 @@ PetscErrorCode nodalStressStrain( GridData *grid, NodalFields *nodalFields, Opti
       vyp = vy[jy][ix];
 
       if(jy == 0){
-	if( bv->mechBCTop.type[0] == 0){/* prescribed velocity */
-	  vxm = 2.0*bv->mechBCTop.value[0] - vx[jy][ix];
-	}else if(bv->mechBCTop.type[0] == 1){
+	if( options->mechBCTop.type[0] == 0){/* prescribed velocity */
+	  vxm = 2.0*options->mechBCTop.value[0] - vx[jy][ix];
+	}else if(options->mechBCTop.type[0] == 1){
 	  vxm = vx[jy][ix];
 	}        
       }else{
@@ -185,10 +185,10 @@ PetscErrorCode nodalStressStrain( GridData *grid, NodalFields *nodalFields, Opti
       if( ix == NX-1 || jy == NY-1){
 	if( ix == NX-1 && jy < NY-1 ){
 	  /* implicit ghost z-velocity nodes */
-	  if( bv->mechBCRight.type[2] == 0){	  
-	    //vzur = 2.0*bv->mechBCRight.value[2]-vz[jy][ix];
-	    //vzlr = 2.0*bv->mechBCRight.value[2]-vz[jy+1][ix];
-	  } else if( bv->mechBCRight.type[2] == 1){
+	  if( options->mechBCRight.type[2] == 0){	  
+	    //vzur = 2.0*options->mechBCRight.value[2]-vz[jy][ix];
+	    //vzlr = 2.0*options->mechBCRight.value[2]-vz[jy+1][ix];
+	  } else if( options->mechBCRight.type[2] == 1){
 	    //vzur = vz[jy][ix];
 	    //vzlr = vz[jy+1][ix];
 	  }
@@ -197,7 +197,7 @@ PetscErrorCode nodalStressStrain( GridData *grid, NodalFields *nodalFields, Opti
 	}
 	if( jy == NY-1 ){
 	  if( ix < NX-1 ){
-	    if(bv->mechBCBottom.type[2] == 1){
+	    if(options->mechBCBottom.type[2] == 1){
 	      //vzll = vz[jy][ix];
 	      //vzlr = vz[jy][ix+1];
 	    }
@@ -205,12 +205,12 @@ PetscErrorCode nodalStressStrain( GridData *grid, NodalFields *nodalFields, Opti
 	    //vzur = vz[jy][ix+1];
 	  }else{
 	    /* special case for lower right corner */
-	    if(bv->mechBCRight.type[2] == 0){/* prescribed velocity */
-	      //vzur = 2.0*bv->mechBCRight.value[2]-vz[jy][ix];
-	    }else if(bv->mechBCRight.type[2] == 1){
+	    if(options->mechBCRight.type[2] == 0){/* prescribed velocity */
+	      //vzur = 2.0*options->mechBCRight.value[2]-vz[jy][ix];
+	    }else if(options->mechBCRight.type[2] == 1){
 	      //vzur = vz[jy][ix];
 	    }
-	    if( bv->mechBCBottom.type[2] == 1){
+	    if( options->mechBCBottom.type[2] == 1){
 	      //vzlr = vzur; /* this imposes free slip on lower boundary */
 	      //vzll = vz[jy][ix];
 	    }

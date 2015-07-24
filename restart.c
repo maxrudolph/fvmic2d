@@ -5,7 +5,12 @@
 
 /* This is a subroutine to restart the simulation from a saved state */
 
-PetscErrorCode restartFromMarkers( MarkerSet *markerset, GridData *grid, Materials *materials, Options *options, PetscInt iMonte, PetscInt iTime, PetscScalar *elapsedTime){
+PetscErrorCode restartFromMarkers( Problem *problem, PetscInt iMonte, PetscInt iTime, PetscScalar *elapsedTime){
+  MarkerSet *markerset = &(problem->markerset);
+  GridData *grid = &(problem->grid);
+  Materials *materials = &(problem->materials);
+  Options *options = &(problem->options);
+  
   /* restart the simulation by reading markers from some other timestep. Distribute to correct processors */
 
   PetscMPIInt rank,size;
@@ -43,7 +48,7 @@ PetscErrorCode restartFromMarkers( MarkerSet *markerset, GridData *grid, Materia
   ierr=MPI_Bcast ( elapsedTime, 1, MPI_DOUBLE, 0, PETSC_COMM_WORLD );/* let everyone know what time it is */
   printf("restart: cpu %d restoring %d markers\n",rank,nMarks[rank]);
 
-  ierr=allocateMarkers( (PetscInt)(((PetscScalar) nMarks[rank])*options->maxMarkFactor) , markerset, PETSC_NULL);/* allocate markers with extra space specified by maxMarkFactor */
+  ierr=allocateMarkers( problem );/* allocate markers with extra space specified by maxMarkFactor */
 
   Marker *markers = markerset -> markers;
 

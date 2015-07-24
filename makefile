@@ -1,5 +1,5 @@
 #Makefile for FEM code
-MARKERCODE_HG_VERSION = `hg tip | grep changeset | cut -d : -f 2,3 | tr -d \ `
+MARKERCODE_HG_VERSION = `git log --pretty=format:'%h' -n 1`
 #PETSC_DIR	= /usr/local/petsc-2.3.3-p13
 #PETSC_ARCH	= linux-gnu-c-debug
 #CC = gcc-4.2
@@ -53,10 +53,17 @@ main_subduction.o : main_subduction.c version.h
 	$(CC) $(CFLAGS) -c $^ $(PETSC_CC_INCLUDES)
 
 
-subduction:  post.o main_subduction.o nodalFields.o gridGenerator.o gridSpacing.o options.o  markers.o io.o kspLinearSolve.o vep_system.o retrieveSolutions.o limitTimestep.o nodalStressStrain.o updateMarkerStrainPressure.o subgridStressChanges.o updateMarkerStress.o formThermalSystem.o subgridTemperatureChanges.o updateBCs.o adiabaticHeating.o enforceThermalBC.o restart.o viscosity.o benchmarkInitialConditions.o residual.o profile.o markerProjection.o initialPressureGuess.o pressureNullSpace.o
+subduction:  post.o main_subduction.o nodalFields.o gridGenerator.o gridSpacing.o options.o  markers.o io.o kspLinearSolve.o vep_system.o retrieveSolutions.o limitTimestep.o nodalStressStrain.o updateMarkerStrainPressure.o subgridStressChanges.o updateMarkerStress.o formThermalSystem.o subgridTemperatureChanges.o adiabaticHeating.o enforceThermalBC.o restart.o viscosity.o benchmarkInitialConditions.o residual.o profile.o markerProjection.o initialPressureGuess.o pressureNullSpace.o
 	-${CLINKER} $(CFLAGS) -o subduction $^ ${PETSC_LIB}
 	${RM} main.o
 
+fvmic2d.o : main_fvmic2d.o version.h
+	$(CC) $(CFLAGS) -c $^ $(PETSC_CC_INCLUDES)
+
+
+fvmic2d:   post.o main_fvmic2d.o nodalFields.o gridGenerator.o gridSpacing.o options.o  markers.o io.o kspLinearSolve.o vep_system.o retrieveSolutions.o limitTimestep.o nodalStressStrain.o updateMarkerStrainPressure.o subgridStressChanges.o updateMarkerStress.o formThermalSystem.o subgridTemperatureChanges.o adiabaticHeating.o enforceThermalBC.o restart.o viscosity.o benchmarkInitialConditions.o residual.o profile.o markerProjection.o initialPressureGuess.o pressureNullSpace.o initialize_problem.o
+	-${CLINKER} $(CFLAGS) -o fvmic2d $^ ${PETSC_LIB}
+	${RM} main.o
 
 #To compile with texture enabled, run:
 #make clean; make CFLAGS="-DTEXTURE" testMM

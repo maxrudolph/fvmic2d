@@ -1,4 +1,4 @@
-PetscErrorCode restartFromMarkers( MarkerSet *,GridData *,Materials *,Options *, PetscInt , PetscInt , PetscScalar *);
+PetscErrorCode restartFromMarkers( Problem * , PetscInt , PetscInt , PetscScalar *);
 PetscErrorCode restartFromMarkersNoTexture( MarkerSet *,GridData *,Materials *, Options *, PetscInt , PetscInt , PetscScalar *);
 PetscErrorCode  loadTextureBinary(MarkerSet *, Materials *,PetscInt *, PetscInt, PetscInt);
 
