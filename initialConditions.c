@@ -1,9 +1,21 @@
+#include "petscksp.h"
 #include "fdcode.h"
-#include "benchmarkInitialConditions.h"
+#include "initialConditions.h"
 #include "viscosity.h"
 #include "math.h"
 #include "markers.h"
 
+PetscErrorCode initialConditions( Problem *problem ){
+  PetscErrorCode ierr =0;
+  MarkerSet *markerset = &(problem->markerset);
+  Options *options = &(problem->options);
+  Materials *materials = &(problem->materials);
+  GridData *grid = &(problem->grid);
+
+  initialConditionsVanKeken( markerset, options, materials, grid );
+
+  PetscFunctionReturn(ierr);
+}
 
 PetscErrorCode initialConditionsVanKeken( MarkerSet *markerset, Options *options, Materials *materials, GridData *grid){
   PetscErrorCode ierr=0;

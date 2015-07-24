@@ -9,7 +9,7 @@
 #include "math.h"
 #include "profile.h"
 #include "updateDamageViscosity.h"
-#include "benchmarkInitialConditions.h"
+#include "initialConditions.h"
 //#define DEBUG
 
 PetscErrorCode allocateMarkers( Problem *problem ){

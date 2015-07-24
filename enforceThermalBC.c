@@ -1,6 +1,6 @@
 #include "fdcode.h"
 #include "thermalSystem.h"
-#include "benchmarkInitialConditions.h"
+#include "initialConditions.h"
 
 PetscErrorCode enforceThermalBCs1( GridData *grid, Options *options, NodalFields *nodalFields){
   PetscErrorCode ierr;

@@ -1,6 +1,6 @@
 #include "fdcode.h"
 #include "thermalSystem.h"
-#include "benchmarkInitialConditions.h"
+#include "initialConditions.h"
 #include "profile.h"
 
 PetscErrorCode formThermalSystem(Problem *problem, GridData *grid, NodalFields *nodalFields, Mat thermalLHS, Vec thermalRHS, PetscScalar dt, Options *options, PetscInt doSteady){

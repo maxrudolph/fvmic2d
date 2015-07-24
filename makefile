@@ -53,7 +53,7 @@ main_subduction.o : main_subduction.c version.h
 	$(CC) $(CFLAGS) -c $^ $(PETSC_CC_INCLUDES)
 
 
-subduction:  post.o main_subduction.o nodalFields.o gridGenerator.o gridSpacing.o options.o  markers.o io.o kspLinearSolve.o vep_system.o retrieveSolutions.o limitTimestep.o nodalStressStrain.o updateMarkerStrainPressure.o subgridStressChanges.o updateMarkerStress.o formThermalSystem.o subgridTemperatureChanges.o adiabaticHeating.o enforceThermalBC.o restart.o viscosity.o benchmarkInitialConditions.o residual.o profile.o markerProjection.o initialPressureGuess.o pressureNullSpace.o
+subduction:  post.o main_subduction.o nodalFields.o gridGenerator.o gridSpacing.o options.o  markers.o io.o kspLinearSolve.o vep_system.o retrieveSolutions.o limitTimestep.o nodalStressStrain.o updateMarkerStrainPressure.o subgridStressChanges.o updateMarkerStress.o formThermalSystem.o subgridTemperatureChanges.o adiabaticHeating.o enforceThermalBC.o restart.o viscosity.o initialConditions.o residual.o profile.o markerProjection.o initialPressureGuess.o pressureNullSpace.o
 	-${CLINKER} $(CFLAGS) -o subduction $^ ${PETSC_LIB}
 	${RM} main.o
 
@@ -61,7 +61,7 @@ fvmic2d.o : main_fvmic2d.o version.h
 	$(CC) $(CFLAGS) -c $^ $(PETSC_CC_INCLUDES)
 
 
-fvmic2d:   post.o main_fvmic2d.o nodalFields.o gridGenerator.o gridSpacing.o options.o  markers.o io.o kspLinearSolve.o vep_system.o retrieveSolutions.o limitTimestep.o nodalStressStrain.o updateMarkerStrainPressure.o subgridStressChanges.o updateMarkerStress.o formThermalSystem.o subgridTemperatureChanges.o adiabaticHeating.o enforceThermalBC.o restart.o viscosity.o benchmarkInitialConditions.o residual.o profile.o markerProjection.o initialPressureGuess.o pressureNullSpace.o initialize_problem.o
+fvmic2d:   post.o main_fvmic2d.o nodalFields.o gridGenerator.o gridSpacing.o options.o  markers.o io.o kspLinearSolve.o vep_system.o retrieveSolutions.o limitTimestep.o nodalStressStrain.o updateMarkerStrainPressure.o subgridStressChanges.o updateMarkerStress.o formThermalSystem.o subgridTemperatureChanges.o adiabaticHeating.o enforceThermalBC.o restart.o viscosity.o initialConditions.o residual.o profile.o markerProjection.o initialPressureGuess.o pressureNullSpace.o initialize_problem.o
 	-${CLINKER} $(CFLAGS) -o fvmic2d $^ ${PETSC_LIB}
 	${RM} main.o
 

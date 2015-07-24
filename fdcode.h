@@ -11,8 +11,8 @@
 #define MAXMAT 8 /* maximum number of materials allowed*/
 
 typedef enum { PSO_NONE, PSO_KINEMATIC_WEDGE, PSO_SANDBOX } PsoType;
-
 typedef enum { GRID_SUBDUCTION, GRID_REGULAR, GRID_CONSTANTINNEROUTER } GridType;
+typedef enum { IC_VANKEKEN1 } ICType;
 
 /* all structure definitions go here*/
 typedef struct {
@@ -190,6 +190,7 @@ typedef struct {
   PetscInt    staticVelocity;
   /* problem-specific setup and constraints */
   PsoType pso;
+  ICType icType;
 } Options;
 
 typedef struct{/* a structure holding everything related to solving a linear system */

@@ -1,7 +1,7 @@
 #include "fdcode.h"
 #include "gridSpacing.h"
 #include "gridGenerator.h"
-#include "benchmarkInitialConditions.h"
+#include "initialConditions.h"
 #include "options.h"
 
 PetscErrorCode initializeGrid(GridData *grid, Options *options){

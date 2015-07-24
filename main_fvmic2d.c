@@ -27,7 +27,7 @@ static const char help[] = "fvmic2d. For options run fvmic2d --help\nTypical usa
 #include "adiabaticHeating.h"
 #include "viscosity.h"
 #include "restart.h"
-#include "benchmarkInitialConditions.h"
+#include "initialConditions.h"
 #include "residual.h"
 #include "version.h"
 #include "profile.h"
@@ -67,14 +67,13 @@ int main(int argc, char **args){
   PetscInt m;
   /* INITIAL CONDITIONS */
   ierr = initialConditions( &problem ); CHKERRQ(ierr);
-  //  ierr = initialConditionsVanKeken( &problem.markerset, &problem.options, &problem.materials, &problem.grid);CHKERRQ(ierr);
    
     /* check to see if we are restarting from a saved state */
     PetscInt iTime0=0;/* initial timestep */
     if( problem.options.restartStep ){
       /* destroy current markers */
       destroyMarkers( &problem.markerset ,&problem.options);
-      restartFromMarkers( &problem, iMonte, problem.options.restartStep, &elapsedTime);
+      restartFromMarkers( &problem, 0, problem.options.restartStep, &elapsedTime);
       //      markers = &(problem.markerset.markers[0]);
       iTime0 = problem.options.restartStep + 1;
     }
@@ -95,7 +94,7 @@ int main(int argc, char **args){
  
     findMarkerCells( &problem.markerset, &problem.grid);
     
-    saveNodalFields( &problem.nodal_fields, &problem.grid, iMonte, -5,0.0,0.0,0);    
+    saveNodalFields( &problem.nodal_fields, &problem.grid, 0, -5,0.0,0.0,0);    
     /* save markers for debugging*/
     ierr=saveMarkersBinary( &problem.markerset, -5,-5,0.0);
 
@@ -189,10 +188,10 @@ int main(int argc, char **args){
 	if(fn) {
 	  ierr=PetscPrintf(PETSC_COMM_WORLD,"Found nan in solution\n");CHKERRQ(ierr);
 
-	  saveNodalFields( &problem.nodal_fields, &problem.grid, iMonte,iTime,displacementdt,elapsedTime,0);
+	  saveNodalFields( &problem.nodal_fields, &problem.grid, 0,iTime,displacementdt,elapsedTime,0);
 
-	  /* 	  saveGriddedMarkersBinary( &markers, &problem.grid, 5*problem.grid.NX, 5*problem.grid.NY,iMonte,iTime); */
-	  ierr=saveMarkersBinary( &problem.markerset, iMonte,-iTime,elapsedTime); 
+	  /* 	  saveGriddedMarkersBinary( &markers, &problem.grid, 5*problem.grid.NX, 5*problem.grid.NY,0,iTime); */
+	  ierr=saveMarkersBinary( &problem.markerset, 0,-iTime,elapsedTime); 
 
 	  goto abort;
 
@@ -201,7 +200,7 @@ int main(int argc, char **args){
 	ierr=nodalStressStrain(&problem.grid, &problem.nodal_fields,&problem.options, displacementdt, problem.nodal_heating, problem.options.gy);CHKERRQ(ierr);
 	/* save nodalFields for debugging*/
 
-	/*ierr=saveNodalFieldsASCIIMatlab( &problem.nodal_fields, &grid,iMonte,iTime, dt, elapsedTime);*/ /* for debugging*/
+	/*ierr=saveNodalFieldsASCIIMatlab( &problem.nodal_fields, &grid,0,iTime, dt, elapsedTime);*/ /* for debugging*/
 
 	/* compute marker strain and pressure*/
 	ierr=updateMarkerStrainPressure( &problem.grid,&problem.nodal_fields, &problem.markerset, &problem.materials, &problem.options, displacementdt);
@@ -291,9 +290,9 @@ int main(int argc, char **args){
                
       /* save solution */
       if(!(iTime % (problem.options.saveInterval))) {
-	ierr=saveNodalFields( &problem.nodal_fields, &problem.grid,iMonte,iTime, dt, elapsedTime,0);
+	ierr=saveNodalFields( &problem.nodal_fields, &problem.grid,0,iTime, dt, elapsedTime,0);
 	if( !(iTime % (problem.options.saveInterval*10))) {
-	  ierr=saveMarkersBinary( &problem.markerset, iMonte,iTime,elapsedTime);
+	  ierr=saveMarkersBinary( &problem.markerset, 0,iTime,elapsedTime);
 	}
       }
     
@@ -319,9 +318,9 @@ int main(int argc, char **args){
       elapsedTime+=dt;
       if(elapsedTime > problem.options.totalTime || iTime==problem.options.nTime-1){
 
-	//saveGriddedMarkersBinary( &markers, &problem.grid, 5*problem.grid.NX, 5*problem.grid.NY,iMonte,iTime);
+	//saveGriddedMarkersBinary( &markers, &problem.grid, 5*problem.grid.NX, 5*problem.grid.NY,0,iTime);
 
-	ierr=saveMarkersBinary( &problem.markerset,iMonte,iTime,elapsedTime);
+	ierr=saveMarkersBinary( &problem.markerset,0,iTime,elapsedTime);
 	goto nextMonte;
       }
       

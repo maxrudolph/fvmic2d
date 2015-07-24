@@ -5,7 +5,7 @@
 #include "fdcode.h"
 #include "vep_system.h"
 #include "profile.h"
-#include "benchmarkInitialConditions.h"
+#include "initialConditions.h"
 #define NADD 27 /* number of entries to add to matrix at a time*/
 
 

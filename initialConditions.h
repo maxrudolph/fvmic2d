@@ -1,5 +1,7 @@
 #ifndef _BENCHMARK_IC_H
 #define _BENCHMARK_IC_H
+PetscErrorCode initialConditions( Problem * );
+
 PetscScalar plate_depth(PetscScalar, Options *);
 PetscInt in_slab( PetscScalar, PetscScalar, Options *);
 PetscInt in_plate( PetscScalar, PetscScalar, Options *);
