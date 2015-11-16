@@ -5,8 +5,8 @@ close all
 fclose all
 [status pd] = unix('echo $PETSC_DIR');
 % pd = '/da/'
-% PETSC_DIR='/opt/petsc';
-PETSC_DIR='/usr/local/petsc';
+PETSC_DIR='/opt/petsc-3.5';
+% PETSC_DIR='/usr/local/petsc';
 setenv('PETSC_DIR',PETSC_DIR);
 
 addpath([PETSC_DIR '/share/petsc/matlab']);
@@ -20,7 +20,8 @@ vscale = 3.156e9;
 s_in_yr = 3.156e7;
 
 % loadgrid
-
+% output_dir = '~/subduction_test2/output';
+% filelist=dir([output_dir '/loadNodalFields_0_*.petscbin']);
 filelist=dir('../output/loadNodalFields_0_*.petscbin');
 snums = zeros(size(filelist));
 for i=1:length(snums)
@@ -111,8 +112,10 @@ for iFile = nfiles:nfiles
     % axis equal tight
     
     % re-sample T onto a 6x6 km grid
-    newx = 0:3000:660000;
-    newy = 0:3000:600000;
+%     newx = 0:3000:660000;
+%     newy = 0:3000:600000;
+    newx = 0:3000:900000; %%%%%%%%%%%%%%%%%%%%%%%%
+    newy = 0:3000:210000; %%%%%%%%%%%%%%%%%%%%%%%%%
     [X,Y] = meshgrid(newx,newy);
     newT = interp2(nf.gridx,nf.gridy,nf.T,X,Y,'linear')-273;
    
@@ -120,7 +123,8 @@ for iFile = nfiles:nfiles
     newvy = interp2(nf.gridxc,nf.gridy,nf.vy,X,Y,'linear');
     newp = interp2(nf.gridxc,nf.gridyc,nf.p,X,Y,'linear');
     
-    newtotp = 3300*10*Y+newp;
+%     newtotp = 3300*10*Y+newp;    
+    newtotp = 4500*10*Y+newp; %%%%%%%%%%%%%%%%%%%%%%%%%%
     % calculate melt fraction
     meltf = interp2( melt_table.T, melt_table.P*1e9, melt_table.F, newT, newtotp ,'linear',0.0);
     dfdp = interp2( melt_table.T, melt_table.P*1e9, melt_table.dFdP, newT, newtotp,'linear',0.0);
