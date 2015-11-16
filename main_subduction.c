@@ -419,11 +419,11 @@ int main(int argc, char **args){
       ierr = VecDestroy(&thermalS); /* free the thermal solution vector */
                
       /* save solution */
-      if(!(iTime % (problem.options.saveInterval))) {
+      if(!(iTime % (problem.options.saveInterval))){
 	ierr=saveNodalFields( &problem.nodal_fields, &problem.grid,iMonte,iTime, dt, elapsedTime,0);
-	if( !(iTime % (problem.options.saveInterval*10))) {
-	  ierr=saveMarkersBinary( &problem.markerset, iMonte,iTime,elapsedTime);
-	}
+      }
+      if( !(iTime % (problem.options.markerSaveInterval))) {
+	ierr=saveMarkersBinary( &problem.markerset, iMonte,iTime,elapsedTime);
       }
     
       /* advect markers */

@@ -185,6 +185,7 @@ typedef struct {
   PetscScalar displacementStepLimit; /* maximum fractional cell size that a marker may move in one timestep */
   PetscScalar maxTempChange;
   PetscInt saveInterval;
+  PetscInt markerSaveInterval;
   PetscScalar subgridStressDiffusivity;
   PetscScalar subgridTemperatureDiffusivity;
 

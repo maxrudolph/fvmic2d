@@ -151,6 +151,7 @@ PetscErrorCode csvOptions(char *csvFileName, Options *options, Materials *materi
     declare_option("NMX",OPTION_INTEGER, &(options->NMX), "4");
     declare_option("NMY",OPTION_INTEGER, &(options->NMY), "4");
     declare_option("saveInterval",OPTION_INTEGER,&(options->saveInterval),"100");
+    declare_option("markerSaveInterval",OPTION_INTEGER,&(options->markerSaveInterval),"1000");
     declare_option("maxMarkFactor",OPTION_SCALAR,&(options->maxMarkFactor),"2.0");
     declare_option("minMarkers",OPTION_INTEGER, &(options->minMarkers), "1");
     declare_option("maxMarkers",OPTION_INTEGER, &(options->maxMarkers), "100");
