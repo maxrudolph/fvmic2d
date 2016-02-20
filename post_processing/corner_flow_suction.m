@@ -18,10 +18,11 @@ load('melt_table_0.1.mat');
 
 vscale = 3.156e9;
 s_in_yr = 3.156e7;
-slab_angle=15.3;
+slab_angle=24.0;
 
 % loadgrid
-output_dir = '~/subduction_test2/output';
+output_dir = '~/subduction_test22/output';
+%output_dir ='~/fvmic2d/output';
 % output_dir = '../case2';
 
 
@@ -93,8 +94,9 @@ for iFile = 1:6
     Ttot = trapz(r,p.*r)
     %% Make figure showing temperature field and streamlines
     figure;
-    set(gcf,'Position',[560   558   522   390]);
-    pcolor(nf.gridx/1e3,nf.gridy/1e3,nf.T); shading flat
+    set(gcf,'Position',[560   558  522*2   390*2]);
+    %pcolor(nf.gridx/1e3,nf.gridy/1e3,nf.T); shading flat
+    contourf(nf.gridx/1e3,nf.gridy/1e3,nf.T, 100, 'color', 'none');
     set(gca,'FontSize',16,'FontName','Helvetica');
     hold on;
     hcb=colorbar;
@@ -173,6 +175,7 @@ for iFile = 1:6
     a2.PlotBoxAspectRatioMode = a1.PlotBoxAspectRatioMode;
     a2.XLim = a1.XLim;
     a2.YLim = a1.YLim;
+    a2.YDir = a1.YDir;
 end
 
 

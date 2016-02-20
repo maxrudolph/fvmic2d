@@ -220,7 +220,11 @@ PetscErrorCode csvOptions(char *csvFileName, Options *options, Materials *materi
     declare_option("rootCenter",OPTION_SCALAR,&options->rootCenter,"1.20e5");
     declare_option("rootWidth",OPTION_SCALAR,&options->rootWidth,"4.0e4");
     declare_option("staticVelocity",OPTION_INTEGER,&options->staticVelocity,"0");
-
+    /* viscous decoupling */
+    declare_option("minDecoupleDepth",OPTION_SCALAR, &options->minDecoupleDepth,"5.1e4");
+    declare_option("maxDecoupleDepth",OPTION_SCALAR, &options->maxDecoupleDepth,"8.0e4");
+    declare_option("decoupleThickness",OPTION_SCALAR, &options->decoupleThickness,"141");
+    declare_option("decoupleEtaScaler",OPTION_SCALAR, &options->decoupleEtaScaler,"1");
     /* Parse the options file line-by-line */
     csvFile = fopen( ifn, "r");
     while( fgets(line, sizeof(line), csvFile) != NULL ){

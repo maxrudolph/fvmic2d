@@ -201,6 +201,11 @@ typedef struct {
   PetscScalar rootCenter;
   PetscScalar rootWidth;
   PetscInt staticVelocity;
+  /* Parameters for viscous decoupling */
+  PetscScalar minDecoupleDepth;
+  PetscScalar maxDecoupleDepth;
+  PetscScalar decoupleThickness;
+  PetscScalar decoupleEtaScaler;
 } Options;
 
 typedef struct{/* a structure holding everything related to solving a linear system */

@@ -272,12 +272,17 @@ int main(int argc, char **args){
 	PetscScalar maxT = 0.0;
 	Marker *markers = problem.markerset.markers;
 	for(m=0;m<problem.markerset.nMark;m++){
-	  if(markers[m].T > maxT) maxT = markers[m].T;
+	  if(markers[m].cellX != -1){
+	    if(markers[m].T > maxT) maxT = markers[m].T;
+	    if(markers[m].T > TBREAK){
+	      printf("Maximum temperature exceeded. Ending Montecarlo step. Marker position (X,Y) = %e, %e\n", markers[m].X, markers[m].Y);
+	    }
+	  }
 	}
 	PetscScalar maxTg;
 	MPI_Allreduce( &maxT, &maxTg, 1, MPI_DOUBLE, MPI_MAX,PETSC_COMM_WORLD);
 	if( maxTg > TBREAK){
-	  printf("Maximum temperature exceeded. Ending Montecarlo step\n");
+	  printf("Maximum temperature exceeded. Ending Montecarlo step. Marker position (X,Y) = %e, %e\n", markers[m].X, markers[m].Y);
 	  //saveGriddedMarkersBinary( &markers, &problem.grid, 5*problem.grid.NX, 5*problem.grid.NY,iMonte,iTime);
 	  goto nextMonte;
 	}
