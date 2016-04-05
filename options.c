@@ -214,6 +214,7 @@ PetscErrorCode csvOptions(char *csvFileName, Options *options, Materials *materi
     declare_option("materialGamma",OPTION_SPECIAL1,materials->gamma,"0,0,1e99"); /* Note - this is not working right now because it will require double-declaration of this parameter*/
     declare_option("materialGamma",OPTION_SPECIAL1,materials->gamma,"0,1,1e98"); 
     /* subduction - specific stuff */
+    declare_option("overridingPlateThickness",OPTION_SCALAR, &options->overridingPlateThickness,"50000");
     declare_option("slabAngle",OPTION_SCALAR, &options->slabAngle,"45");
     declare_option("slabVelocity",OPTION_SCALAR, &(options->slabVelocity),"1.0e-10");
     declare_option("rootThickness",OPTION_SCALAR,&options->rootThickness,"0.0");

@@ -78,7 +78,7 @@ PetscScalar mantle_temperature(){
 }
 
 PetscScalar plate_depth(PetscScalar x, Options *options){
-  const double plate_thickness = 50000.0;
+  const double plate_thickness = options->overridingPlateThickness;
 
   const double root_thickness         = options->rootThickness;// 10 km
   const double root_center_location   = options->rootCenter;// 120 km
