@@ -2,11 +2,11 @@
 %calculate nusselt number
 
 clear
-%close all
-fclose all
+close all
+fclose all;
 [status pd] = unix('echo $PETSC_DIR');
 % pd = '/da/'
- PETSC_DIR='/opt/petsc';
+ PETSC_DIR='/opt/petsc-3.5';
 %PETSC_DIR='/usr/local/petsc';
 setenv('PETSC_DIR',PETSC_DIR);
 
@@ -18,10 +18,11 @@ load('melt_table_0.1.mat');
 
 vscale = 3.156e9;
 s_in_yr = 3.156e7;
-slab_angle=40;
+slab_angle=24.0;
 
 % loadgrid
-output_dir = '~/subduction_runs/case3_root/output';
+output_dir = '~/subduction_test38/output';
+%output_dir ='~/fvmic2d/output';
 % output_dir = '../case2';
 
 
@@ -93,8 +94,9 @@ for iFile = 1:6
     Ttot = trapz(r,p.*r)
     %% Make figure showing temperature field and streamlines
     figure;
-    set(gcf,'Position',[560   558   522   390]);
-    pcolor(nf.gridx/1e3,nf.gridy/1e3,nf.T); shading flat
+    set(gcf,'Position',[560   558  522*2   390*2]);
+    %pcolor(nf.gridx/1e3,nf.gridy/1e3,nf.T); shading flat
+    contourf(nf.gridx/1e3,nf.gridy/1e3,nf.T, 100, 'color', 'none');
     set(gca,'FontSize',16,'FontName','Helvetica');
     hold on;
     hcb=colorbar;
@@ -106,8 +108,9 @@ for iFile = 1:6
     nsl = 50;
     LX = max(nf.gridx(1,:))/1e3;
     LY = max(nf.gridy(:,1))/1e3;
-    slx = 0.99*LX*ones(nsl,1);
-    sly = linspace(0,LY,nsl)';
+%     slx = 0.99*LX*ones(nsl,1);
+    slx = 400*ones(nsl,1);
+    sly = linspace(0,135,nsl)';
     vxc = (nf.vx(1:end-1,1:end-1) + nf.vx(1:end-1,2:end))/2;
     vyc = (nf.vy(1:end-1,1:end-1) + nf.vy(2:end,1:end-1))/2;
     plate_mask = sqrt(vxc.^2+vyc.^2)<1e-14;
@@ -121,11 +124,14 @@ for iFile = 1:6
     % alpha(double(plate_mask));
     
     hold on
-    hsl=streamline(xc/1e3,yc/1e3,vxc,vyc,slx,sly);
+    mask = xc(1,:) <= 450*1000;
+    hsl=streamline(xc(:,mask)/1e3,yc(:,mask)/1e3,vxc(:,mask),vyc(:,mask),slx,sly);
     set(hsl,'Color','k')
     
     set(gca,'XLim',[0 400]);
-    set(gca,'YLim',[0 250]);
+    set(gca,'YLim',[0 200]);
+%     set(gca,'XLim',[0 320]);
+%     set(gca,'YLim',[0 140]);
     xlabel('Distance from trench (km)');
     ylabel('Depth (km)');
     
@@ -149,6 +155,7 @@ for iFile = 1:6
     dy = newy(2)-newy(1);
     [dpdx,dpdy] = gradient(newtotp,dx,dy);
     [dTdx,dTdy] = gradient(newT,dx,dy);
+
     dPdt = (dpdx.*newvx + dpdy.*newvy)*s_in_yr;
     dTdt = (dTdx.*newvx + dTdy.*newvy)*s_in_yr;
     
@@ -173,6 +180,7 @@ for iFile = 1:6
     a2.PlotBoxAspectRatioMode = a1.PlotBoxAspectRatioMode;
     a2.XLim = a1.XLim;
     a2.YLim = a1.YLim;
+    a2.YDir = a1.YDir;
 end
 
 

@@ -214,13 +214,18 @@ PetscErrorCode csvOptions(char *csvFileName, Options *options, Materials *materi
     declare_option("materialGamma",OPTION_SPECIAL1,materials->gamma,"0,0,1e99"); /* Note - this is not working right now because it will require double-declaration of this parameter*/
     declare_option("materialGamma",OPTION_SPECIAL1,materials->gamma,"0,1,1e98"); 
     /* subduction - specific stuff */
+    declare_option("overridingPlateThickness",OPTION_SCALAR, &options->overridingPlateThickness,"50000");
     declare_option("slabAngle",OPTION_SCALAR, &options->slabAngle,"45");
     declare_option("slabVelocity",OPTION_SCALAR, &(options->slabVelocity),"1.0e-10");
     declare_option("rootThickness",OPTION_SCALAR,&options->rootThickness,"0.0");
     declare_option("rootCenter",OPTION_SCALAR,&options->rootCenter,"1.20e5");
     declare_option("rootWidth",OPTION_SCALAR,&options->rootWidth,"4.0e4");
     declare_option("staticVelocity",OPTION_INTEGER,&options->staticVelocity,"0");
-
+    /* viscous decoupling */
+    declare_option("minDecoupleDepth",OPTION_SCALAR, &options->minDecoupleDepth,"5.1e4");
+    declare_option("maxDecoupleDepth",OPTION_SCALAR, &options->maxDecoupleDepth,"8.0e4");
+    declare_option("decoupleThickness",OPTION_SCALAR, &options->decoupleThickness,"141");
+    declare_option("decoupleEtaScaler",OPTION_SCALAR, &options->decoupleEtaScaler,"1");
     /* Parse the options file line-by-line */
     csvFile = fopen( ifn, "r");
     while( fgets(line, sizeof(line), csvFile) != NULL ){

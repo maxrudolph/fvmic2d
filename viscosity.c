@@ -1,5 +1,6 @@
 #include "fdcode.h"
 #include "viscosity.h"
+#include <math.h>
 #ifdef COMPBA
 #include "phaseBA.h"
 #endif
@@ -34,6 +35,28 @@ PetscErrorCode computeRheology( Marker *marker, Options *options, Materials *mat
   }else if(materials->hasEtaT[mymat] == 0){
     /* no temperature dependence */
     thiseta = materials->materialEta[ mymat ];
+
+  }else if(materials->hasEtaT[mymat] == 6){
+    /* viscous layer */ 
+    const PetscScalar depth = marker->Y;
+    const PetscScalar distance = marker->X;
+    PetscScalar slabAngle = options->slabAngle;
+    PetscScalar decoupleThickness = options->decoupleThickness;
+    PetscScalar minDecoupleDepth = options->minDecoupleDepth;
+    PetscScalar maxDecoupleDepth = options->maxDecoupleDepth;
+    PetscScalar decoupleEtaScaler = options->decoupleEtaScaler;
+    thiseta = materials->materialEta[ mymat ];
+    if( distance > depth/tan(slabAngle) ){
+      if( distance < (depth/tan(slabAngle) + decoupleThickness) ){
+	if( depth > minDecoupleDepth && depth < maxDecoupleDepth ){
+	  thiseta *= decoupleEtaScaler;
+	}
+      }
+    }
+    /* }else if(materials->hasEtaT[mymat] == 7){
+       /* temperature dependent */
+    /* thiseta = materials->materialEta[mymat]*exp(materials->QonR[mymat] * (materials->Tref[mymat] - marker->T)); */
+
   }else{
     printf("Error! Viscosity law undefined\n");
     abort();

@@ -23,7 +23,7 @@ PetscErrorCode initializeSubductionGrid(GridData *grid, Options *options){
   const PetscScalar slab_bottom_x = LY/tan(options->slabAngle);        /* x-position where slab meets bottom of domain */
   const PetscScalar cornery = plate_depth(0.0,options);                         /* depth of corner (same as overriding plate thickness) */
 
-  const PetscInt Nplate = floor( 2.0*cornery/LY * ((PetscScalar) NY) );
+  const PetscInt Nplate = floor( 1.0*cornery/LY * ((PetscScalar) NY) );
 
   const PetscInt Nwedge = NY - Nplate + 1;
 
@@ -36,8 +36,8 @@ PetscErrorCode initializeSubductionGrid(GridData *grid, Options *options){
   gridSpacingUniform( grid->x, 0.0, cornerx, Nplate );
   gridSpacingUniform( grid->y, 0.0, cornery, Nplate );
   // use ramp spacing in mantle wedge
-  gridSpacingRamp( grid->x + Nplate-1, cornerx, slab_bottom_x, Nwedge, 5.0);
-  gridSpacingRamp( grid->y + Nplate-1, cornery, LY, Nwedge, 5.0);
+  gridSpacingRamp( grid->x + Nplate-1, cornerx, slab_bottom_x, Nwedge, 3.0);
+  gridSpacingRamp( grid->y + Nplate-1, cornery, LY, Nwedge, 3.0);
   //use uniform spacing in "Extra" x region
   gridSpacingUniform( grid->x + Nplate + Nwedge - 2, slab_bottom_x , LX , Nextrax);
 
