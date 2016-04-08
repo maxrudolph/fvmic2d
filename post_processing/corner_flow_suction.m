@@ -21,7 +21,7 @@ s_in_yr = 3.156e7;
 slab_angle=24.0;
 
 % loadgrid
-output_dir = '~/subduction_test38/output';
+output_dir = '~/subduction_test34/output';
 %output_dir ='~/fvmic2d/output';
 % output_dir = '../case2';
 
