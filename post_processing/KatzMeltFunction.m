@@ -15,8 +15,8 @@ options = optimset('algorithm',alg,'TolX',1e-10,'TolFun',1e-10,'MaxFunEvals',100
 %weight pct water
 xH2O = 0.1;
 
-numP=42;
-numT=22;
+numP=202;
+numT=102;
 
 F=zeros(numP,numT);
 Fcpx=zeros(numP,numT);

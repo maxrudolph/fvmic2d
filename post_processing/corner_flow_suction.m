@@ -1,9 +1,10 @@
 
 %calculate nusselt number
 
-clear
+%clear
 close all
 fclose all;
+% load('norootnodeTPV.mat');
 [status pd] = unix('echo $PETSC_DIR');
 % pd = '/da/'
  PETSC_DIR='/opt/petsc-3.5';
@@ -18,10 +19,14 @@ load('melt_table_0.1.mat');
 
 vscale = 3.156e9;
 s_in_yr = 3.156e7;
-slab_angle=24.0;
+
 
 % loadgrid
-output_dir = '~/subduction_test34/output';
+output_dir = '~/subduction_test68/output';
+plate_thickness=50000;          %PLATE THICKNESS!!!!
+%slab_angle=40;                  % SLAB ANGLE !!!!
+slab_angle=20;                  % SLAB ANGLE !!!!
+
 %output_dir ='~/fvmic2d/output';
 % output_dir = '../case2';
 
@@ -72,9 +77,11 @@ for iFile = 1:6
     
     
     %%
+       % reduced dynamic pressure when eta = 3e19 instead of 1e21
+    nf.p = 3e19/1e21*nf.p; 
+    %%
     npres=300;
     
-    plate_thickness=50000;
     LY = max(nf.gridy(:,1));
     slabx=linspace(plate_thickness/tand(slab_angle),LY/tand(slab_angle),npres);
     slaby=tand(slab_angle)*slabx;
@@ -95,22 +102,24 @@ for iFile = 1:6
     %% Make figure showing temperature field and streamlines
     figure;
     set(gcf,'Position',[560   558  522*2   390*2]);
+    set(gca,'FontSize',11,'FontName','Helvetica');
     %pcolor(nf.gridx/1e3,nf.gridy/1e3,nf.T); shading flat
     contourf(nf.gridx/1e3,nf.gridy/1e3,nf.T, 100, 'color', 'none');
-    set(gca,'FontSize',16,'FontName','Helvetica');
     hold on;
     hcb=colorbar;
     colormap hot
     axis equal tight
     hcb.Label.String='Temperature (K)';
-    hcb.Label.FontSize=16;
+    hcb.Label.FontSize=12;
     set(gca,'YDir','reverse');
     nsl = 50;
     LX = max(nf.gridx(1,:))/1e3;
     LY = max(nf.gridy(:,1))/1e3;
 %     slx = 0.99*LX*ones(nsl,1);
-    slx = 400*ones(nsl,1);
-    sly = linspace(0,135,nsl)';
+%     slx = 440*ones(nsl,1);
+    slx = 440*ones(nsl,1);
+    sly = linspace(0,120,nsl)';
+%     sly = linspace(0,120,nsl)';
     vxc = (nf.vx(1:end-1,1:end-1) + nf.vx(1:end-1,2:end))/2;
     vyc = (nf.vy(1:end-1,1:end-1) + nf.vy(2:end,1:end-1))/2;
     plate_mask = sqrt(vxc.^2+vyc.^2)<1e-14;
@@ -128,11 +137,12 @@ for iFile = 1:6
     hsl=streamline(xc(:,mask)/1e3,yc(:,mask)/1e3,vxc(:,mask),vyc(:,mask),slx,sly);
     set(hsl,'Color','k')
     
-    set(gca,'XLim',[0 400]);
-    set(gca,'YLim',[0 200]);
-%     set(gca,'XLim',[0 320]);
-%     set(gca,'YLim',[0 140]);
-    xlabel('Distance from trench (km)');
+%     set(gca,'XLim',[plate_thickness/tand(slab_angle)/1e3 440]);
+%     set(gca,'YLim',[0 160]);    
+    set(gca,'XLim',[0 440]);
+    set(gca,'YLim',[0 160]);
+%     xlabel('Distance from wedge corner (km)');
+    xlabel('Distance from trench (km)');   
     ylabel('Depth (km)');
     
     % re-sample T onto a 6x6 km grid
@@ -144,6 +154,7 @@ for iFile = 1:6
     newvx = interp2(nf.gridx,nf.gridyc,nf.vx,X,Y,'linear');
     newvy = interp2(nf.gridxc,nf.gridy,nf.vy,X,Y,'linear');
     newp = interp2(nf.gridxc,nf.gridyc,nf.p,X,Y,'linear');
+
     %
     newtotp = 3300*10*Y+newp;
     % calculate melt fraction
@@ -164,15 +175,21 @@ for iFile = 1:6
     melt_production(isnan(melt_production)) = 0;
     
     % figure;
+%     set(gca,'XTick',[plate_thickness/tand(slab_angle)/1e3, plate_thickness/tand(slab_angle)/1e3+50, plate_thickness/tand(slab_angle)/1e3+100, plate_thickness/tand(slab_angle)/1e3+150,plate_thickness/tand(slab_angle)/1e3+200,plate_thickness/tand(slab_angle)/1e3+250, plate_thickness/tand(slab_angle)/1e3+300]);
+%     set(gca,'XTickLabel',[0,50,100,150,200,250,300]);
+    set(gca,'YTick',[0,30,60,90,120,150]);
+    %comment out above if needed for distance from trench!!!
+    set(gca,'YTick',[0,50,100,150,200]);
+    set(gca,'FontSize',11,'FontName','Helvetica');
     a1=gca;
     a2=axes();
     a2.Position = a1.Position;
-    [cd,hc]=contour(X/1e3,Y/1e3,(melt_production/1e-11)); shading interp;
+    [cd,hc]=contour(X/1e3,Y/1e3,(melt_production/1e-11),10); shading interp;
     colormap(a2,'Jet');
     hcb2=colorbar('South');
     hcb2.Label.String = 'Melt Production (year^{-1}) x10^{-11}';
-    hcb2.Label.FontSize=13;
-    hcb2.FontSize=13;
+    hcb2.Label.FontSize=12;
+    hcb2.FontSize=12;
     a2.YTick=[];
     a2.XTick=[];
     set(gca,'Color','none');
@@ -181,9 +198,259 @@ for iFile = 1:6
     a2.XLim = a1.XLim;
     a2.YLim = a1.YLim;
     a2.YDir = a1.YDir;
+    set(gca,'Color','none');
+    set(gcf, 'Color', 'w');
+%     caxis([3 40])
 end
 
+% %% make plot showing melt volume vs distance 
+% ij = size(melt_production);
+% melt_vol=zeros(ij(2),1);
+% 
+% for j=1:ij(2)
+%     for i=1:ij(1)
+%         melt_vol(j) = melt_vol(j) + melt_production(i,j)*max(newx)/(ij(2)-1)*max(newy)/(ij(1)-1);
+%     end
+% end
+% 
+% figure(301);
+% plot(newx/1e3,melt_vol)
+% set(gca,'XLim',[0, 560]);    set(hsl,'Color','k')
+% 
+% xlabel('Distance from trench (km)');
+% ylabel('Melt production (kg/m/yr)');
 
+%% make figure showing dynamic pressure
+% nf.p(nf.p < -3e7 ) = -3e7;
+% nf.p(isnan(p)) = 0;
+% figure, pcolor(nf.gridx,nf.gridy, nf.p); axis ij; shading flat; colorbar
+
+%% make figure showing upward velocity vy or Temperature difference
+% figure;
+%     set(gcf,'Position',[560   558  522*2   390*2]);
+%     set(gca,'FontSize',11,'FontName','Helvetica');
+%     %pcolor(nf.gridx/1e3,nf.gridy/1e3,nf.T); shading flat
+% %     contourf(nf.gridx/1e3,nf.gridy/1e3, nf.vy, 100, 'color', 'none');
+%     tempdiff = newT-rootnodenewT;
+%     contourf(X/1e3,Y/1e3,tempdiff,200,'color','none');
+% 
+%     hold on;
+%     hcb=colorbar;
+%     colormap(flipud(brewermap([],'RdBu')));
+%     axis equal tight
+%     hcb.Label.String='\Delta T (K)';
+%     hcb.Label.FontSize=12;
+%     hcb.Direction='normal';
+%     set(gca,'YDir','reverse');
+%     nsl = 50;
+%     LX = max(nf.gridx(1,:))/1e3;
+%     LY = max(nf.gridy(:,1))/1e3;
+% %     slx = 0.99*LX*ones(nsl,1);
+% %     slx = 440*ones(nsl,1);
+%     slx = 440*ones(nsl,1);
+%     sly = linspace(0,120,nsl)';
+% %     sly = linspace(0,120,nsl)';
+%     vxc = (nf.vx(1:end-1,1:end-1) + nf.vx(1:end-1,2:end))/2;
+%     vyc = (nf.vy(1:end-1,1:end-1) + nf.vy(2:end,1:end-1))/2;
+%     plate_mask = sqrt(vxc.^2+vyc.^2)<1e-14;
+%     % plot overriding plate polygon
+%     bwb=bwboundaries(plate_mask);
+%     bwb=bwb{1}; %assume bwb structure only contains one polygon
+%     hold on;
+%     hp = plot( xc(1,bwb(:,2))/1e3, yc(bwb(:,1),1)/1e3);
+%     hp.LineWidth=3;
+%     hp.Color=0.7*[1 1 1];
+%     % alpha(double(plate_mask));
+%     
+%     hold on
+%     mask = xc(1,:) <= 450*1000;
+%     hsl=streamline(xc(:,mask)/1e3,yc(:,mask)/1e3,vxc(:,mask),vyc(:,mask),slx,sly);
+%     set(hsl,'Color','k')
+% %     quiver(X(1:8:end,1:8:end)/1e3,Y(1:8:end,1:8:end)/1e3,newvx(1:8:end,1:8:end),newvy(1:8:end,1:8:end),'color','k');
+% 
+%     
+% %     set(gca,'XLim',[plate_thickness/tand(slab_angle)/1e3 440]);
+% %     set(gca,'YLim',[0 160]);    
+%     set(gca,'XLim',[0 440]);
+%     set(gca,'YLim',[0 160]);
+%     caxis ([-130 130]);
+% %     caxis ([-2e-10 3.3789e-10]);
+% %     caxis ([-max(max(nf.vx)) max(max(nf.vx))]);
+% %     xlabel('Distance from wedge corner (km)');
+%     xlabel('Distance from trench (km)');   
+%     ylabel('Depth (km)');
+%     
+%     % re-sample T onto a 6x6 km grid
+%     newx = 0:3000:660000;
+%     newy = 0:3000:600000;
+%     [X,Y] = meshgrid(newx,newy);
+%     newT = interp2(nf.gridx,nf.gridy,nf.T,X,Y,'linear')-273;
+%     
+%     newvx = interp2(nf.gridx,nf.gridyc,nf.vx,X,Y,'linear');
+%     newvy = interp2(nf.gridxc,nf.gridy,nf.vy,X,Y,'linear');
+%     newp = interp2(nf.gridxc,nf.gridyc,nf.p,X,Y,'linear');
+% 
+%     %
+%     newtotp = 3300*10*Y+newp;
+%     % calculate melt fraction
+%     meltf = interp2( melt_table.T, melt_table.P*1e9, melt_table.F, newT, newtotp ,'linear',0.0);
+%     dfdp = interp2( melt_table.T, melt_table.P*1e9, melt_table.dFdP, newT, newtotp,'linear',0.0);
+%     dfdT = interp2( melt_table.T, melt_table.P*1e9, melt_table.dFdT, newT, newtotp,'linear',0.0);
+%     %% calculate gradient of pressure and temperature
+%     dx = newx(2)-newx(1);
+%     dy = newy(2)-newy(1);
+%     [dpdx,dpdy] = gradient(newtotp,dx,dy);
+%     [dTdx,dTdy] = gradient(newT,dx,dy);
+% 
+%     dPdt = (dpdx.*newvx + dpdy.*newvy)*s_in_yr;
+%     dTdt = (dTdx.*newvx + dTdy.*newvy)*s_in_yr;
+%     
+%     melt_production = dPdt.*dfdp/1e9 + dTdt.*dfdT;
+%     melt_production(melt_production<0) = 0;
+%     melt_production(isnan(melt_production)) = 0;
+%     
+%     % figure;
+% %     set(gca,'XTick',[plate_thickness/tand(slab_angle)/1e3, plate_thickness/tand(slab_angle)/1e3+50, plate_thickness/tand(slab_angle)/1e3+100, plate_thickness/tand(slab_angle)/1e3+150,plate_thickness/tand(slab_angle)/1e3+200,plate_thickness/tand(slab_angle)/1e3+250, plate_thickness/tand(slab_angle)/1e3+300]);
+% %     set(gca,'XTickLabel',[0,50,100,150,200,250,300]);
+%     set(gca,'YTick',[0,30,60,90,120,150]);
+%     %comment out above if needed for distance from trench!!!
+%     set(gca,'YTick',[0,50,100,150,200]);
+%     set(gca,'FontSize',11,'FontName','Helvetica');
+%     a1=gca;
+% %     a2=axes();
+% %     a2.Position = a1.Position;
+% %     pcolor(X,Y,newvy); shading interp;
+% %     colormap(a2,'Jet');
+% %     hcb2=colorbar('South');
+% %     hcb2.Label.String = 'Melt Production (year^{-1}) x10^{-11}';
+% %     hcb2.Label.FontSize=12;
+% %     hcb2.FontSize=12;
+% %     a2.YTick=[];
+% %     a2.XTick=[];
+% %     set(gca,'Color','none');
+% %     a2.PlotBoxAspectRatio = a1.PlotBoxAspectRatio;
+% %     a2.PlotBoxAspectRatioMode = a1.PlotBoxAspectRatioMode;
+% %     a2.XLim = a1.XLim;
+% %     a2.YLim = a1.YLim;
+%     a2.YDir = a1.YDir;
+%     set(gca,'Color','none');
+%     set(gcf, 'Color', 'w');
+%     
+%     
+% %% make figure showing dynamic pressure
+% nf.p(isnan(nf.p)) = 0;
+% % newp(newp < newp(18,55)) = newp(18,55);
+% figure;
+%     set(gcf,'Position',[560   558  522*2   390*2]);
+%     set(gca,'FontSize',11,'FontName','Helvetica');
+%     %pcolor(nf.gridx/1e3,nf.gridy/1e3,nf.T); shading flat
+%     pcolor(nf.gridx/1e3, nf.gridy/1e3, (nf.p)/1e6);shading flat
+%     hold on;
+%     hcb=colorbar;
+%     colormap jet
+%     axis equal tight
+%     hcb.Label.String='Dynamic pressure (MPa)';
+%     hcb.Label.FontSize=12;
+% %     hcb.Direction='reverse';
+%     set(gca,'YDir','reverse');
+%     nsl = 50;
+%     LX = max(nf.gridx(1,:))/1e3;
+%     LY = max(nf.gridy(:,1))/1e3;
+% %     slx = 0.99*LX*ones(nsl,1);
+% %     slx = 440*ones(nsl,1);
+%     slx = 440*ones(nsl,1);
+%     sly = linspace(0,120,nsl)';
+% %     sly = linspace(0,120,nsl)';
+%     vxc = (nf.vx(1:end-1,1:end-1) + nf.vx(1:end-1,2:end))/2;
+%     vyc = (nf.vy(1:end-1,1:end-1) + nf.vy(2:end,1:end-1))/2;
+%     plate_mask = sqrt(vxc.^2+vyc.^2)<1e-14;
+%     % plot overriding plate polygon
+%     bwb=bwboundaries(plate_mask);
+%     bwb=bwb{1}; %assume bwb structure only contains one polygon
+%     hold on;
+%     hp = plot( xc(1,bwb(:,2))/1e3, yc(bwb(:,1),1)/1e3);
+%     hp.LineWidth=3;
+%     hp.Color=0.7*[1 1 1];
+%     % alpha(double(plate_mask));
+%     
+%     hold on
+%     mask = xc(1,:) <= 450*1000;
+%     hsl=streamline(xc(:,mask)/1e3,yc(:,mask)/1e3,vxc(:,mask),vyc(:,mask),slx,sly);
+%     set(hsl,'Color','k')
+% %     quiver(X(1:10:end,1:10:end)/1e3,Y(1:10:end,1:10:end)/1e3,newvx(1:10:end,1:10:end),newvy(1:10:end,1:10:end),'color','k');
+% 
+%     
+% %     set(gca,'XLim',[plate_thickness/tand(slab_angle)/1e3 440]);
+% %     set(gca,'YLim',[0 160]);    
+%     set(gca,'XLim',[0 440]);
+%     set(gca,'YLim',[0 160]);
+%     caxis([-22 0])
+% %     xlabel('Distance from wedge corner (km)');
+%     xlabel('Distance from trench (km)');   
+%     ylabel('Depth (km)');
+%     
+% %     % re-sample T onto a 6x6 km grid
+% %     newx = 0:3000:660000;
+% %     newy = 0:3000:600000;
+% %     [X,Y] = meshgrid(newx,newy);
+% %     newT = interp2(nf.gridx,nf.gridy,nf.T,X,Y,'linear')-273;
+% %     
+% %     newvx = interp2(nf.gridx,nf.gridyc,nf.vx,X,Y,'linear');
+% %     newvy = interp2(nf.gridxc,nf.gridy,nf.vy,X,Y,'linear');
+% %     newp = interp2(nf.gridxc,nf.gridyc,nf.p,X,Y,'linear');
+% % 
+% %     %
+% %     newtotp = 3300*10*Y+newp;
+% %     % calculate melt fraction
+% %     meltf = interp2( melt_table.T, melt_table.P*1e9, melt_table.F, newT, newtotp ,'linear',0.0);
+% %     dfdp = interp2( melt_table.T, melt_table.P*1e9, melt_table.dFdP, newT, newtotp,'linear',0.0);
+% %     dfdT = interp2( melt_table.T, melt_table.P*1e9, melt_table.dFdT, newT, newtotp,'linear',0.0);
+% %     %% calculate gradient of pressure and temperature
+% %     dx = newx(2)-newx(1);
+% %     dy = newy(2)-newy(1);
+% %     [dpdx,dpdy] = gradient(newtotp,dx,dy);
+% %     [dTdx,dTdy] = gradient(newT,dx,dy);
+% % 
+% %     dPdt = (dpdx.*newvx + dpdy.*newvy)*s_in_yr;
+% %     dTdt = (dTdx.*newvx + dTdy.*newvy)*s_in_yr;
+% %     
+% %     melt_production = dPdt.*dfdp/1e9 + dTdt.*dfdT;
+% %     melt_production(melt_production<0) = 0;
+% %     melt_production(isnan(melt_production)) = 0;
+% %     
+%     % figure;
+% %     set(gca,'XTick',[plate_thickness/tand(slab_angle)/1e3, plate_thickness/tand(slab_angle)/1e3+50, plate_thickness/tand(slab_angle)/1e3+100, plate_thickness/tand(slab_angle)/1e3+150,plate_thickness/tand(slab_angle)/1e3+200,plate_thickness/tand(slab_angle)/1e3+250, plate_thickness/tand(slab_angle)/1e3+300]);
+% %     set(gca,'XTickLabel',[0,50,100,150,200,250,300]);
+%     set(gca,'YTick',[0,30,60,90,120,150]);
+%     %comment out above if needed for distance from trench!!!
+%     set(gca,'YTick',[0,50,100,150,200]);
+%     set(gca,'FontSize',11,'FontName','Helvetica');
+%     a1=gca;
+% %     a2=axes();
+% %     a2.Position = a1.Position;
+% %     pcolor(X,Y,newvy); shading interp;
+% %     colormap(a2,'Jet');
+% %     hcb2=colorbar('South');
+% %     hcb2.Label.String = 'Melt Production (year^{-1}) x10^{-11}';
+% %     hcb2.Label.FontSize=12;
+% %     hcb2.FontSize=12;
+% %     a2.YTick=[];
+% %     a2.XTick=[];
+% %     set(gca,'Color','none');
+% %     a2.PlotBoxAspectRatio = a1.PlotBoxAspectRatio;
+% %     a2.PlotBoxAspectRatioMode = a1.PlotBoxAspectRatioMode;
+% %     a2.XLim = a1.XLim;
+% %     a2.YLim = a1.YLim;
+% %     a2.YDir = a1.YDir;
+%     set(gca,'Color','none');
+%     set(gcf, 'Color', 'w');
+% 
+% % tipx = (newx - plate_thickness/tand(slab_angle))/1e3;
+% % figure(301);
+% % plot(tipx,melt_vol)
+% % set(gca,'XLim',[0, (560000 - plate_thickness/tand(slab_angle))/1e3]);
+% % xlabel('Distance from wedge corner (km)');
+% % ylabel('Melt production (kg/m/yr)');
 %%
 %
 % %     [grid.xc grid.yc] = meshgrid(grid.xc,grid.yc);

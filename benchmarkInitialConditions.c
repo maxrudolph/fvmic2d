@@ -128,7 +128,7 @@ PetscInt in_slab(PetscScalar x, PetscScalar y, Options *options ){
 PetscScalar slab_inflow_temperature(PetscScalar x, PetscScalar y, PetscScalar angle){
   // calculates temperature in the slab based on half-space cooling model
   const PetscScalar Ts = 273;
-  const PetscScalar T0 = 1573;
+  const PetscScalar T0 = 1623;
   const PetscScalar kappa = 0.7272e-6;//Van Keken et al. table 1
   const PetscScalar t50 = 1.5778463e15;//50 Myr in seconds
   return Ts + (T0-Ts) * erf( (y-slab_depth(x,angle))/(2.0*sqrt(kappa*t50)) );
