@@ -4,7 +4,7 @@ PetscScalar plate_depth(PetscScalar, Options *);
 PetscInt in_slab( PetscScalar, PetscScalar, Options *);
 PetscInt in_plate( PetscScalar, PetscScalar, Options *);
 PetscInt in_either( PetscScalar, PetscScalar, Options *);
-PetscScalar slab_inflow_temperature(PetscScalar, PetscScalar, PetscScalar);
+PetscScalar slab_inflow_temperature(PetscScalar, PetscScalar, PetscScalar, PetscScalar);
 PetscErrorCode initialConditionsVanKeken( MarkerSet *, Options *, Materials *, GridData *);
 PetscScalar slab_depth(PetscScalar, PetscScalar);
 PetscScalar slab_x(PetscScalar, PetscScalar);

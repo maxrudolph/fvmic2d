@@ -18,7 +18,7 @@ PetscErrorCode initialConditionsVanKeken( MarkerSet *markerset, Options *options
     }else{
       if( in_slab(markers[m].X, markers[m].Y, options) ){
 	//slab IC	
-	markers[m].T = slab_inflow_temperature( markers[m].X, markers[m].Y, slab_angle);
+	markers[m].T = slab_inflow_temperature( markers[m].X, markers[m].Y, slab_angle, options->slabAge);
       }else if(in_plate( markers[m].X, markers[m].Y, options )){
 	//in overriding plate
 	//	markers[m].T = markers[m].Y/50000.0 * (Tlith-273.0) + 273.0;
@@ -55,7 +55,7 @@ Marker new_slab_marker(PetscScalar x, PetscScalar y, Options *options, Materials
   m.X = x;
   m.Y = y;
   m.Mat = 0;
-  m.T = slab_inflow_temperature( x, y, options->slabAngle );
+  m.T = slab_inflow_temperature( x, y, options->slabAngle ,options->slabAge);
   updateMarkerViscosity( &m, options, materials, 0.0);
   return m;
 }
@@ -125,13 +125,14 @@ PetscInt in_slab(PetscScalar x, PetscScalar y, Options *options ){
   }
 }
 
-PetscScalar slab_inflow_temperature(PetscScalar x, PetscScalar y, PetscScalar angle){
+PetscScalar slab_inflow_temperature(PetscScalar x, PetscScalar y, PetscScalar angle, PetscScalar age){
   // calculates temperature in the slab based on half-space cooling model
   const PetscScalar Ts = 273;
   const PetscScalar T0 = 1623;
   const PetscScalar kappa = 0.7272e-6;//Van Keken et al. table 1
-  const PetscScalar t50 = 1.5778463e15;//50 Myr in seconds
-  return Ts + (T0-Ts) * erf( (y-slab_depth(x,angle))/(2.0*sqrt(kappa*t50)) );
+  const PetscScalar s_in_year = 3.15576e7;
+  const PetscScalar slab_age_s = age * s_in_year;
+  return Ts + (T0-Ts) * erf( (y-slab_depth(x,angle))/(2.0*sqrt(kappa*slab_age_s)) );
 
 }
 

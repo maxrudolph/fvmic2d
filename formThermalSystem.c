@@ -169,7 +169,7 @@ PetscErrorCode formThermalSystem(Problem *problem, GridData *grid, NodalFields *
 	
 	
 	//slab temperature
-	PetscScalar thisT = slab_inflow_temperature( grid->x[ix], grid->y[jy], options->slabAngle);
+	PetscScalar thisT = slab_inflow_temperature( grid->x[ix], grid->y[jy], options->slabAngle, options->slabAge);
 	ierr = VecSetValue( thermalRHS, idxnode, thisT , INSERT_VALUES); CHKERRQ(ierr);
 
 

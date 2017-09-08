@@ -196,6 +196,7 @@ typedef struct {
 
   /* Parameters for subduction model */
   PetscScalar overridingPlateThickness;
+  PetscScalar slabAge;
   PetscScalar slabAngle;
   PetscScalar slabVelocity;
   PetscScalar rootThickness;

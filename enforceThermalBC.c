@@ -23,7 +23,7 @@ PetscErrorCode enforceThermalBCs1( GridData *grid, Options *options, NodalFields
       }
       
       if(ix ==0){/* LEFT */
-	lastT[jy][ix] = slab_inflow_temperature( 0.0, grid->y[jy], options->slabAngle );
+	lastT[jy][ix] = slab_inflow_temperature( 0.0, grid->y[jy], options->slabAngle ,options->slabAge);
 
       }else if(ix == grid->NX-1){/* RIGHT */
 	if( grid->y[jy] <= plate_depth(grid->LX,options) ){
