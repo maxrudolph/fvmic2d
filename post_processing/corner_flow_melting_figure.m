@@ -5,8 +5,8 @@ close all
 fclose all
 [status pd] = unix('echo $PETSC_DIR');
 % pd = '/da/'
-PETSC_DIR='/opt/petsc-3.5';
-% PETSC_DIR='/usr/local/petsc';
+% PETSC_DIR='/opt/petsc-3.5';
+PETSC_DIR='~/sw/petsc-3.5.4';
 setenv('PETSC_DIR',PETSC_DIR);
 
 addpath([PETSC_DIR '/share/petsc/matlab']);

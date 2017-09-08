@@ -22,7 +22,7 @@ s_in_yr = 3.156e7;
 
 
 % loadgrid
-output_dir = '~/subduction_test68/output';
+output_dir = '~/subduction_test47/output';
 plate_thickness=50000;          %PLATE THICKNESS!!!!
 %slab_angle=40;                  % SLAB ANGLE !!!!
 slab_angle=20;                  % SLAB ANGLE !!!!
