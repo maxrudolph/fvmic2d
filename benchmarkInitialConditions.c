@@ -131,7 +131,7 @@ PetscScalar slab_inflow_temperature(PetscScalar x, PetscScalar y, PetscScalar an
   const PetscScalar T0 = 1623;
   const PetscScalar kappa = 0.7272e-6;//Van Keken et al. table 1
   const PetscScalar s_in_year = 3.15576e7;
-  const PetscScalar slab_age_s = age * s_in_year;
+  const PetscScalar slab_age_s = age * 1.0e6 * s_in_year;
   return Ts + (T0-Ts) * erf( (y-slab_depth(x,angle))/(2.0*sqrt(kappa*slab_age_s)) );
 
 }
